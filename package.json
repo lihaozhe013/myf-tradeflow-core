@@ -1,0 +1,32 @@
+{
+  "name": "myf-db-systool",
+  "private": true,
+  "version": "0.0.0",
+  "description": "小型公司进出货 + 账务系统",
+  "scripts": {
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "build:prod": "cd frontend && npm run build && cd ../backend && npm run build",
+    "start": "cd backend && npm start",
+    "start:prod": "NODE_ENV=production cd backend && npm start",
+    "preview": "cd frontend && npm run preview",
+    "lint": "cd frontend && npm run lint",
+    "clean": "rm -rf frontend/dist backend/dist node_modules frontend/node_modules backend/node_modules",
+    "clean:build": "rm -rf frontend/dist backend/dist",
+    "test": "cd backend && npm test && cd ../frontend && npm test",
+    "setup": "npm run install:all && npm run build"
+  },
+  "dependencies": {
+    "concurrently": "^9.2.0"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  }
+}
