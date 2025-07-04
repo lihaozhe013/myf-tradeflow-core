@@ -88,9 +88,9 @@ const Products = () => {
   };
 
   // 删除产品
-  const handleDelete = async (productModel) => {
+  const handleDelete = async (shortName) => {
     try {
-      const response = await fetch(`/api/products/${productModel}`, {
+      const response = await fetch(`/api/products/${shortName}`, {
         method: 'DELETE',
       });
       if (response.ok) {
@@ -107,19 +107,21 @@ const Products = () => {
   // 保存产品
   const handleSave = async (values) => {
     try {
-      const url = editingProduct 
-        ? `/api/products/${editingProduct.product_model}`
+      const url = editingProduct
+        ? `/api/products/${editingProduct.short_name}`
         : '/api/products';
       const method = editingProduct ? 'PUT' : 'POST';
-      
+      const body = { ...values };
+      if (!editingProduct) {
+        body.short_name = values.short_name;
+      }
       const response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(values),
+        body: JSON.stringify(body),
       });
-
       if (response.ok) {
         message.success(editingProduct ? '修改成功' : '新增成功');
         setModalVisible(false);
@@ -136,6 +138,12 @@ const Products = () => {
   // 表格列定义
   const columns = [
     {
+      title: '产品简称',
+      dataIndex: 'short_name',
+      key: 'short_name',
+      width: 120,
+    },
+    {
       title: '产品型号',
       dataIndex: 'product_model',
       key: 'product_model',
@@ -149,8 +157,8 @@ const Products = () => {
     },
     {
       title: '产品描述',
-      dataIndex: 'description',
-      key: 'description',
+      dataIndex: 'remark',
+      key: 'remark',
       width: 300,
     },
     {
@@ -169,7 +177,7 @@ const Products = () => {
           </Button>
           <Popconfirm
             title="确定要删除这个产品吗？"
-            onConfirm={() => handleDelete(record.product_model)}
+            onConfirm={() => handleDelete(record.short_name)}
             okText="确定"
             cancelText="取消"
           >
@@ -211,7 +219,7 @@ const Products = () => {
           <Table
             columns={columns}
             dataSource={products}
-            rowKey="product_model"
+            rowKey="short_name"
             loading={loading}
             pagination={{
               pageSize: 10,
@@ -237,6 +245,20 @@ const Products = () => {
           layout="vertical"
           onFinish={handleSave}
         >
+          <Form.Item
+            label="产品简称"
+            name="short_name"
+            rules={[
+              { required: true, message: '请输入产品简称' },
+              { max: 100, message: '产品简称不能超过100个字符' },
+            ]}
+          >
+            <Input
+              placeholder="请输入产品简称"
+              disabled={!!editingProduct}
+            />
+          </Form.Item>
+
           <Form.Item
             label="产品型号"
             name="product_model"
@@ -306,7 +328,7 @@ const Products = () => {
 
           <Form.Item
             label="产品描述"
-            name="description"
+            name="remark"
             rules={[{ max: 500, message: '产品描述不能超过500个字符' }]}
           >
             <Input.TextArea

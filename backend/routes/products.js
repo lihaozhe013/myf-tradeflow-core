@@ -57,48 +57,38 @@ router.post('/', (req, res) => {
   });
 });
 
-// 修改产品
+// 修改产品（按short_name主键）
 router.put('/:short_name', (req, res) => {
   const { short_name } = req.params;
   const { category, product_model, remark } = req.body;
-  
-  const sql = `
-    UPDATE products SET category=?, product_model=?, remark=?
-    WHERE short_name=?
-  `;
-  
+  const sql = `UPDATE products SET category=?, product_model=?, remark=? WHERE short_name=?`;
   db.run(sql, [category, product_model, remark, short_name], function(err) {
     if (err) {
       res.status(500).json({ error: err.message });
       return;
     }
-    
     if (this.changes === 0) {
       res.status(404).json({ error: '产品不存在' });
       return;
     }
-    
     res.json({ message: '产品更新成功' });
   });
 });
 
-// 删除产品
+// 删除产品（按short_name主键）
 router.delete('/:short_name', (req, res) => {
   const { short_name } = req.params;
-  
   db.run('DELETE FROM products WHERE short_name = ?', [short_name], function(err) {
     if (err) {
       res.status(500).json({ error: err.message });
       return;
     }
-    
     if (this.changes === 0) {
       res.status(404).json({ error: '产品不存在' });
       return;
     }
-    
     res.json({ message: '产品删除成功' });
   });
 });
 
-module.exports = router; 
+module.exports = router;

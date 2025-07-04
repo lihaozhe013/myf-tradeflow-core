@@ -142,7 +142,6 @@
 | GET | /api/report/inout | 导出进出货明细报表 |
 | GET | /api/report/finance | 导出收支统计报表 |
 | GET | /api/product-categories | 获取所有产品类型 |
-| POST | /api/product-categories | 新增产品类型（仅后端维护）|
 | DELETE | /api/product-categories/:name | 删除产品类型（仅后端维护）|
 
 ## 五、前端页面结构
