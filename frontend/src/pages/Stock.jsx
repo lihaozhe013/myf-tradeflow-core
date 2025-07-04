@@ -54,8 +54,9 @@ const Stock = () => {
       setHistoryLoading(true);
       const response = await fetch('/api/stock/history');
       if (response.ok) {
-        const data = await response.json();
-        setStockHistory(Array.isArray(data) ? data : []);
+        const result = await response.json();
+        // API返回格式为 {data: [...]}
+        setStockHistory(Array.isArray(result.data) ? result.data : []);
       } else {
         console.error('获取库存历史失败');
         setStockHistory([]);
@@ -105,9 +106,9 @@ const Stock = () => {
 
   // 计算统计数据
   const totalProducts = filteredStockData.length;
-  const totalQuantity = filteredStockData.reduce((sum, item) => sum + (item.stock_quantity || 0), 0);
-  const lowStockCount = filteredStockData.filter(item => (item.stock_quantity || 0) < 10).length;
-  const outOfStockCount = filteredStockData.filter(item => (item.stock_quantity || 0) === 0).length;
+  const totalQuantity = filteredStockData.reduce((sum, item) => sum + (item.current_stock || 0), 0);
+  const lowStockCount = filteredStockData.filter(item => (item.current_stock || 0) < 10).length;
+  const outOfStockCount = filteredStockData.filter(item => (item.current_stock || 0) === 0).length;
 
   // 库存明细表格列定义
   const stockColumns = [
@@ -120,10 +121,10 @@ const Stock = () => {
     },
     {
       title: '当前库存',
-      dataIndex: 'stock_quantity',
-      key: 'stock_quantity',
+      dataIndex: 'current_stock',
+      key: 'current_stock',
       width: 120,
-      sorter: (a, b) => (a.stock_quantity || 0) - (b.stock_quantity || 0),
+      sorter: (a, b) => (a.current_stock || 0) - (b.current_stock || 0),
       render: (quantity) => {
         let color = 'green';
         if (quantity === 0) color = 'red';
@@ -137,7 +138,7 @@ const Stock = () => {
       key: 'stock_status',
       width: 100,
       render: (_, record) => {
-        const quantity = record.stock_quantity || 0;
+        const quantity = record.current_stock || 0;
         if (quantity === 0) return <Tag color="red">缺货</Tag>;
         if (quantity < 10) return <Tag color="orange">库存不足</Tag>;
         return <Tag color="green">正常</Tag>;
@@ -145,10 +146,10 @@ const Stock = () => {
     },
     {
       title: '最后更新时间',
-      dataIndex: 'update_time',
-      key: 'update_time',
+      dataIndex: 'last_update',
+      key: 'last_update',
       width: 180,
-      sorter: (a, b) => new Date(a.update_time || 0) - new Date(b.update_time || 0),
+      sorter: (a, b) => new Date(a.last_update || 0) - new Date(b.last_update || 0),
     },
   ];
 
@@ -299,7 +300,7 @@ const Stock = () => {
           <Table
             columns={historyColumns}
             dataSource={stockHistory}
-            rowKey="record_id"
+            rowKey={(record, index) => `${record.record_id}-${index}`}
             loading={historyLoading}
             pagination={{
               pageSize: 10,
