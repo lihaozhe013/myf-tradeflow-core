@@ -22,10 +22,8 @@
 }
 
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  width: 100%;
+  height: 100vh;
 }
 
 .logo {
@@ -79,4 +77,16 @@
   .responsive-table .ant-table-tbody > tr > td {
     padding: 8px 4px;
   }
+}
+
+/* 确保页面占满全屏 */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
 }

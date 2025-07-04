@@ -107,30 +107,33 @@ function AppContent() {
   ];
 
   return (
-    <Layout>
-      <Header>
+    <Layout style={{ minHeight: '100vh' }}>
+      <Header style={{ padding: '0 24px' }}>
         <Menu 
           theme="dark" 
           mode="horizontal" 
           selectedKeys={[getSelectedKey()]}
           items={menuItems}
+          style={{ lineHeight: '64px' }}
         />
       </Header>
-      <Content style={{ padding: 24 }}>
-        <ErrorBoundary>
-          <Routes>
-            <Route path="/" element={<Navigate to="/overview" replace />} />
-            <Route path="/overview" element={<Overview />} />
-            <Route path="/inbound" element={<Inbound />} />
-            <Route path="/outbound" element={<Outbound />} />
-            <Route path="/stock" element={<Stock />} />
-            <Route path="/partners" element={<Partners />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/product-prices" element={<ProductPrices />} />
-            <Route path="/report" element={<Report />} />
-            <Route path="*" element={<Navigate to="/overview" replace />} />
-          </Routes>
-        </ErrorBoundary>
+      <Content style={{ padding: '24px', background: '#f0f2f5' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+          <ErrorBoundary>
+            <Routes>
+              <Route path="/" element={<Navigate to="/overview" replace />} />
+              <Route path="/overview" element={<Overview />} />
+              <Route path="/inbound" element={<Inbound />} />
+              <Route path="/outbound" element={<Outbound />} />
+              <Route path="/stock" element={<Stock />} />
+              <Route path="/partners" element={<Partners />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/product-prices" element={<ProductPrices />} />
+              <Route path="/report" element={<Report />} />
+              <Route path="*" element={<Navigate to="/overview" replace />} />
+            </Routes>
+          </ErrorBoundary>
+        </div>
       </Content>
     </Layout>
   )
