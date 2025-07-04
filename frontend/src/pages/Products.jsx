@@ -26,6 +26,8 @@ const Products = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [form] = Form.useForm();
+  const [categoryOptions, setCategoryOptions] = useState([]);
+  const [categoryLoading, setCategoryLoading] = useState(false);
 
   // 获取产品列表
   const fetchProducts = async () => {
@@ -48,8 +50,27 @@ const Products = () => {
     }
   };
 
+  // 获取产品类型列表
+  const fetchCategories = async () => {
+    setCategoryLoading(true);
+    try {
+      const res = await fetch('/api/product-categories');
+      if (res.ok) {
+        const result = await res.json();
+        setCategoryOptions(Array.isArray(result.data) ? result.data : []);
+      } else {
+        setCategoryOptions([]);
+      }
+    } catch {
+      setCategoryOptions([]);
+    } finally {
+      setCategoryLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
+    fetchCategories();
   }, []);
 
   // 新增产品
@@ -238,16 +259,49 @@ const Products = () => {
               { max: 100, message: '产品分类不能超过100个字符' },
             ]}
           >
-            <Select placeholder="请选择产品分类" allowClear>
-              <Option value="电子产品">电子产品</Option>
-              <Option value="机械设备">机械设备</Option>
-              <Option value="化工原料">化工原料</Option>
-              <Option value="建筑材料">建筑材料</Option>
-              <Option value="服装纺织">服装纺织</Option>
-              <Option value="食品饮料">食品饮料</Option>
-              <Option value="办公用品">办公用品</Option>
-              <Option value="其他">其他</Option>
-            </Select>
+            <Select
+              showSearch
+              allowClear
+              placeholder="请选择或输入产品分类"
+              loading={categoryLoading}
+              options={categoryOptions.map(name => ({ value: name, label: name }))}
+              filterOption={(input, option) =>
+                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+              }
+              dropdownRender={menu => (
+                <>
+                  {menu}
+                  <div style={{ display: 'flex', flexWrap: 'nowrap', padding: 8 }}>
+                    <Input
+                      style={{ flex: 'auto' }}
+                      placeholder="新增产品分类"
+                      onPressEnter={async e => {
+                        const value = e.target.value.trim();
+                        if (!value) return;
+                        if (categoryOptions.includes(value)) return;
+                        setCategoryLoading(true);
+                        try {
+                          const res = await fetch('/api/product-categories', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ name: value })
+                          });
+                          if (res.ok) {
+                            setCategoryOptions(prev => [...prev, value]);
+                            message.success('产品分类添加成功');
+                          } else {
+                            const err = await res.json();
+                            message.error(err.error || '添加失败');
+                          }
+                        } finally {
+                          setCategoryLoading(false);
+                        }
+                      }}
+                    />
+                  </div>
+                </>
+              )}
+            />
           </Form.Item>
 
           <Form.Item
