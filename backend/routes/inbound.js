@@ -84,7 +84,8 @@ router.get('/', (req, res) => {
 // 新增入库记录
 router.post('/', (req, res) => {
   const {
-    supplier_short_name, supplier_full_name, product_model, quantity, unit_price,
+    supplier_code, supplier_short_name, supplier_full_name, 
+    product_code, product_model, quantity, unit_price,
     inbound_date, invoice_date, invoice_number, invoice_image_url, order_number,
     payment_date, payment_amount, payment_method, remark
   } = req.body;
@@ -95,14 +96,16 @@ router.post('/', (req, res) => {
   
   const sql = `
     INSERT INTO inbound_records 
-    (supplier_short_name, supplier_full_name, product_model, quantity, unit_price, total_price, 
+    (supplier_code, supplier_short_name, supplier_full_name, 
+     product_code, product_model, quantity, unit_price, total_price, 
      inbound_date, invoice_date, invoice_number, invoice_image_url, order_number, 
      payment_date, payment_amount, payable_amount, payment_method, remark)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
   
   const params = [
-    supplier_short_name, supplier_full_name, product_model, quantity, unit_price, total_price,
+    supplier_code, supplier_short_name, supplier_full_name, 
+    product_code, product_model, quantity, unit_price, total_price,
     inbound_date, invoice_date, invoice_number, invoice_image_url, order_number,
     payment_date, payment_amount, payable_amount, payment_method, remark
   ];
@@ -124,7 +127,8 @@ router.post('/', (req, res) => {
 router.put('/:id', (req, res) => {
   const { id } = req.params;
   const {
-    supplier_short_name, supplier_full_name, product_model, quantity, unit_price,
+    supplier_code, supplier_short_name, supplier_full_name, 
+    product_code, product_model, quantity, unit_price,
     inbound_date, invoice_date, invoice_number, invoice_image_url, order_number,
     payment_date, payment_amount, payment_method, remark
   } = req.body;
@@ -134,14 +138,16 @@ router.put('/:id', (req, res) => {
   
   const sql = `
     UPDATE inbound_records SET
-    supplier_short_name=?, supplier_full_name=?, product_model=?, quantity=?, unit_price=?, total_price=?,
+    supplier_code=?, supplier_short_name=?, supplier_full_name=?, 
+    product_code=?, product_model=?, quantity=?, unit_price=?, total_price=?,
     inbound_date=?, invoice_date=?, invoice_number=?, invoice_image_url=?, order_number=?,
     payment_date=?, payment_amount=?, payable_amount=?, payment_method=?, remark=?
     WHERE id=?
   `;
   
   const params = [
-    supplier_short_name, supplier_full_name, product_model, quantity, unit_price, total_price,
+    supplier_code, supplier_short_name, supplier_full_name, 
+    product_code, product_model, quantity, unit_price, total_price,
     inbound_date, invoice_date, invoice_number, invoice_image_url, order_number,
     payment_date, payment_amount, payable_amount, payment_method, remark, id
   ];

@@ -7,91 +7,9 @@
 
 一个专为小型企业设计的轻量级库存管理和账务系统，基于现代Web技术栈构建，提供完整的进出货管理、库存跟踪和财务报表功能。
 
-## 🌟 功能特性
+---
 
-### 📦 库存管理
-- ✅ **入库管理** - 完整的采购入库流程，支持供应商管理和付款跟踪
-- ✅ **出库管理** - 销售出库管理，支持客户管理和回款跟踪
-- ✅ **库存明细** - 实时库存查看，支持历史记录和库存预警
-- ✅ **自动更新** - 进出库操作自动更新库存数量
-
-### 👥 基础数据管理
-- ✅ **客户/供应商管理** - 统一的合作伙伴信息维护
-- ✅ **产品管理** - 产品信息和分类管理
-- ✅ **价格管理** - 基于日期的动态价格管理系统
-
-### 💰 财务管理
-- ✅ **自动计算** - 总价、应付/应收金额自动计算
-- ✅ **付款跟踪** - 采购付款状态管理
-- ✅ **回款跟踪** - 销售回款状态管理
-- ✅ **财务报表** - 收支统计和利润分析
-
-### 📊 报表系统
-- ✅ **库存报表** - 当前库存状况总览
-- ✅ **进出货报表** - 历史交易记录分析
-- ✅ **财务报表** - 按期间统计收支和利润
-- ✅ **数据导出** - 支持CSV格式导出
-
-### 🛠 开发调试
-- ✅ **总览调试页** - 数据库表格总览和测试数据
-- ✅ **一键设置** - 快速生成测试数据
-- ✅ **API测试** - 完整的接口测试支持
-
-## 🏗 技术架构
-
-### 前端技术栈
-- **React 18** - 现代化的用户界面框架
-- **Ant Design 5** - 企业级UI组件库
-- **Vite** - 快速的前端构建工具
-- **dayjs** - 轻量级日期处理库
-
-### 后端技术栈
-- **Node.js 18+** - 服务器运行环境
-- **Express** - Web应用框架
-- **SQLite** - 轻量级嵌入式数据库
-- **CORS** - 跨域资源共享支持
-
-### 项目结构
-```
-myf-db-systool/
-├── 📁 backend/              # 后端服务
-│   ├── 📄 server.js         # 服务器入口 (36行)
-│   ├── 📄 db.js             # 数据库连接 (33行)
-│   ├── 📁 routes/           # API路由模块
-│   │   ├── 📄 debug.js      # 调试接口 (49行)
-│   │   ├── 📄 inbound.js    # 入库管理 (172行)
-│   │   ├── 📄 outbound.js   # 出库管理 (169行)
-│   │   ├── 📄 stock.js      # 库存管理 (32行)
-│   │   ├── 📄 partners.js   # 客户/供应商 (98行)
-│   │   ├── 📄 products.js   # 产品管理 (90行)
-│   │   ├── 📄 productPrices.js # 价格管理 (130行)
-│   │   └── 📄 reports.js    # 报表生成 (44行)
-│   └── 📁 utils/            # 工具函数
-│       ├── 📄 dbSchema.js   # 数据库结构 (79行)
-│       ├── 📄 setupTestData.js # 测试数据 (161行)
-│       ├── 📄 stockService.js # 库存服务 (75行)
-│       └── 📄 reportService.js # 报表服务 (153行)
-├── 📁 frontend/             # 前端应用
-│   ├── 📄 index.html        # 应用入口
-│   ├── 📄 vite.config.js    # Vite配置
-│   └── 📁 src/
-│       ├── 📄 App.jsx       # 主应用组件
-│       ├── 📄 main.jsx      # 应用启动文件
-│       └── 📁 pages/        # 页面组件
-│           ├── 📄 Overview.jsx    # 总览调试页
-│           ├── 📄 Inbound.jsx     # 入库管理页
-│           ├── 📄 Outbound.jsx    # 出库管理页
-│           ├── 📄 Stock.jsx       # 库存明细页
-│           ├── 📄 Partners.jsx    # 客户/供应商页
-│           ├── 📄 Products.jsx    # 产品管理页
-│           ├── 📄 ProductPrices.jsx # 价格管理页
-│           └── 📄 Report.jsx      # 报表导出页
-├── 📄 package.json          # 项目配置
-├── 📄 README.md            # 项目说明
-└── 📄 plan.md              # 开发方案
-```
-
-## 🚀 快速开始
+## 🚀 快速上手
 
 ### 环境要求
 - Node.js >= 18.0.0
@@ -110,270 +28,170 @@ npm run install:all
 npm run dev
 ```
 
-### 访问地址
-- **前端开发服务器**: http://localhost:5173
-- **后端API服务器**: http://localhost:3000
-- **生产环境**: http://localhost:3000
+- 前端开发服务器: http://localhost:5173
+- 后端API服务器: http://localhost:3000
+- 生产环境: http://localhost:3000
+
+---
+
+## 📦 功能特性
+
+- **智能入库/出库管理**：支持代号-简称强绑定输入，自动补全与匹配，自动更新库存
+- **客户/供应商管理**：代号-简称-全称三项联动，强绑定校验，避免数据冗余
+- **产品管理**：代号-简称-型号三项联动，支持产品分类与价格管理
+- **财务自动计算**：应付/应收金额自动计算，支持部分付款/回款跟踪
+- **智能表单体验**：AutoComplete组件，输入任意项自动补全其他项，流畅操作
+- **数据导出与报表**：库存明细、进出货记录、收支统计等多维度报表
+- **一键测试数据**：快速生成示例数据，API调试支持
+- **响应式设计**：适配桌面和移动设备，现代化UI体验
+
+---
+
+## 🏗 技术架构
+
+- 前端：React 18 + Ant Design 5 + Vite + dayjs
+- 后端：Node.js 18+ + Express + SQLite + CORS
+
+---
+
+## 📁 目录结构
+
+```
+myf-db-systool/
+├── backend/         # 后端服务
+│   ├── server.js    # 服务器入口
+│   ├── db.js        # 数据库连接
+│   ├── routes/      # API路由
+│   └── utils/       # 工具函数
+├── frontend/        # 前端应用
+│   ├── index.html   # 应用入口
+│   ├── vite.config.js
+│   └── src/
+│       ├── App.jsx
+│       ├── main.jsx
+│       └── pages/   # 页面组件
+├── package.json     # 项目配置
+├── README.md        # 项目说明
+└── ask-llm.md       # LLM开发辅助文档
+```
+
+---
 
 ## 📋 使用指南
 
 ### 1. 初始化数据
-首次使用时，建议先设置测试数据：
-1. 访问 http://localhost:5173
-2. 点击"总览调试"菜单
-3. 点击"设置测试数据"按钮
-4. 系统将自动创建示例数据
+- 访问 http://localhost:5173
+- 进入“总览调试”页面，点击“设置测试数据”按钮
+- 系统自动生成示例数据
 
 ### 2. 基础数据设置
-按以下顺序设置基础数据：
-1. **客户/供应商管理** - 添加合作伙伴信息
-2. **产品管理** - 添加产品信息
-3. **产品价格管理** - 设置产品价格
+- 客户/供应商管理：添加合作伙伴信息
+- 产品管理：添加产品信息
+- 产品价格管理：设置产品价格
 
 ### 3. 业务操作
-1. **入库操作** - 记录采购入库
-2. **出库操作** - 记录销售出库
-3. **库存查看** - 监控库存状况
-4. **报表导出** - 生成业务报表
+- 入库/出库：记录采购和销售
+- 库存查看：监控库存状况
+- 报表导出：生成业务报表
 
 ### 4. 智能功能
-- **自动价格填充** - 选择供应商和产品时自动获取价格
-- **实时金额计算** - 自动计算总价和应付/应收金额
-- **库存自动更新** - 进出库操作自动更新库存
-- **状态可视化** - 付款/回款状态清晰显示
+- **代号-简称强绑定输入**：入库/出库界面支持输入代号或简称，自动补全匹配项
+- **三项联动校验**：客户/供应商、产品的代号-简称-全称/型号强绑定，确保数据一致性
+- **自动价格与金额计算**：根据历史价格自动填充，库存自动更新
+- **状态可视化**：付款/回款状态标识，进度跟踪
+- **批量导入/导出**：支持Excel等格式的数据批量处理
 
-## 🔧 开发命令
+---
 
-### 根目录命令 (推荐)
+## 🔧 常用开发命令
+
+### 根目录
 ```bash
-# 🔧 安装所有依赖
-npm run install:all
-
-# 🚀 启动开发环境 (前端+后端)
-npm run dev
-
-# 🏗️ 构建生产版本
-npm run build:prod
-
-# ▶️ 启动生产环境
-npm run start:prod
-
-# 🧹 清理构建文件
-npm run clean
-
-# 📝 代码检查
-npm run lint
+npm run install:all   # 安装所有依赖
+npm run dev           # 启动开发环境
+npm run build:prod    # 构建生产版本
+npm run start:prod    # 启动生产环境
+npm run clean         # 清理构建文件
+npm run lint          # 代码检查
 ```
 
 ### 前端独立命令
 ```bash
 cd frontend
-
-# 🚀 启动开发服务器
-npm run dev
-
-# 🏗️ 构建生产版本
-npm run build
-
-# 👀 预览构建结果
-npm run preview
-
-# 🔧 自动修复代码格式
-npm run lint:fix
+npm run dev           # 启动前端开发服务器
+npm run build         # 构建前端
+npm run preview       # 预览构建结果
+npm run lint:fix      # 自动修复代码格式
 ```
 
 ### 后端独立命令
 ```bash
 cd backend
-
-# ▶️ 启动生产服务器
-npm start
-
-# 🚀 启动开发服务器 (自动重启)
-npm run dev
-
-# 🐛 启动调试模式
-npm run dev:debug
-
-# 🗄️ 初始化数据库
-npm run db:init
-
-# 🌱 填充测试数据
-npm run db:seed
+npm start             # 启动生产服务器
+npm run dev           # 启动开发服务器
+npm run dev:debug     # 启动调试模式
+npm run db:init       # 初始化数据库
+npm run db:seed       # 填充测试数据
 ```
-
-## 📊 数据库设计
-
-### 核心表结构
-- **inbound_records** - 入库记录表 (17字段)
-- **outbound_records** - 出库记录表 (17字段)
-- **stock** - 库存明细表 (4字段)
-- **partners** - 客户/供应商表 (6字段)
-- **products** - 产品信息表 (4字段)
-- **product_prices** - 产品价格表 (5字段)
-- **product_categories** - 产品类型表 (1字段)
-
-### 数据库结构
-| 表名 | 字段 | 说明 |
-| :---- | :---- | :---- |
-| inbound_records | id, supplier_short_name, supplier_full_name, product_model, quantity, unit_price, total_price, inbound_date, invoice_date, invoice_number, invoice_image_url, order_number, payment_date, payment_amount, payable_amount, payment_method, remark | 入库记录 |
-| outbound_records | id, customer_short_name, customer_full_name, product_model, quantity, unit_price, total_price, outbound_date, invoice_date, invoice_number, invoice_image_url, order_number, collection_date, collection_amount, receivable_amount, collection_method, remark | 出库记录 |
-| stock | record_id, product_model, stock_quantity, update_time | 库存明细 |
-| partners | short_name, full_name, address, contact_person, contact_phone, type | 客户/供应商 |
-| products | short_name, category, product_model, remark | 产品信息 |
-| product_prices | id, partner_short_name, product_model, effective_date, unit_price | 产品价格 |
-| product_categories | name | 产品类型 |
-
-### API接口
-| 方法 | 路径 | 说明 |
-| :---- | :---- | :---- |
-| GET | /api/inbound | 获取入库记录列表（支持分页、筛选） |
-| POST | /api/inbound | 新增入库记录 |
-| PUT | /api/inbound/:id | 修改入库记录 |
-| DELETE | /api/inbound/:id | 删除入库记录 |
-| GET | /api/outbound | 获取出库记录列表（支持分页、筛选） |
-| POST | /api/outbound | 新增出库记录 |
-| PUT | /api/outbound/:id | 修改出库记录 |
-| DELETE | /api/outbound/:id | 删除出库记录 |
-| GET | /api/stock | 获取库存明细 |
-| GET | /api/stock/history | 获取库存历史记录 |
-| GET | /api/partners | 获取客户/供应商列表 |
-| POST | /api/partners | 新增客户/供应商 |
-| PUT | /api/partners/:short_name | 修改客户/供应商 |
-| DELETE | /api/partners/:short_name | 删除客户/供应商 |
-| GET | /api/products | 获取产品列表 |
-| POST | /api/products | 新增产品 |
-| PUT | /api/products/:short_name | 修改产品 |
-| DELETE | /api/products/:short_name | 删除产品 |
-| GET | /api/product-prices | 获取产品价格列表 |
-| GET | /api/product-prices/current | 获取当前有效价格 |
-| POST | /api/product-prices | 新增产品价格 |
-| PUT | /api/product-prices/:id | 修改产品价格 |
-| DELETE | /api/product-prices/:id | 删除产品价格 |
-| GET | /api/report/stock | 导出库存明细报表 |
-| GET | /api/report/inout | 导出进出货明细报表 |
-| GET | /api/report/finance | 导出收支统计报表 |
-| GET | /api/product-categories | 获取所有产品类型 |
-| POST | /api/product-categories | 新增产品类型（仅后端维护）|
-| DELETE | /api/product-categories/:name | 删除产品类型（仅后端维护）|
-
-## 🎨 用户界面
-
-### 设计特色
-- **Ant Design风格** - 专业的企业级UI
-- **响应式设计** - 适配不同屏幕尺寸
-- **直观操作** - 简洁明了的用户体验
-- **状态反馈** - 清晰的操作状态提示
-
-### 页面功能
-- **智能表单** - 自动填充和实时验证
-- **数据表格** - 支持排序、筛选、分页
-- **状态标识** - 颜色编码的状态显示
-- **批量操作** - 高效的数据处理
-
-## 🔒 部署方案
-
-### 开发环境
-```bash
-# 启动开发环境
-npm run dev
-# 前端: http://localhost:5173
-# 后端: http://localhost:3000
-```
-
-### 生产环境
-```bash
-# 构建和启动生产环境
-npm run build:prod
-npm run start:prod
-# 访问: http://localhost:3000
-```
-
-### 数据备份
-```bash
-# 备份数据库
-cp backend/data.db backup/data-$(date +%Y%m%d).db
-
-# 恢复数据库
-cp backup/data-20240101.db backend/data.db
-```
-
-## 🧪 测试和调试
-
-### 测试数据
-- 访问总览调试页面
-- 点击"设置测试数据"
-- 系统自动创建完整的示例数据
-
-### API测试
-- 使用Postman或curl测试API
-- 所有接口支持标准HTTP方法
-- 详细的错误信息和状态码
-
-### 调试工具
-- 浏览器开发者工具
-- React DevTools扩展
-- 后端调试模式 (`npm run dev:debug`)
-
-## 📈 性能优化
-
-### 前端优化
-- **代码分割** - 按需加载页面组件
-- **缓存策略** - 智能的数据缓存
-- **懒加载** - 大数据表格的虚拟滚动
-- **压缩构建** - 生产环境代码压缩
-
-### 后端优化
-- **数据库索引** - 关键字段索引优化
-- **查询优化** - 高效的SQL查询
-- **分页查询** - 大数据量的分页处理
-- **缓存机制** - 常用数据缓存
-
-## 🔄 扩展功能
-
-### 已实现功能
-- ✅ 完整的CRUD操作
-- ✅ 自动价格和金额计算
-- ✅ 库存自动更新
-- ✅ 三类业务报表
-- ✅ 数据导出功能
-- ✅ 响应式设计
-
-### 计划功能
-- 📋 文件上传 (发票图片)
-- 📋 Excel导入导出
-- 📋 用户权限管理
-- 📋 操作日志记录
-- 📋 移动端适配
-- 📋 数据分析图表
-
-## 🤝 贡献指南
-
-### 开发流程
-1. Fork 项目
-2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 打开 Pull Request
-
-### 代码规范
-- 使用ESLint进行代码检查
-- 遵循Prettier格式化规范
-- 编写清晰的注释和文档
-- 保持代码模块化和可维护性
-
-## 📄 许可证
-
-本项目采用 ISC 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
-
-## 📞 支持
-
-如有问题或建议，请：
-1. 查看文档和FAQ
-2. 搜索已有的Issues
-3. 创建新的Issue
-4. 联系项目维护者
 
 ---
 
-**🎯 这是一个专为小型企业设计的现代化库存管理系统，简单易用，功能完整，开箱即用！**
+## 📊 数据库核心表
+
+- **inbound_records**：入库记录（含supplier_code、product_code字段）
+- **outbound_records**：出库记录（含customer_code、product_code字段）
+- **stock**：库存明细（基于product_model跟踪）
+- **partners**：客户/供应商（代号-简称-全称强绑定）
+- **products**：产品信息（代号-简称-型号强绑定）
+- **product_prices**：产品价格（按日期管理）
+- **product_categories**：产品类型
+
+---
+
+## 🔄 主要API接口
+
+- 详见 `ask-llm.md` 文档，或参考 `/backend/routes/` 目录源码
+
+---
+
+## 🎨 用户界面
+
+- **Ant Design风格**：现代化UI设计，响应式布局
+- **智能表单**：AutoComplete组件实现代号-简称强绑定输入，流畅操作体验
+- **数据表格**：支持分页、排序、筛选、批量操作
+- **状态标识**：可视化付款/回款状态，操作反馈
+- **移动端适配**：支持桌面和移动设备访问
+
+---
+
+## 🧪 测试与调试
+
+- 一键生成测试数据，API接口可用Postman/curl测试
+- 浏览器开发者工具、React DevTools
+- 后端调试模式：`npm run dev:debug`
+
+---
+
+## 📈 性能与扩展
+
+- 前端代码分割、懒加载、缓存优化
+- 后端分页查询、索引优化
+- 支持文件上传、Excel导入导出、权限管理等扩展
+
+---
+
+## 🤝 贡献与支持
+
+- Fork、分支开发、Pull Request
+- 代码规范：ESLint + Prettier
+- 问题反馈：Issue 或联系维护者
+
+---
+
+## 📄 许可证
+
+ISC License
+
+---
+
+**🎯 本系统专为小型企业设计，简单易用，功能完整，开箱即用！**

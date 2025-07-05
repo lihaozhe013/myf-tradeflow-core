@@ -81,7 +81,8 @@ router.get('/', (req, res) => {
 // 新增出库记录
 router.post('/', (req, res) => {
   const {
-    customer_short_name, customer_full_name, product_model, quantity, unit_price,
+    customer_code, customer_short_name, customer_full_name, 
+    product_code, product_model, quantity, unit_price,
     outbound_date, invoice_date, invoice_number, invoice_image_url, order_number,
     collection_date, collection_amount, collection_method, remark
   } = req.body;
@@ -91,14 +92,16 @@ router.post('/', (req, res) => {
   
   const sql = `
     INSERT INTO outbound_records 
-    (customer_short_name, customer_full_name, product_model, quantity, unit_price, total_price,
+    (customer_code, customer_short_name, customer_full_name, 
+     product_code, product_model, quantity, unit_price, total_price,
      outbound_date, invoice_date, invoice_number, invoice_image_url, order_number,
      collection_date, collection_amount, receivable_amount, collection_method, remark)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
   
   const params = [
-    customer_short_name, customer_full_name, product_model, quantity, unit_price, total_price,
+    customer_code, customer_short_name, customer_full_name, 
+    product_code, product_model, quantity, unit_price, total_price,
     outbound_date, invoice_date, invoice_number, invoice_image_url, order_number,
     collection_date, collection_amount, receivable_amount, collection_method, remark
   ];
@@ -120,7 +123,8 @@ router.post('/', (req, res) => {
 router.put('/:id', (req, res) => {
   const { id } = req.params;
   const {
-    customer_short_name, customer_full_name, product_model, quantity, unit_price,
+    customer_code, customer_short_name, customer_full_name, 
+    product_code, product_model, quantity, unit_price,
     outbound_date, invoice_date, invoice_number, invoice_image_url, order_number,
     collection_date, collection_amount, collection_method, remark
   } = req.body;
@@ -130,14 +134,16 @@ router.put('/:id', (req, res) => {
   
   const sql = `
     UPDATE outbound_records SET
-    customer_short_name=?, customer_full_name=?, product_model=?, quantity=?, unit_price=?, total_price=?,
+    customer_code=?, customer_short_name=?, customer_full_name=?, 
+    product_code=?, product_model=?, quantity=?, unit_price=?, total_price=?,
     outbound_date=?, invoice_date=?, invoice_number=?, invoice_image_url=?, order_number=?,
     collection_date=?, collection_amount=?, receivable_amount=?, collection_method=?, remark=?
     WHERE id=?
   `;
   
   const params = [
-    customer_short_name, customer_full_name, product_model, quantity, unit_price, total_price,
+    customer_code, customer_short_name, customer_full_name, 
+    product_code, product_model, quantity, unit_price, total_price,
     outbound_date, invoice_date, invoice_number, invoice_image_url, order_number,
     collection_date, collection_amount, receivable_amount, collection_method, remark, id
   ];
