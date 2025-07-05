@@ -37,7 +37,7 @@ function ensureAllTablesAndColumns() {
  * @param {sqlite3.Database} dbInstance 数据库实例
  */
 function checkAndAddMissingColumns(dbInstance) {
-  let pendingChecks = 2; // 需要检查的表数量
+  let pendingChecks = 4; // 需要检查的表数量
   
   // 检查并补全 partners.code 字段
   dbInstance.all("PRAGMA table_info(partners)", (err, columns) => {
@@ -73,6 +73,80 @@ function checkAndAddMissingColumns(dbInstance) {
       });
     } else {
       console.log('✅ products.code 字段已存在');
+    }
+    
+    pendingChecks--;
+    if (pendingChecks === 0) finishUpgrade(dbInstance);
+  });
+
+  // 检查并补全 inbound_records 的代号字段
+  dbInstance.all("PRAGMA table_info(inbound_records)", (err, columns) => {
+    if (err) {
+      console.error('❌ 检查 inbound_records 表结构失败:', err.message);
+    } else if (columns) {
+      const needsSupplierCode = !columns.some(col => col.name === 'supplier_code');
+      const needsProductCode = !columns.some(col => col.name === 'product_code');
+      
+      if (needsSupplierCode) {
+        dbInstance.run("ALTER TABLE inbound_records ADD COLUMN supplier_code TEXT", (err2) => {
+          if (err2) {
+            console.error('❌ 添加 inbound_records.supplier_code 字段失败:', err2.message);
+          } else {
+            console.log('✅ 已补全 inbound_records.supplier_code 字段');
+          }
+        });
+      }
+      
+      if (needsProductCode) {
+        dbInstance.run("ALTER TABLE inbound_records ADD COLUMN product_code TEXT", (err3) => {
+          if (err3) {
+            console.error('❌ 添加 inbound_records.product_code 字段失败:', err3.message);
+          } else {
+            console.log('✅ 已补全 inbound_records.product_code 字段');
+          }
+        });
+      }
+      
+      if (!needsSupplierCode && !needsProductCode) {
+        console.log('✅ inbound_records 代号字段已存在');
+      }
+    }
+    
+    pendingChecks--;
+    if (pendingChecks === 0) finishUpgrade(dbInstance);
+  });
+
+  // 检查并补全 outbound_records 的代号字段
+  dbInstance.all("PRAGMA table_info(outbound_records)", (err, columns) => {
+    if (err) {
+      console.error('❌ 检查 outbound_records 表结构失败:', err.message);
+    } else if (columns) {
+      const needsCustomerCode = !columns.some(col => col.name === 'customer_code');
+      const needsProductCode = !columns.some(col => col.name === 'product_code');
+      
+      if (needsCustomerCode) {
+        dbInstance.run("ALTER TABLE outbound_records ADD COLUMN customer_code TEXT", (err2) => {
+          if (err2) {
+            console.error('❌ 添加 outbound_records.customer_code 字段失败:', err2.message);
+          } else {
+            console.log('✅ 已补全 outbound_records.customer_code 字段');
+          }
+        });
+      }
+      
+      if (needsProductCode) {
+        dbInstance.run("ALTER TABLE outbound_records ADD COLUMN product_code TEXT", (err3) => {
+          if (err3) {
+            console.error('❌ 添加 outbound_records.product_code 字段失败:', err3.message);
+          } else {
+            console.log('✅ 已补全 outbound_records.product_code 字段');
+          }
+        });
+      }
+      
+      if (!needsCustomerCode && !needsProductCode) {
+        console.log('✅ outbound_records 代号字段已存在');
+      }
     }
     
     pendingChecks--;

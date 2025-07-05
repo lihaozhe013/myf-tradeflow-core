@@ -1,0 +1,203 @@
+# 项目开发说明（ask-llm专用）
+
+本文件用于辅助LLM理解本项目结构、API、数据库设计和核心业务逻辑，便于自动化代码生成和智能对话开发。
+
+---
+
+## 一、项目结构
+
+- **backend/**
+  - `server.js`：Express服务器入口
+  - `db.js`：SQL## 四、核心业务逻辑
+
+- **价格管理**：产品价格按生效日期管理，查询时取最近有效价格。
+- **库存管理**：入库增加库存，出库减少库存，允许库存为负（前端警告）。
+- **财务管理**：应付=总价-已付，应收=总价-已收，支持部分付款/回款。
+- **数据唯一性**：客户/供应商、产品的"代号-简称-全称/型号"三项强绑定，任意一项变更自动同步，后端API校验唯一性。
+- **自动计算**：总价、应付/应收金额自动计算，进出库自动更新库存。
+- **智能输入**：入库/出库界面支持代号或简称/型号输入，自动补全匹配项，强绑定校验，使用AutoComplete组件提供流畅的输入体验。
+
+---
+
+## 五、前端页面结构
+
+- 总览调试页（数据库总览、测试数据）
+- 入库管理页（代号-简称强绑定AutoComplete输入）
+- 出库管理页（代号-简称强绑定AutoComplete输入）
+- 库存明细页
+- 客户/供应商管理页（代号-简称-全称三项联动）
+- 产品管理页（代号-简称-型号三项联动）
+- 产品价格管理页
+- 报表导出页/`：API路由模块（如inbound、outbound、stock、partners、products、productPrices、reports等）
+  - `utils/`：数据库结构、测试数据、报表、库存等工具
+- **frontend/**
+  - `index.html`、`vite.config.js`、`src/`（App.jsx、main.jsx、pages/等）
+- 根目录：`package.json`、`README.md`、`ask-llm.md`（本文件）
+
+---
+
+## 二、数据库设计
+
+### 1. 入库记录表 inbound_records
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| id | INTEGER PRIMARY KEY AUTOINCREMENT | 入库单号 |
+| supplier_code | TEXT | 供应商代号 |
+| supplier_short_name | TEXT | 供应商简称 |
+| supplier_full_name | TEXT | 供应商全称 |
+| product_code | TEXT | 产品代号 |
+| product_model | TEXT | 产品型号 |
+| quantity | INTEGER | 数量 |
+| unit_price | REAL | 单价 |
+| total_price | REAL | 总价（自动计算） |
+| inbound_date | TEXT | 入库时间 |
+| invoice_date | TEXT | 开票日期 |
+| invoice_number | TEXT | 发票号码 |
+| invoice_image_url | TEXT | 发票图片链接 |
+| order_number | TEXT | 订单号 |
+| payment_date | TEXT | 付款日期 |
+| payment_amount | REAL | 付款金额 |
+| payable_amount | REAL | 应付金额（自动计算） |
+| payment_method | TEXT | 付款方式 |
+| remark | TEXT | 备注 |
+
+### 2. 出库记录表 outbound_records
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| id | INTEGER PRIMARY KEY AUTOINCREMENT | 出库单号 |
+| customer_code | TEXT | 客户代号 |
+| customer_short_name | TEXT | 客户简称 |
+| customer_full_name | TEXT | 客户全称 |
+| product_code | TEXT | 产品代号 |
+| product_model | TEXT | 产品型号 |
+| quantity | INTEGER | 数量 |
+| unit_price | REAL | 单价 |
+| total_price | REAL | 总价（自动计算） |
+| outbound_date | TEXT | 出库时间 |
+| invoice_date | TEXT | 开票日期 |
+| invoice_number | TEXT | 发票号码 |
+| invoice_image_url | TEXT | 发票图片链接 |
+| order_number | TEXT | 订单号 |
+| collection_date | TEXT | 回款日期 |
+| collection_amount | REAL | 回款金额 |
+| receivable_amount | REAL | 应收金额（自动计算） |
+| collection_method | TEXT | 回款方式 |
+| remark | TEXT | 备注 |
+
+### 3. 库存表 stock
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| record_id | INTEGER | 记录编号（与进/出库记录id一致） |
+| product_model | TEXT | 产品型号 |
+| stock_quantity | INTEGER | 操作后库存数量 |
+| update_time | TEXT | 更新时间 |
+
+### 4. 客户/供应商表 partners
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| code | TEXT UNIQUE | 代号（唯一） |
+| short_name | TEXT PRIMARY KEY | 简称（唯一） |
+| full_name | TEXT | 全称 |
+| address | TEXT | 地址 |
+| contact_person | TEXT | 联系人 |
+| contact_phone | TEXT | 联系电话 |
+| type | INTEGER | 0=供应商，1=客户 |
+
+### 5. 产品表 products
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| code | TEXT UNIQUE | 代号（唯一） |
+| short_name | TEXT PRIMARY KEY | 简称（唯一） |
+| category | TEXT | 产品类别 |
+| product_model | TEXT | 产品型号 |
+| remark | TEXT | 备注 |
+
+### 6. 产品价格表 product_prices
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| id | INTEGER PRIMARY KEY AUTOINCREMENT | 唯一标识 |
+| partner_short_name | TEXT | 供应商/客户简称 |
+| product_model | TEXT | 产品型号 |
+| effective_date | TEXT | 生效日期 |
+| unit_price | REAL | 单价 |
+
+### 7. 产品类型表 product_categories
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| name | TEXT PRIMARY KEY | 产品类型名称 |
+
+---
+
+## 三、API接口（RESTful）
+
+- 统一前缀：`/api/`
+- 主要接口：
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | /api/inbound | 获取入库记录列表（分页/筛选） |
+| POST | /api/inbound | 新增入库记录 |
+| PUT | /api/inbound/:id | 修改入库记录 |
+| DELETE | /api/inbound/:id | 删除入库记录 |
+| GET | /api/outbound | 获取出库记录列表（分页/筛选） |
+| POST | /api/outbound | 新增出库记录 |
+| PUT | /api/outbound/:id | 修改出库记录 |
+| DELETE | /api/outbound/:id | 删除出库记录 |
+| GET | /api/stock | 获取库存明细 |
+| GET | /api/stock/history | 获取库存历史记录 |
+| GET | /api/partners | 获取客户/供应商列表 |
+| POST | /api/partners | 新增客户/供应商 |
+| PUT | /api/partners/:short_name | 修改客户/供应商 |
+| DELETE | /api/partners/:short_name | 删除客户/供应商 |
+| GET | /api/products | 获取产品列表 |
+| POST | /api/products | 新增产品 |
+| PUT | /api/products/:short_name | 修改产品 |
+| DELETE | /api/products/:short_name | 删除产品 |
+| GET | /api/product-prices | 获取产品价格列表 |
+| GET | /api/product-prices/current | 获取当前有效价格 |
+| POST | /api/product-prices | 新增产品价格 |
+| PUT | /api/product-prices/:id | 修改产品价格 |
+| DELETE | /api/product-prices/:id | 删除产品价格 |
+| GET | /api/report/stock | 导出库存明细报表 |
+| GET | /api/report/inout | 导出进出货明细报表 |
+| GET | /api/report/finance | 导出收支统计报表 |
+| GET | /api/product-categories | 获取所有产品类型 |
+| POST | /api/product-categories | 新增产品类型（仅后端维护） |
+| DELETE | /api/product-categories/:name | 删除产品类型（仅后端维护） |
+
+---
+
+## 四、核心业务逻辑
+
+- **价格管理**：产品价格按生效日期管理，查询时取最近有效价格。
+- **库存管理**：入库增加库存，出库减少库存，允许库存为负（前端警告）。
+- **财务管理**：应付=总价-已付，应收=总价-已收，支持部分付款/回款。
+- **数据唯一性**：客户/供应商、产品的“代号-简称-全称”三项强绑定，任意一项变更自动同步，后端API校验唯一性。
+- **自动计算**：总价、应付/应收金额自动计算，进出库自动更新库存。
+
+---
+
+## 五、前端页面结构
+
+- 总览调试页（数据库总览、测试数据）
+- 入库管理页
+- 出库管理页
+- 库存明细页
+- 客户/供应商管理页（代号-简称-全称三项联动）
+- 产品管理页（代号-简称-型号三项联动）
+- 产品价格管理页
+- 报表导出页
+
+---
+
+## 六、开发建议
+
+- API优先，前后端分离
+- 所有业务逻辑在后端实现，数据库仅存数据
+- 代码模块化、注释清晰
+- 先实现核心功能，再扩展高级特性
+- 测试用例覆盖所有接口
+
+---
+
+> 本文件为LLM/AI开发辅助文档，便于理解项目结构、API和业务规则，适合自动化代码生成和智能对话。

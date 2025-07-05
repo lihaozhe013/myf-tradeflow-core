@@ -3,8 +3,10 @@
 const initSql = `
 CREATE TABLE IF NOT EXISTS inbound_records (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
+  supplier_code TEXT,
   supplier_short_name TEXT,
   supplier_full_name TEXT,
+  product_code TEXT,
   product_model TEXT,
   quantity INTEGER,
   unit_price REAL,
@@ -23,8 +25,10 @@ CREATE TABLE IF NOT EXISTS inbound_records (
 
 CREATE TABLE IF NOT EXISTS outbound_records (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
+  customer_code TEXT,
   customer_short_name TEXT,
   customer_full_name TEXT,
+  product_code TEXT,
   product_model TEXT,
   quantity INTEGER,
   unit_price REAL,
