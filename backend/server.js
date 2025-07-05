@@ -80,8 +80,8 @@ if (process.env.NODE_ENV === 'production') {
   // 托管前端构建文件
   app.use(express.static(frontendDist));
   
-  // SPA 路由回退 - 所有未匹配的路由返回 index.html
-  app.get('*', (req, res) => {
+  // SPA 路由回退 - 所有未匹配的非 API 路由返回 index.html
+  app.get(/^\/(?!api).*/, (req, res) => {
     res.sendFile(path.join(frontendDist, 'index.html'));
   });
   
