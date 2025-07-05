@@ -211,31 +211,51 @@ npm run db:seed
 - **partners** - 客户/供应商表 (6字段)
 - **products** - 产品信息表 (4字段)
 - **product_prices** - 产品价格表 (5字段)
+- **product_categories** - 产品类型表 (1字段)
 
-### 业务逻辑
-- **价格管理** - 基于日期的动态价格系统
-- **库存管理** - 自动库存更新和历史记录
-- **财务管理** - 自动计算应付/应收金额
-- **数据关联** - 通过简称和型号建立数据关系
+### 数据库结构
+| 表名 | 字段 | 说明 |
+| :---- | :---- | :---- |
+| inbound_records | id, supplier_short_name, supplier_full_name, product_model, quantity, unit_price, total_price, inbound_date, invoice_date, invoice_number, invoice_image_url, order_number, payment_date, payment_amount, payable_amount, payment_method, remark | 入库记录 |
+| outbound_records | id, customer_short_name, customer_full_name, product_model, quantity, unit_price, total_price, outbound_date, invoice_date, invoice_number, invoice_image_url, order_number, collection_date, collection_amount, receivable_amount, collection_method, remark | 出库记录 |
+| stock | record_id, product_model, stock_quantity, update_time | 库存明细 |
+| partners | short_name, full_name, address, contact_person, contact_phone, type | 客户/供应商 |
+| products | short_name, category, product_model, remark | 产品信息 |
+| product_prices | id, partner_short_name, product_model, effective_date, unit_price | 产品价格 |
+| product_categories | name | 产品类型 |
 
-## 🔌 API接口
-
-### 完整接口列表 (28个)
-- **调试接口** (2个) - 测试数据和调试功能
-- **入库管理** (4个) - 完整CRUD操作
-- **出库管理** (4个) - 完整CRUD操作
-- **库存管理** (2个) - 查询和历史记录
-- **客户/供应商** (4个) - 完整CRUD操作
-- **产品管理** (4个) - 完整CRUD操作
-- **价格管理** (5个) - 包含当前价格查询
-- **报表系统** (3个) - 三类报表生成
-
-### 接口特性
-- **RESTful设计** - 标准的REST API规范
-- **分页支持** - 大数据量的分页查询
-- **条件筛选** - 多条件组合查询
-- **错误处理** - 统一的错误响应格式
-- **数据验证** - 完整的请求参数验证
+### API接口
+| 方法 | 路径 | 说明 |
+| :---- | :---- | :---- |
+| GET | /api/inbound | 获取入库记录列表（支持分页、筛选） |
+| POST | /api/inbound | 新增入库记录 |
+| PUT | /api/inbound/:id | 修改入库记录 |
+| DELETE | /api/inbound/:id | 删除入库记录 |
+| GET | /api/outbound | 获取出库记录列表（支持分页、筛选） |
+| POST | /api/outbound | 新增出库记录 |
+| PUT | /api/outbound/:id | 修改出库记录 |
+| DELETE | /api/outbound/:id | 删除出库记录 |
+| GET | /api/stock | 获取库存明细 |
+| GET | /api/stock/history | 获取库存历史记录 |
+| GET | /api/partners | 获取客户/供应商列表 |
+| POST | /api/partners | 新增客户/供应商 |
+| PUT | /api/partners/:short_name | 修改客户/供应商 |
+| DELETE | /api/partners/:short_name | 删除客户/供应商 |
+| GET | /api/products | 获取产品列表 |
+| POST | /api/products | 新增产品 |
+| PUT | /api/products/:short_name | 修改产品 |
+| DELETE | /api/products/:short_name | 删除产品 |
+| GET | /api/product-prices | 获取产品价格列表 |
+| GET | /api/product-prices/current | 获取当前有效价格 |
+| POST | /api/product-prices | 新增产品价格 |
+| PUT | /api/product-prices/:id | 修改产品价格 |
+| DELETE | /api/product-prices/:id | 删除产品价格 |
+| GET | /api/report/stock | 导出库存明细报表 |
+| GET | /api/report/inout | 导出进出货明细报表 |
+| GET | /api/report/finance | 导出收支统计报表 |
+| GET | /api/product-categories | 获取所有产品类型 |
+| POST | /api/product-categories | 新增产品类型（仅后端维护）|
+| DELETE | /api/product-categories/:name | 删除产品类型（仅后端维护）|
 
 ## 🎨 用户界面
 

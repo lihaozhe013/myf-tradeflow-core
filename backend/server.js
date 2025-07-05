@@ -2,9 +2,27 @@ const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const db = require('./db');
+const sqlite3 = require('sqlite3').verbose();
+const fs = require('fs');
+const { initSql } = require('./utils/dbSchema');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// 启动时检查所有表和列是否存在，不存在则自动创建
+function ensureAllTablesAndColumns() {
+  const dbPath = path.resolve(__dirname, 'data.db');
+  const dbInstance = new sqlite3.Database(dbPath);
+  dbInstance.exec(initSql, (err) => {
+    if (err) {
+      console.error('数据库结构检查/升级失败:', err.message);
+    } else {
+      console.log('数据库结构已检查/升级');
+    }
+    dbInstance.close();
+  });
+}
+ensureAllTablesAndColumns();
 
 // 中间件
 app.use(express.json());
@@ -26,6 +44,7 @@ const partnersRoutes = require('./routes/partners');
 const productsRoutes = require('./routes/products');
 const productPricesRoutes = require('./routes/productPrices');
 const reportsRoutes = require('./routes/reports');
+const productCategoriesRoutes = require('./routes/productCategories');
 
 // 注册路由
 app.use('/api/debug', debugRoutes);
@@ -36,6 +55,7 @@ app.use('/api/partners', partnersRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/product-prices', productPricesRoutes);
 app.use('/api/report', reportsRoutes);
+app.use('/api/product-categories', productCategoriesRoutes);
 
 // 生产环境托管前端静态文件
 if (process.env.NODE_ENV === 'production') {
@@ -54,4 +74,4 @@ app.listen(PORT, () => {
   } else {
     console.log('🔧 开发模式: 前端请访问 http://localhost:5173');
   }
-}); 
+});

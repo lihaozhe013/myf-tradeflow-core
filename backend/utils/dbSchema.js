@@ -71,6 +71,10 @@ CREATE TABLE IF NOT EXISTS product_prices (
   effective_date TEXT,
   unit_price REAL
 );
+
+CREATE TABLE IF NOT EXISTS product_categories (
+  name TEXT PRIMARY KEY
+);
 `;
 
 module.exports = {

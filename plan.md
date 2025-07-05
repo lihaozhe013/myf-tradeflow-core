@@ -99,6 +99,11 @@
 | effective_date | TEXT | 生效时间（YYYY-MM-DD） |
 | unit_price | REAL | 单价 |
 
+### 7. 产品类型表 (product_categories)
+| 字段名 | 数据类型 | 备注 |
+| :---- | :---- | :---- |
+| name | TEXT PRIMARY KEY | 产品类型名称（唯一）|
+
 ## 四、API接口设计（REST API）
 
 ### 调试接口
@@ -136,6 +141,8 @@
 | GET | /api/report/stock | 导出库存明细报表 |
 | GET | /api/report/inout | 导出进出货明细报表 |
 | GET | /api/report/finance | 导出收支统计报表 |
+| GET | /api/product-categories | 获取所有产品类型 |
+| DELETE | /api/product-categories/:name | 删除产品类型（仅后端维护）|
 
 ## 五、前端页面结构
 
@@ -156,6 +163,10 @@
 4. **状态标识** - 付款/回款状态的可视化标识
 5. **数据验证** - 表单验证和错误提示
 6. **响应式设计** - 适配不同屏幕尺寸
+
+### 产品管理页面
+- 产品分类下拉框支持快速搜索、输入和新增，所有分类由后端API动态提供
+- 产品类型表仅后端维护，前端不直接暴露管理入口
 
 ## 六、业务逻辑规则
 
