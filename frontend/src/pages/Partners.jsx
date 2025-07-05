@@ -26,6 +26,8 @@ const Partners = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingPartner, setEditingPartner] = useState(null);
   const [form] = Form.useForm();
+  // 新增：用于联动输入的下拉数据
+  const [partnerOptions, setPartnerOptions] = useState([]);
 
   // 获取合作伙伴列表
   const fetchPartners = async () => {
@@ -34,15 +36,15 @@ const Partners = () => {
       const response = await fetch('/api/partners');
       if (response.ok) {
         const result = await response.json();
-        // API返回格式为 {data: [...]}
         setPartners(Array.isArray(result.data) ? result.data : []);
+        setPartnerOptions(Array.isArray(result.data) ? result.data : []);
       } else {
-        console.error('获取合作伙伴列表失败');
         setPartners([]);
+        setPartnerOptions([]);
       }
     } catch (error) {
-      console.error('获取合作伙伴列表失败:', error);
       setPartners([]);
+      setPartnerOptions([]);
     } finally {
       setLoading(false);
     }
@@ -115,6 +117,12 @@ const Partners = () => {
   // 表格列定义
   const columns = [
     {
+      title: '代号',
+      dataIndex: 'code',
+      key: 'code',
+      width: 80,
+    },
+    {
       title: '简称',
       dataIndex: 'short_name',
       key: 'short_name',
@@ -185,6 +193,37 @@ const Partners = () => {
     },
   ];
 
+  // 联动输入处理
+  const handlePartnerFieldChange = (changed, all) => {
+    // changed: { code/short_name/full_name: value }
+    // all: 所有表单值
+    if (changed.code) {
+      const match = partnerOptions.find(p => p.code === changed.code);
+      if (match) {
+        form.setFieldsValue({ short_name: match.short_name, full_name: match.full_name });
+      }
+    } else if (changed.short_name) {
+      const match = partnerOptions.find(p => p.short_name === changed.short_name);
+      if (match) {
+        form.setFieldsValue({ code: match.code, full_name: match.full_name });
+      }
+    } else if (changed.full_name) {
+      const match = partnerOptions.find(p => p.full_name === changed.full_name);
+      if (match) {
+        form.setFieldsValue({ code: match.code, short_name: match.short_name });
+      }
+    }
+  };
+
+  // 解析批量输入
+  const parseBatchInput = (text) => {
+    return text.split(/\n|\r/).map(line => {
+      const [code, short_name, full_name] = line.split(',').map(s => s && s.trim());
+      if (code && short_name && full_name) return { code, short_name, full_name };
+      return null;
+    }).filter(Boolean);
+  };
+
   return (
     <div>
       <Card>
@@ -218,7 +257,7 @@ const Partners = () => {
               showTotal: (total, range) =>
                 `第 ${range[0]}-${range[1]} 条/共 ${total} 条`,
             }}
-            scroll={{ x: 800 }}
+            scroll={{ x: 900 }}
           />
         </div>
       </Card>
@@ -234,7 +273,18 @@ const Partners = () => {
           form={form}
           layout="vertical"
           onFinish={handleSave}
+          onValuesChange={handlePartnerFieldChange}
         >
+          <Form.Item
+            label="代号"
+            name="code"
+            rules={[
+              { max: 50, message: '代号不能超过50个字符' },
+            ]}
+          >
+            <Input placeholder="请输入代号" disabled={!!editingPartner} />
+          </Form.Item>
+
           <Form.Item
             label="简称"
             name="short_name"
@@ -243,10 +293,7 @@ const Partners = () => {
               { max: 50, message: '简称不能超过50个字符' },
             ]}
           >
-            <Input
-              placeholder="请输入简称"
-              disabled={!!editingPartner}
-            />
+            <Input placeholder="请输入简称" disabled={!!editingPartner} />
           </Form.Item>
 
           <Form.Item

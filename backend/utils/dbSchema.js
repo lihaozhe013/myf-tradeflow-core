@@ -49,6 +49,7 @@ CREATE TABLE IF NOT EXISTS stock (
 );
 
 CREATE TABLE IF NOT EXISTS partners (
+  code TEXT UNIQUE,
   short_name TEXT PRIMARY KEY,
   full_name TEXT,
   address TEXT,
@@ -58,6 +59,7 @@ CREATE TABLE IF NOT EXISTS partners (
 );
 
 CREATE TABLE IF NOT EXISTS products (
+  code TEXT UNIQUE,
   short_name TEXT PRIMARY KEY,
   category TEXT,
   product_model TEXT,

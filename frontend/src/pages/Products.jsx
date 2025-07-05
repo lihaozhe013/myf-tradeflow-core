@@ -28,6 +28,8 @@ const Products = () => {
   const [form] = Form.useForm();
   const [categoryOptions, setCategoryOptions] = useState([]);
   const [categoryLoading, setCategoryLoading] = useState(false);
+  // 新增：用于联动输入的下拉数据
+  const [productOptions, setProductOptions] = useState([]);
 
   // 获取产品列表
   const fetchProducts = async () => {
@@ -36,15 +38,15 @@ const Products = () => {
       const response = await fetch('/api/products');
       if (response.ok) {
         const result = await response.json();
-        // API返回格式为 {data: [...]}
         setProducts(Array.isArray(result.data) ? result.data : []);
+        setProductOptions(Array.isArray(result.data) ? result.data : []);
       } else {
-        console.error('获取产品列表失败');
         setProducts([]);
+        setProductOptions([]);
       }
     } catch (error) {
-      console.error('获取产品列表失败:', error);
       setProducts([]);
+      setProductOptions([]);
     } finally {
       setLoading(false);
     }
@@ -138,6 +140,12 @@ const Products = () => {
   // 表格列定义
   const columns = [
     {
+      title: '代号',
+      dataIndex: 'code',
+      key: 'code',
+      width: 80,
+    },
+    {
       title: '产品简称',
       dataIndex: 'short_name',
       key: 'short_name',
@@ -195,6 +203,26 @@ const Products = () => {
     },
   ];
 
+  // 联动输入处理
+  const handleProductFieldChange = (changed, all) => {
+    if (changed.code) {
+      const match = productOptions.find(p => p.code === changed.code);
+      if (match) {
+        form.setFieldsValue({ short_name: match.short_name, product_model: match.product_model });
+      }
+    } else if (changed.short_name) {
+      const match = productOptions.find(p => p.short_name === changed.short_name);
+      if (match) {
+        form.setFieldsValue({ code: match.code, product_model: match.product_model });
+      }
+    } else if (changed.product_model) {
+      const match = productOptions.find(p => p.product_model === changed.product_model);
+      if (match) {
+        form.setFieldsValue({ code: match.code, short_name: match.short_name });
+      }
+    }
+  };
+
   return (
     <div>
       <Card>
@@ -228,7 +256,7 @@ const Products = () => {
               showTotal: (total, range) =>
                 `第 ${range[0]}-${range[1]} 条/共 ${total} 条`,
             }}
-            scroll={{ x: 800 }}
+            scroll={{ x: 900 }}
           />
         </div>
       </Card>
@@ -244,7 +272,18 @@ const Products = () => {
           form={form}
           layout="vertical"
           onFinish={handleSave}
+          onValuesChange={handleProductFieldChange}
         >
+          <Form.Item
+            label="代号"
+            name="code"
+            rules={[
+              { max: 50, message: '代号不能超过50个字符' },
+            ]}
+          >
+            <Input placeholder="请输入代号" disabled={!!editingProduct} />
+          </Form.Item>
+
           <Form.Item
             label="产品简称"
             name="short_name"
@@ -253,10 +292,7 @@ const Products = () => {
               { max: 100, message: '产品简称不能超过100个字符' },
             ]}
           >
-            <Input
-              placeholder="请输入产品简称"
-              disabled={!!editingProduct}
-            />
+            <Input placeholder="请输入产品简称" disabled={!!editingProduct} />
           </Form.Item>
 
           <Form.Item
@@ -267,10 +303,7 @@ const Products = () => {
               { max: 100, message: '产品型号不能超过100个字符' },
             ]}
           >
-            <Input
-              placeholder="请输入产品型号"
-              disabled={!!editingProduct}
-            />
+            <Input placeholder="请输入产品型号" disabled={!!editingProduct} />
           </Form.Item>
 
           <Form.Item

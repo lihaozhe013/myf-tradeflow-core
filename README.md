@@ -142,6 +142,12 @@ npm run dev
 - **库存自动更新** - 进出库操作自动更新库存
 - **状态可视化** - 付款/回款状态清晰显示
 
+### 5. 代号-简称-全称强绑定
+- 在客户/供应商管理和产品管理页面，用户在新增/编辑时自动校验三项绑定唯一性，无需单独设置绑定弹窗。
+- 绑定后三者必须一一对应，任意一项变更自动同步，且不能与其他绑定冲突。
+- 支持批量导入（如粘贴多行文本或上传CSV）和单条编辑。
+- 后端API校验唯一性和一致性。
+
 ## 🔧 开发命令
 
 ### 根目录命令 (推荐)
@@ -208,8 +214,8 @@ npm run db:seed
 - **inbound_records** - 入库记录表 (17字段)
 - **outbound_records** - 出库记录表 (17字段)
 - **stock** - 库存明细表 (4字段)
-- **partners** - 客户/供应商表 (6字段)
-- **products** - 产品信息表 (4字段)
+- **partners** - 客户/供应商表 (7字段，含代号code)
+- **products** - 产品信息表 (5字段，含代号code)
 - **product_prices** - 产品价格表 (5字段)
 - **product_categories** - 产品类型表 (1字段)
 
@@ -219,8 +225,8 @@ npm run db:seed
 | inbound_records | id, supplier_short_name, supplier_full_name, product_model, quantity, unit_price, total_price, inbound_date, invoice_date, invoice_number, invoice_image_url, order_number, payment_date, payment_amount, payable_amount, payment_method, remark | 入库记录 |
 | outbound_records | id, customer_short_name, customer_full_name, product_model, quantity, unit_price, total_price, outbound_date, invoice_date, invoice_number, invoice_image_url, order_number, collection_date, collection_amount, receivable_amount, collection_method, remark | 出库记录 |
 | stock | record_id, product_model, stock_quantity, update_time | 库存明细 |
-| partners | short_name, full_name, address, contact_person, contact_phone, type | 客户/供应商 |
-| products | short_name, category, product_model, remark | 产品信息 |
+| partners | code, short_name, full_name, address, contact_person, contact_phone, type | 客户/供应商（含代号code） |
+| products | code, short_name, category, product_model, remark | 产品信息（含代号code） |
 | product_prices | id, partner_short_name, product_model, effective_date, unit_price | 产品价格 |
 | product_categories | name | 产品类型 |
 
@@ -266,7 +272,7 @@ npm run db:seed
 - **状态反馈** - 清晰的操作状态提示
 
 ### 页面功能
-- **智能表单** - 自动填充和实时验证
+- **智能表单** - 代号/简称/全称三项联动输入，任意输入一项可自动补全其余两项，基于 Antd 可输入下拉菜单实现
 - **数据表格** - 支持排序、筛选、分页
 - **状态标识** - 颜色编码的状态显示
 - **批量操作** - 高效的数据处理
