@@ -163,6 +163,7 @@
 | GET | /api/product-categories | 获取所有产品类型 |
 | POST | /api/product-categories | 新增产品类型（仅后端维护） |
 | DELETE | /api/product-categories/:name | 删除产品类型（仅后端维护） |
+| POST | /api/stock-rebuild/rebuild | 重建库存表（清空后根据入库/出库记录重新汇总，耗时操作，需前端确认） |
 
 ---
 

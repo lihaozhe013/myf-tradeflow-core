@@ -12,9 +12,11 @@ import {
   Space,
   message,
   Statistic,
-  Tag
+  Tag,
+  Modal,
+  Progress
 } from 'antd';
-import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
+import { SearchOutlined, ReloadOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -26,6 +28,10 @@ const Stock = () => {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [productFilter, setProductFilter] = useState('');
   const [products, setProducts] = useState([]);
+  const [rebuildModalVisible, setRebuildModalVisible] = useState(false);
+  const [rebuildModalLoading, setRebuildModalLoading] = useState(false);
+  const [progress, setProgress] = useState({ total: 0, current: 0, running: false });
+  const [progressTimer, setProgressTimer] = useState(null);
 
   // 获取库存数据
   const fetchStockData = async () => {
@@ -183,6 +189,59 @@ const Stock = () => {
     },
   ];
 
+  const showRebuildModal = () => setRebuildModalVisible(true);
+
+  const pollProgress = () => {
+    fetch('/api/stock-rebuild/progress')
+      .then(res => res.json())
+      .then(data => {
+        setProgress(data);
+        if (data.running) {
+          setProgressTimer(setTimeout(pollProgress, 500));
+        } else {
+          setProgressTimer(null);
+        }
+      })
+      .catch(() => setProgressTimer(null));
+  };
+
+  const handleRebuildOk = async () => {
+    setRebuildModalLoading(true);
+    setProgress({ total: 0, current: 0, running: true });
+    const hide = message.loading('正在重建库存，请稍候...', 0);
+    try {
+      const response = await fetch('/api/stock-rebuild/rebuild', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      pollProgress(); // 启动进度轮询
+      const result = await response.json();
+      if (response.ok && result.success) {
+        message.success('库存重建成功！');
+        fetchStockData();
+        fetchStockHistory();
+        setRebuildModalVisible(false);
+      } else {
+        message.error(result.error || '库存重建失败');
+      }
+    } catch (error) {
+      message.error('库存重建失败: ' + error.message);
+      console.error('重建库存请求异常:', error);
+    } finally {
+      setRebuildModalLoading(false);
+      hide();
+      setProgressTimer(null);
+    }
+  };
+
+  const handleRebuildCancel = () => setRebuildModalVisible(false);
+
+  React.useEffect(() => {
+    return () => {
+      if (progressTimer) clearTimeout(progressTimer);
+    };
+  }, [progressTimer]);
+
   return (
     <div>
       {/* 统计卡片 */}
@@ -262,6 +321,14 @@ const Stock = () => {
               >
                 刷新
               </Button>
+              <Button
+                danger
+                type="primary"
+                onClick={showRebuildModal}
+                loading={loading}
+              >
+                重建库存
+              </Button>
             </Space>
           </Col>
         </Row>
@@ -313,6 +380,29 @@ const Stock = () => {
           />
         </div>
       </Card>
+
+      {/* 重建库存数据确认弹窗 */}
+      <Modal
+        title="重建库存数据"
+        open={rebuildModalVisible}
+        onOk={handleRebuildOk}
+        onCancel={handleRebuildCancel}
+        confirmLoading={rebuildModalLoading}
+        okText="确定"
+        cancelText="取消"
+        maskClosable={false}
+        destroyOnClose
+      >
+        <p>此操作将清空并重新计算所有库存数据，过程可能耗时较长，确定要继续吗？</p>
+        {progress.running && progress.total > 0 && (
+          <Progress
+            percent={Math.round((progress.current / progress.total) * 100)}
+            status={progress.current < progress.total ? 'active' : 'success'}
+            style={{ marginTop: 16 }}
+            format={p => `进度：${progress.current}/${progress.total} (${p}%)`}
+          />
+        )}
+      </Modal>
     </div>
   );
 };

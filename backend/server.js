@@ -56,6 +56,7 @@ const productsRoutes = require('./routes/products');               // 产品管�
 const productPricesRoutes = require('./routes/productPrices');     // 产品价格管理
 const reportsRoutes = require('./routes/reports');                 // 报表生成
 const productCategoriesRoutes = require('./routes/productCategories'); // 产品类型管理
+const stockRebuildRoutes = require('./routes/stockRebuild');       // 库存重建
 
 // 注册 API 路由
 app.use('/api/debug', debugRoutes);
@@ -67,6 +68,7 @@ app.use('/api/products', productsRoutes);
 app.use('/api/product-prices', productPricesRoutes);
 app.use('/api/report', reportsRoutes);
 app.use('/api/product-categories', productCategoriesRoutes);
+app.use('/api/stock-rebuild', stockRebuildRoutes);
 
 console.log('✅ API 路由已注册');
 
