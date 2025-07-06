@@ -7,7 +7,6 @@ const Overview = () => {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState({});
   const [error, setError] = useState(null);
-  const [setupLoading, setSetupLoading] = useState(false);
 
   // 添加调试信息
   console.log('Overview component is rendering');
@@ -27,31 +26,6 @@ const Overview = () => {
       setError('获取数据失败: ' + err.message);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const setupTestData = async () => {
-    try {
-      setSetupLoading(true);
-      const response = await fetch('/api/debug/setup-test-data', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      const result = await response.json();
-      
-      if (result.success) {
-        message.success('测试数据设置成功！');
-        // 重新获取数据
-        await fetchAllTables();
-      } else {
-        message.error('测试数据设置失败: ' + result.error);
-      }
-    } catch (err) {
-      message.error('设置测试数据失败: ' + err.message);
-    } finally {
-      setSetupLoading(false);
     }
   };
 
@@ -148,19 +122,12 @@ const Overview = () => {
       <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Title level={2}>数据库总览 - 调试页面</Title>
         <Space>
-          <Button 
-            type="primary" 
-            onClick={setupTestData} 
-            loading={setupLoading}
-          >
-            设置测试数据
-          </Button>
           <Button onClick={fetchAllTables} loading={loading}>
             刷新数据
           </Button>
         </Space>
       </div>
-      
+
       <Row gutter={[16, 16]}>
         <Col span={24}>
           <Card title="入库记录表 (inbound_records)" size="small">
@@ -244,4 +211,4 @@ const Overview = () => {
   );
 };
 
-export default Overview; 
+export default Overview;

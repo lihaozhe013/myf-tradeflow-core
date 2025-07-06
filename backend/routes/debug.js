@@ -1,17 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
-const { setupTestData } = require('../utils/setupTestData');
-
-// 调试接口：设置测试数据
-router.post('/setup-test-data', (req, res) => {
-  try {
-    setupTestData();
-    res.json({ success: true, message: '测试数据设置完成' });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
 
 // 调试接口：获取所有表的数据
 router.get('/all-tables', (req, res) => {

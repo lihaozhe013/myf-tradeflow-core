@@ -14,8 +14,7 @@
     "test": "echo \"No tests specified\" && exit 0",
     "lint": "echo \"No linting configured\" && exit 0",
     "clean": "rm -rf node_modules",
-    "db:init": "node utils/dbSchema.js",
-    "db:seed": "node -e \"const {setupTestData} = require('./utils/setupTestData'); setupTestData();\""
+    "db:init": "node utils/dbSchema.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
