@@ -3,8 +3,7 @@ const db = require('../db');
 // 库存明细报表
 function getStockReport(callback) {
   const sql = `
-    SELECT 
-      p.short_name,
+    SELECT
       p.category,
       p.product_model,
       COALESCE(SUM(CASE WHEN s.record_id IN (SELECT id FROM inbound_records) THEN s.stock_quantity ELSE 0 END), 0) as total_inbound,
@@ -13,7 +12,7 @@ function getStockReport(callback) {
       MAX(s.update_time) as last_update
     FROM products p
     LEFT JOIN stock s ON p.product_model = s.product_model
-    GROUP BY p.short_name, p.category, p.product_model
+    GROUP BY p.category, p.product_model
     ORDER BY p.category, p.product_model
   `;
   

@@ -107,7 +107,6 @@
 | 字段 | 类型 | 说明 |
 |---|---|---|
 | code | TEXT UNIQUE | 代号（唯一） |
-| short_name | TEXT PRIMARY KEY | 简称（唯一） |
 | category | TEXT | 产品类别 |
 | product_model | TEXT | 产品型号 |
 | remark | TEXT | 备注 |

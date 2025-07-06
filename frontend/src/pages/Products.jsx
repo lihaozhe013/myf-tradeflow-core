@@ -90,9 +90,9 @@ const Products = () => {
   };
 
   // 删除产品
-  const handleDelete = async (shortName) => {
+  const handleDelete = async (code) => {
     try {
-      const response = await fetch(`/api/products/${shortName}`, {
+      const response = await fetch(`/api/products/${code}`, {
         method: 'DELETE',
       });
       if (response.ok) {
@@ -110,13 +110,10 @@ const Products = () => {
   const handleSave = async (values) => {
     try {
       const url = editingProduct
-        ? `/api/products/${editingProduct.short_name}`
+        ? `/api/products/${editingProduct.code}`
         : '/api/products';
       const method = editingProduct ? 'PUT' : 'POST';
       const body = { ...values };
-      if (!editingProduct) {
-        body.short_name = values.short_name;
-      }
       const response = await fetch(url, {
         method,
         headers: {
@@ -143,12 +140,6 @@ const Products = () => {
       title: '代号',
       dataIndex: 'code',
       key: 'code',
-      width: 80,
-    },
-    {
-      title: '产品简称',
-      dataIndex: 'short_name',
-      key: 'short_name',
       width: 120,
     },
     {
@@ -185,7 +176,7 @@ const Products = () => {
           </Button>
           <Popconfirm
             title="确定要删除这个产品吗？"
-            onConfirm={() => handleDelete(record.short_name)}
+            onConfirm={() => handleDelete(record.code)}
             okText="确定"
             cancelText="取消"
           >
@@ -203,22 +194,17 @@ const Products = () => {
     },
   ];
 
-  // 联动输入处理
+  // 联动输入处理（仅按code和型号联动）
   const handleProductFieldChange = (changed, all) => {
     if (changed.code) {
       const match = productOptions.find(p => p.code === changed.code);
       if (match) {
-        form.setFieldsValue({ short_name: match.short_name, product_model: match.product_model });
-      }
-    } else if (changed.short_name) {
-      const match = productOptions.find(p => p.short_name === changed.short_name);
-      if (match) {
-        form.setFieldsValue({ code: match.code, product_model: match.product_model });
+        form.setFieldsValue({ product_model: match.product_model });
       }
     } else if (changed.product_model) {
       const match = productOptions.find(p => p.product_model === changed.product_model);
       if (match) {
-        form.setFieldsValue({ code: match.code, short_name: match.short_name });
+        form.setFieldsValue({ code: match.code });
       }
     }
   };
@@ -247,7 +233,7 @@ const Products = () => {
           <Table
             columns={columns}
             dataSource={products}
-            rowKey="short_name"
+            rowKey="code"
             loading={loading}
             pagination={{
               pageSize: 10,
@@ -278,21 +264,11 @@ const Products = () => {
             label="代号"
             name="code"
             rules={[
+              { required: true, message: '请输入代号' },
               { max: 50, message: '代号不能超过50个字符' },
             ]}
           >
             <Input placeholder="请输入代号" disabled={!!editingProduct} />
-          </Form.Item>
-
-          <Form.Item
-            label="产品简称"
-            name="short_name"
-            rules={[
-              { required: true, message: '请输入产品简称' },
-              { max: 100, message: '产品简称不能超过100个字符' },
-            ]}
-          >
-            <Input placeholder="请输入产品简称" disabled={!!editingProduct} />
           </Form.Item>
 
           <Form.Item

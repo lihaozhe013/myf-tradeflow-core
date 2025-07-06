@@ -64,7 +64,6 @@ CREATE TABLE IF NOT EXISTS partners (
 
 CREATE TABLE IF NOT EXISTS products (
   code TEXT UNIQUE,
-  short_name TEXT PRIMARY KEY,
   category TEXT,
   product_model TEXT,
   remark TEXT
