@@ -104,17 +104,11 @@ const Stock = () => {
     fetchStockHistory();
   };
 
-  // 筛选库存数据
+  // 筛选库存数据（后端已保证每种商品只返回一条最新记录）
   const filteredStockData = stockData.filter(item => {
     if (!productFilter) return true;
     return item.product_model && item.product_model.toLowerCase().includes(productFilter.toLowerCase());
   });
-
-  // 计算统计数据
-  const totalProducts = filteredStockData.length;
-  const totalQuantity = filteredStockData.reduce((sum, item) => sum + (item.current_stock || 0), 0);
-  const lowStockCount = filteredStockData.filter(item => (item.current_stock || 0) < 10).length;
-  const outOfStockCount = filteredStockData.filter(item => (item.current_stock || 0) === 0).length;
 
   // 库存明细表格列定义
   const stockColumns = [
@@ -244,46 +238,6 @@ const Stock = () => {
 
   return (
     <div>
-      {/* 统计卡片 */}
-      <Row gutter={16} style={{ marginBottom: 16 }}>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="产品种类"
-              value={totalProducts}
-              valueStyle={{ color: '#1890ff' }}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="总库存量"
-              value={totalQuantity}
-              valueStyle={{ color: '#52c41a' }}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="库存不足"
-              value={lowStockCount}
-              valueStyle={{ color: '#fa8c16' }}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="缺货产品"
-              value={outOfStockCount}
-              valueStyle={{ color: '#ff4d4f' }}
-            />
-          </Card>
-        </Col>
-      </Row>
-
       {/* 库存明细 */}
       <Card>
         <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
