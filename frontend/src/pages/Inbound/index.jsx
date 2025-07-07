@@ -118,7 +118,6 @@ const Inbound = () => {
       product_code: product?.code || '',
       inbound_date: record.inbound_date ? dayjs(record.inbound_date) : null,
       invoice_date: record.invoice_date ? dayjs(record.invoice_date) : null,
-      payment_date: record.payment_date ? dayjs(record.payment_date) : null,
     });
     setModalVisible(true);
   };
@@ -168,9 +167,7 @@ const Inbound = () => {
         ...values,
         inbound_date: values.inbound_date ? values.inbound_date.format('YYYY-MM-DD') : null,
         invoice_date: values.invoice_date ? values.invoice_date.format('YYYY-MM-DD') : null,
-        payment_date: values.payment_date ? values.payment_date.format('YYYY-MM-DD') : null,
         total_price: (values.quantity || 0) * (values.unit_price || 0),
-        payable_amount: ((values.quantity || 0) * (values.unit_price || 0)) - (values.payment_amount || 0),
       };
 
       const url = editingRecord 
@@ -266,18 +263,15 @@ const Inbound = () => {
     }
   };
 
-  // 处理价格或数量变化，自动计算总价和应付金额
+  // 处理价格或数量变化，自动计算总价
   const handlePriceOrQuantityChange = () => {
     const quantity = form.getFieldValue('quantity') || 0;
     const unitPrice = form.getFieldValue('unit_price') || 0;
-    const paymentAmount = form.getFieldValue('payment_amount') || 0;
     
     const totalPrice = quantity * unitPrice;
-    const payableAmount = totalPrice - paymentAmount;
 
     form.setFieldsValue({
       total_price: totalPrice,
-      payable_amount: payableAmount,
     });
   };
 

@@ -231,51 +231,6 @@ const InboundModal = ({
           </Col>
           <Col span={8}>
             <Form.Item
-              label="付款金额"
-              name="payment_amount"
-              rules={[{ type: 'number', min: 0, message: '付款金额必须大于等于0' }]}
-            >
-              <InputNumber
-                style={{ width: '100%' }}
-                placeholder="请输入付款金额"
-                precision={2}
-                min={0}
-                addonBefore="¥"
-                onChange={onPriceOrQuantityChange}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label="应付金额"
-              name="payable_amount"
-            >
-              <InputNumber
-                style={{ width: '100%' }}
-                placeholder="自动计算"
-                precision={2}
-                disabled
-                addonBefore="¥"
-              />
-            </Form.Item>
-          </Col>
-        </Row>
-
-        <Row gutter={16}>
-          <Col span={8}>
-            <Form.Item
-              label="付款日期"
-              name="payment_date"
-            >
-              <DatePicker
-                style={{ width: '100%' }}
-                placeholder="请选择付款日期"
-                format="YYYY-MM-DD"
-              />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
               label="发票日期"
               name="invoice_date"
             >
@@ -303,20 +258,6 @@ const InboundModal = ({
               name="order_number"
             >
               <Input placeholder="请输入订单号" />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label="付款方式"
-              name="payment_method"
-            >
-              <Select placeholder="请选择付款方式">
-                <Option value="银行转账">银行转账</Option>
-                <Option value="现金">现金</Option>
-                <Option value="支票">支票</Option>
-                <Option value="微信支付">微信支付</Option>
-                <Option value="支付宝">支付宝</Option>
-              </Select>
             </Form.Item>
           </Col>
           <Col span={8}>

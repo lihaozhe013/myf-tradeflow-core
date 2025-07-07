@@ -89,27 +89,26 @@ router.post('/', (req, res) => {
     supplier_code, supplier_short_name, supplier_full_name, 
     product_code, product_model, quantity, unit_price,
     inbound_date, invoice_date, invoice_number, invoice_image_url, order_number,
-    payment_date, payment_amount, payment_method, remark
+    remark
   } = req.body;
   
-  // 计算总价和应付金额
+  // 计算总价
   const total_price = quantity * unit_price;
-  const payable_amount = total_price - (payment_amount || 0);
   
   const sql = `
     INSERT INTO inbound_records 
     (supplier_code, supplier_short_name, supplier_full_name, 
      product_code, product_model, quantity, unit_price, total_price, 
      inbound_date, invoice_date, invoice_number, invoice_image_url, order_number, 
-     payment_date, payment_amount, payable_amount, payment_method, remark)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     remark)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
   
   const params = [
     supplier_code, supplier_short_name, supplier_full_name, 
     product_code, product_model, quantity, unit_price, total_price,
     inbound_date, invoice_date, invoice_number, invoice_image_url, order_number,
-    payment_date, payment_amount, payable_amount, payment_method, remark
+    remark
   ];
   
   db.run(sql, params, function(err) {
@@ -132,18 +131,17 @@ router.put('/:id', (req, res) => {
     supplier_code, supplier_short_name, supplier_full_name, 
     product_code, product_model, quantity, unit_price,
     inbound_date, invoice_date, invoice_number, invoice_image_url, order_number,
-    payment_date, payment_amount, payment_method, remark
+    remark
   } = req.body;
   
   const total_price = quantity * unit_price;
-  const payable_amount = total_price - (payment_amount || 0);
   
   const sql = `
     UPDATE inbound_records SET
     supplier_code=?, supplier_short_name=?, supplier_full_name=?, 
     product_code=?, product_model=?, quantity=?, unit_price=?, total_price=?,
     inbound_date=?, invoice_date=?, invoice_number=?, invoice_image_url=?, order_number=?,
-    payment_date=?, payment_amount=?, payable_amount=?, payment_method=?, remark=?
+    remark=?
     WHERE id=?
   `;
   
@@ -151,7 +149,7 @@ router.put('/:id', (req, res) => {
     supplier_code, supplier_short_name, supplier_full_name, 
     product_code, product_model, quantity, unit_price, total_price,
     inbound_date, invoice_date, invoice_number, invoice_image_url, order_number,
-    payment_date, payment_amount, payable_amount, payment_method, remark, id
+    remark, id
   ];
   
   db.run(sql, params, function(err) {

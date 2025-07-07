@@ -118,7 +118,6 @@ const Outbound = () => {
       product_code: product?.code || '',
       outbound_date: record.outbound_date ? dayjs(record.outbound_date) : null,
       invoice_date: record.invoice_date ? dayjs(record.invoice_date) : null,
-      collection_date: record.collection_date ? dayjs(record.collection_date) : null,
     });
     setModalVisible(true);
   };
@@ -168,9 +167,7 @@ const Outbound = () => {
         ...values,
         outbound_date: values.outbound_date ? values.outbound_date.format('YYYY-MM-DD') : null,
         invoice_date: values.invoice_date ? values.invoice_date.format('YYYY-MM-DD') : null,
-        collection_date: values.collection_date ? values.collection_date.format('YYYY-MM-DD') : null,
         total_price: (values.quantity || 0) * (values.unit_price || 0),
-        receivable_amount: ((values.quantity || 0) * (values.unit_price || 0)) - (values.collection_amount || 0),
       };
 
       const url = editingRecord 
@@ -266,18 +263,15 @@ const Outbound = () => {
     }
   };
 
-  // 处理价格或数量变化，自动计算总价和应收金额
+  // 处理价格或数量变化，自动计算总价
   const handlePriceOrQuantityChange = () => {
     const quantity = form.getFieldValue('quantity') || 0;
     const unitPrice = form.getFieldValue('unit_price') || 0;
-    const collectionAmount = form.getFieldValue('collection_amount') || 0;
     
     const totalPrice = quantity * unitPrice;
-    const receivableAmount = totalPrice - collectionAmount;
 
     form.setFieldsValue({
       total_price: totalPrice,
-      receivable_amount: receivableAmount,
     });
   };
 

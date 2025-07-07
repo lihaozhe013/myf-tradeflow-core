@@ -53,10 +53,6 @@
 | invoice_number | TEXT | 发票号码 |
 | invoice_image_url | TEXT | 发票图片链接 |
 | order_number | TEXT | 订单号 |
-| payment_date | TEXT | 付款日期 |
-| payment_amount | REAL | 付款金额 |
-| payable_amount | REAL | 应付金额（自动计算） |
-| payment_method | TEXT | 付款方式 |
 | remark | TEXT | 备注 |
 
 ### 2. 出库记录表 outbound_records
@@ -76,10 +72,6 @@
 | invoice_number | TEXT | 发票号码 |
 | invoice_image_url | TEXT | 发票图片链接 |
 | order_number | TEXT | 订单号 |
-| collection_date | TEXT | 回款日期 |
-| collection_amount | REAL | 回款金额 |
-| receivable_amount | REAL | 应收金额（自动计算） |
-| collection_method | TEXT | 回款方式 |
 | remark | TEXT | 备注 |
 
 ### 3. 库存表 stock
@@ -170,9 +162,8 @@
 
 - **价格管理**：产品价格按生效日期管理，查询时取最近有效价格。
 - **库存管理**：入库增加库存，出库减少库存，允许库存为负（前端警告）。
-- **财务管理**：应付=总价-已付，应收=总价-已收，支持部分付款/回款。
 - **数据唯一性**：客户/供应商、产品的"代号-简称-全称"三项强绑定，任意一项变更自动同步，后端API校验唯一性。
-- **自动计算**：总价、应付/应收金额自动计算，进出库自动更新库存。
+- **自动计算**：总价自动计算，进出库自动更新库存。
 - **智能输入**：入库/出库界面支持代号或简称/型号输入，自动补全匹配项，强绑定校验，使用AutoComplete组件提供流畅的输入体验。
 
 ---
