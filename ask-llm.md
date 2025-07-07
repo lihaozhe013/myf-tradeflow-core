@@ -157,6 +157,7 @@
 | POST | /api/product-prices | 新增产品价格 |
 | PUT | /api/product-prices/:id | 修改产品价格 |
 | DELETE | /api/product-prices/:id | 删除产品价格 |
+| GET | /api/product-prices/auto | 自动获取产品单价（参数：partner_short_name, product_model, date，返回匹配的单价） |
 | GET | /api/report/stock | 导出库存明细报表 |
 | GET | /api/report/inout | 导出进出货明细报表 |
 | GET | /api/report/finance | 导出收支统计报表 |

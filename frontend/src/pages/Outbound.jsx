@@ -17,7 +17,8 @@ import {
   Col,
   Divider,
   Tag,
-  AutoComplete
+  AutoComplete,
+  Radio
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -43,6 +44,7 @@ const Outbound = () => {
     field: undefined,
     order: undefined,
   });
+  const [manualPrice, setManualPrice] = useState(false);
 
   // 获取出库记录列表
   const fetchOutboundRecords = async (params = {}) => {
@@ -285,20 +287,20 @@ const Outbound = () => {
 
   // 处理客户或产品变化，自动获取价格
   const handlePartnerOrProductChange = async () => {
-    const customerShortName = form.getFieldValue('customer_short_name');
-    const productModel = form.getFieldValue('product_model');
-    const outboundDate = form.getFieldValue('outbound_date');
-
-    if (customerShortName && productModel && outboundDate) {
-      const price = await fetchCurrentPrice(
-        customerShortName,
-        productModel,
-        outboundDate.format('YYYY-MM-DD')
-      );
-      if (price > 0) {
-        form.setFieldsValue({ unit_price: price });
-        // 触发总价计算
-        handlePriceOrQuantityChange();
+    if (!manualPrice) {
+      const customerShortName = form.getFieldValue('customer_short_name');
+      const productModel = form.getFieldValue('product_model');
+      const outboundDate = form.getFieldValue('outbound_date');
+      if (customerShortName && productModel && outboundDate) {
+        // 使用 /auto 接口
+        const resp = await fetch(`/api/product-prices/auto?partner_short_name=${customerShortName}&product_model=${productModel}&date=${outboundDate.format('YYYY-MM-DD')}`);
+        if (resp.ok) {
+          const data = await resp.json();
+          form.setFieldsValue({ unit_price: data.unit_price });
+          handlePriceOrQuantityChange();
+        } else {
+          form.setFieldsValue({ unit_price: 0 });
+        }
       }
     }
   };
@@ -664,6 +666,23 @@ const Outbound = () => {
               </Form.Item>
             </Col>
             <Col span={8}>
+              <Form.Item label="单价输入方式" name="manual_price" initialValue={false}>
+                <Radio.Group
+                  options={[
+                    { label: '自动获取', value: false },
+                    { label: '手动输入', value: true },
+                  ]}
+                  onChange={e => {
+                    setManualPrice(e.target.value);
+                    if (!e.target.value) handlePartnerOrProductChange();
+                  }}
+                  optionType="button"
+                  buttonStyle="solid"
+                  value={manualPrice}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
               <Form.Item
                 label="单价"
                 name="unit_price"
@@ -679,9 +698,13 @@ const Outbound = () => {
                   min={0}
                   addonBefore="¥"
                   onChange={handlePriceOrQuantityChange}
+                  disabled={!manualPrice}
                 />
               </Form.Item>
             </Col>
+          </Row>
+
+          <Row gutter={16}>
             <Col span={8}>
               <Form.Item
                 label="总价"
@@ -696,9 +719,6 @@ const Outbound = () => {
                 />
               </Form.Item>
             </Col>
-          </Row>
-
-          <Row gutter={16}>
             <Col span={8}>
               <Form.Item
                 label="回款金额"
@@ -729,6 +749,9 @@ const Outbound = () => {
                 />
               </Form.Item>
             </Col>
+          </Row>
+
+          <Row gutter={16}>
             <Col span={8}>
               <Form.Item
                 label="回款日期"
@@ -741,9 +764,6 @@ const Outbound = () => {
                 />
               </Form.Item>
             </Col>
-          </Row>
-
-          <Row gutter={16}>
             <Col span={8}>
               <Form.Item
                 label="发票日期"
@@ -764,6 +784,9 @@ const Outbound = () => {
                 <Input placeholder="请输入发票号码" />
               </Form.Item>
             </Col>
+          </Row>
+
+          <Row gutter={16}>
             <Col span={8}>
               <Form.Item
                 label="订单号"
@@ -772,10 +795,7 @@ const Outbound = () => {
                 <Input placeholder="请输入订单号" />
               </Form.Item>
             </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={12}>
+            <Col span={8}>
               <Form.Item
                 label="回款方式"
                 name="collection_method"
@@ -789,7 +809,7 @@ const Outbound = () => {
                 </Select>
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col span={8}>
               <Form.Item
                 label="发票图片链接"
                 name="invoice_image_url"

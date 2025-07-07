@@ -17,7 +17,8 @@ import {
   Col,
   Divider,
   Tag,
-  AutoComplete
+  AutoComplete,
+  Radio
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -43,6 +44,7 @@ const Inbound = () => {
     field: undefined,
     order: undefined,
   });
+  const [manualPrice, setManualPrice] = useState(false);
 
   // 获取入库记录列表
   const fetchInboundRecords = async (params = {}) => {
@@ -285,20 +287,20 @@ const Inbound = () => {
 
   // 处理供应商或产品变化，自动获取价格
   const handlePartnerOrProductChange = async () => {
-    const supplierShortName = form.getFieldValue('supplier_short_name');
-    const productModel = form.getFieldValue('product_model');
-    const inboundDate = form.getFieldValue('inbound_date');
-
-    if (supplierShortName && productModel && inboundDate) {
-      const price = await fetchCurrentPrice(
-        supplierShortName,
-        productModel,
-        inboundDate.format('YYYY-MM-DD')
-      );
-      if (price > 0) {
-        form.setFieldsValue({ unit_price: price });
-        // 触发总价计算
-        handlePriceOrQuantityChange();
+    if (!manualPrice) {
+      const supplierShortName = form.getFieldValue('supplier_short_name');
+      const productModel = form.getFieldValue('product_model');
+      const inboundDate = form.getFieldValue('inbound_date');
+      if (supplierShortName && productModel && inboundDate) {
+        // 使用 /auto 接口
+        const resp = await fetch(`/api/product-prices/auto?partner_short_name=${supplierShortName}&product_model=${productModel}&date=${inboundDate.format('YYYY-MM-DD')}`);
+        if (resp.ok) {
+          const data = await resp.json();
+          form.setFieldsValue({ unit_price: data.unit_price });
+          handlePriceOrQuantityChange();
+        } else {
+          form.setFieldsValue({ unit_price: 0 });
+        }
       }
     }
   };
@@ -465,6 +467,20 @@ const Inbound = () => {
   return (
     <div>
       <Card>
+        <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
+          <Col>
+            <Title level={3} style={{ margin: 0 }}>入库管理</Title>
+          </Col>
+          <Col>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={handleAdd}
+            >
+              新增入库记录
+            </Button>
+          </Col>
+        </Row>
         <Row gutter={16} style={{ marginBottom: 16 }}>
           <Col span={5}>
             <Select
@@ -665,6 +681,27 @@ const Inbound = () => {
             </Col>
             <Col span={8}>
               <Form.Item
+                label="单价输入方式"
+                name="manual_price"
+                initialValue={false}
+              >
+                <Radio.Group
+                  options={[
+                    { label: '自动获取', value: false },
+                    { label: '手动输入', value: true },
+                  ]}
+                  onChange={e => {
+                    setManualPrice(e.target.value);
+                    if (!e.target.value) handlePartnerOrProductChange();
+                  }}
+                  optionType="button"
+                  buttonStyle="solid"
+                  value={manualPrice}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
                 label="单价"
                 name="unit_price"
                 rules={[
@@ -679,9 +716,13 @@ const Inbound = () => {
                   min={0}
                   addonBefore="¥"
                   onChange={handlePriceOrQuantityChange}
+                  disabled={!manualPrice}
                 />
               </Form.Item>
             </Col>
+          </Row>
+
+          <Row gutter={16}>
             <Col span={8}>
               <Form.Item
                 label="总价"
@@ -696,9 +737,6 @@ const Inbound = () => {
                 />
               </Form.Item>
             </Col>
-          </Row>
-
-          <Row gutter={16}>
             <Col span={8}>
               <Form.Item
                 label="付款金额"
@@ -729,6 +767,9 @@ const Inbound = () => {
                 />
               </Form.Item>
             </Col>
+          </Row>
+
+          <Row gutter={16}>
             <Col span={8}>
               <Form.Item
                 label="付款日期"
@@ -741,9 +782,6 @@ const Inbound = () => {
                 />
               </Form.Item>
             </Col>
-          </Row>
-
-          <Row gutter={16}>
             <Col span={8}>
               <Form.Item
                 label="发票日期"
@@ -764,6 +802,9 @@ const Inbound = () => {
                 <Input placeholder="请输入发票号码" />
               </Form.Item>
             </Col>
+          </Row>
+
+          <Row gutter={16}>
             <Col span={8}>
               <Form.Item
                 label="订单号"
@@ -772,10 +813,7 @@ const Inbound = () => {
                 <Input placeholder="请输入订单号" />
               </Form.Item>
             </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={12}>
+            <Col span={8}>
               <Form.Item
                 label="付款方式"
                 name="payment_method"
@@ -789,7 +827,7 @@ const Inbound = () => {
                 </Select>
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col span={8}>
               <Form.Item
                 label="发票图片链接"
                 name="invoice_image_url"
