@@ -15,7 +15,8 @@ import {
   Typography,
   Row,
   Col,
-  Divider
+  Divider,
+  AutoComplete
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -234,6 +235,58 @@ const ProductPrices = () => {
     },
   ];
 
+  // 新增：用于AutoComplete的options
+  const partnerCodeOptions = partners.map(p => ({ value: p.code, label: `${p.code} - ${p.short_name}` }));
+  const partnerShortNameOptions = partners.map(p => ({ value: p.short_name, label: `${p.short_name} - ${p.full_name}` }));
+  const productCodeOptions = products.map(p => ({ value: p.code, label: `${p.code} - ${p.product_model}` }));
+  const productModelOptions = products.map(p => ({ value: p.product_model, label: `${p.product_model} - ${p.category}` }));
+
+  // 联动逻辑
+  const handlePartnerCodeChange = (code) => {
+    const partner = partners.find(p => p.code === code);
+    if (partner) {
+      form.setFieldsValue({
+        partner_code: partner.code,
+        partner_short_name: partner.short_name,
+      });
+    } else {
+      form.setFieldsValue({ partner_short_name: undefined });
+    }
+  };
+  const handlePartnerShortNameChange = (short_name) => {
+    const partner = partners.find(p => p.short_name === short_name);
+    if (partner) {
+      form.setFieldsValue({
+        partner_code: partner.code,
+        partner_short_name: partner.short_name,
+      });
+    } else {
+      form.setFieldsValue({ partner_code: undefined });
+    }
+  };
+  const handleProductCodeChange = (code) => {
+    const product = products.find(p => p.code === code);
+    if (product) {
+      form.setFieldsValue({
+        product_code: product.code,
+        product_model: product.product_model,
+      });
+    } else {
+      form.setFieldsValue({ product_model: undefined });
+    }
+  };
+  const handleProductModelChange = (model) => {
+    const product = products.find(p => p.product_model === model);
+    if (product) {
+      form.setFieldsValue({
+        product_code: product.code,
+        product_model: product.product_model,
+      });
+    } else {
+      form.setFieldsValue({ product_code: undefined });
+    }
+  };
+
   return (
     <div>
       <Card>
@@ -284,33 +337,68 @@ const ProductPrices = () => {
           layout="vertical"
           onFinish={handleSave}
         >
-          <Form.Item
-            label="合作伙伴"
-            name="partner_short_name"
-            rules={[{ required: true, message: '请选择合作伙伴' }]}
-          >
-            <Select placeholder="请选择合作伙伴" showSearch>
-              {partners.map(partner => (
-                <Option key={partner.short_name} value={partner.short_name}>
-                  {partner.short_name} - {partner.full_name}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            label="产品型号"
-            name="product_model"
-            rules={[{ required: true, message: '请选择产品型号' }]}
-          >
-            <Select placeholder="请选择产品型号" showSearch>
-              {products.map(product => (
-                <Option key={product.product_model} value={product.product_model}>
-                  {product.product_model} - {product.category}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
+          <Row gutter={8}>
+            <Col span={12}>
+              <Form.Item label="合作伙伴代号" name="partner_code">
+                <AutoComplete
+                  options={partnerCodeOptions}
+                  placeholder="请输入合作伙伴代号"
+                  onChange={handlePartnerCodeChange}
+                  filterOption={(inputValue, option) =>
+                    option.value.toLowerCase().includes(inputValue.toLowerCase())
+                  }
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                label="合作伙伴简称"
+                name="partner_short_name"
+                rules={[{ required: true, message: '请选择合作伙伴' }]}
+              >
+                <Select
+                  placeholder="请选择合作伙伴"
+                  showSearch
+                  options={partnerShortNameOptions}
+                  onChange={handlePartnerShortNameChange}
+                  filterOption={(input, option) =>
+                    option.value.toLowerCase().includes(input.toLowerCase())
+                  }
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={8}>
+            <Col span={12}>
+              <Form.Item label="产品代号" name="product_code">
+                <AutoComplete
+                  options={productCodeOptions}
+                  placeholder="请输入产品代号"
+                  onChange={handleProductCodeChange}
+                  filterOption={(inputValue, option) =>
+                    option.value.toLowerCase().includes(inputValue.toLowerCase())
+                  }
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                label="产品型号"
+                name="product_model"
+                rules={[{ required: true, message: '请选择产品型号' }]}
+              >
+                <Select
+                  placeholder="请选择产品型号"
+                  showSearch
+                  options={productModelOptions}
+                  onChange={handleProductModelChange}
+                  filterOption={(input, option) =>
+                    option.value.toLowerCase().includes(input.toLowerCase())
+                  }
+                />
+              </Form.Item>
+            </Col>
+          </Row>
 
           <Form.Item
             label="单价"
