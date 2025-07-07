@@ -19,7 +19,7 @@ import {
   Tag,
   AutoComplete
 } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
 const { Title } = Typography;
@@ -33,22 +33,38 @@ const Outbound = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
   const [form] = Form.useForm();
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const [filters, setFilters] = useState({
+    customer_short_name: undefined,
+    product_model: undefined,
+    dateRange: [],
+  });
+  const [sorter, setSorter] = useState({
+    field: undefined,
+    order: undefined,
+  });
 
   // 获取出库记录列表
-  const fetchOutboundRecords = async () => {
+  const fetchOutboundRecords = async (params = {}) => {
     try {
       setLoading(true);
-      const response = await fetch('/api/outbound');
+      const query = new URLSearchParams({
+        ...params,
+        customer_short_name: params.customer_short_name || filters.customer_short_name || '',
+        product_model: params.product_model || filters.product_model || '',
+        start_date: params.start_date || (filters.dateRange[0] ? filters.dateRange[0] : ''),
+        end_date: params.end_date || (filters.dateRange[1] ? filters.dateRange[1] : ''),
+        sort_field: params.sort_field || sorter.field || '',
+        sort_order: params.sort_order || sorter.order || '',
+      });
+      const response = await fetch(`/api/outbound?${query.toString()}`);
       if (response.ok) {
         const result = await response.json();
-        // API返回格式为 {data: [...], pagination: {...}}
         setOutboundRecords(Array.isArray(result.data) ? result.data : []);
       } else {
-        console.error('获取出库记录列表失败');
         setOutboundRecords([]);
       }
     } catch (error) {
-      console.error('获取出库记录列表失败:', error);
       setOutboundRecords([]);
     } finally {
       setLoading(false);
@@ -302,6 +318,24 @@ const Outbound = () => {
     });
   };
 
+  // 筛选区表单提交
+  const handleFilter = () => {
+    fetchOutboundRecords({
+      customer_short_name: filters.customer_short_name,
+      product_model: filters.product_model,
+      start_date: filters.dateRange[0],
+      end_date: filters.dateRange[1],
+    });
+  };
+
+  // 表格排序
+  const handleTableChange = (pagination, filtersTable, sorterTable) => {
+    let field = sorterTable.field;
+    let order = sorterTable.order === 'ascend' ? 'asc' : sorterTable.order === 'descend' ? 'desc' : undefined;
+    setSorter({ field, order });
+    fetchOutboundRecords({ sort_field: field, sort_order: order });
+  };
+
   // 表格列定义
   const columns = [
     {
@@ -321,6 +355,8 @@ const Outbound = () => {
       dataIndex: 'customer_short_name',
       key: 'customer_short_name',
       width: 120,
+      filters: partners.map(p => ({ text: p.short_name, value: p.short_name })),
+      onFilter: (value, record) => record.customer_short_name === value,
     },
     {
       title: '产品代号',
@@ -333,6 +369,8 @@ const Outbound = () => {
       dataIndex: 'product_model',
       key: 'product_model',
       width: 150,
+      filters: products.map(p => ({ text: p.product_model, value: p.product_model })),
+      onFilter: (value, record) => record.product_model === value,
     },
     {
       title: '数量',
@@ -346,6 +384,7 @@ const Outbound = () => {
       key: 'unit_price',
       width: 100,
       render: (price) => `¥${price}`,
+      sorter: true,
     },
     {
       title: '总价',
@@ -353,12 +392,14 @@ const Outbound = () => {
       key: 'total_price',
       width: 100,
       render: (price) => `¥${price}`,
+      sorter: true,
     },
     {
       title: '出库日期',
       dataIndex: 'outbound_date',
       key: 'outbound_date',
       width: 120,
+      sorter: true,
     },
     {
       title: '回款状态',
@@ -416,38 +457,68 @@ const Outbound = () => {
     },
   ];
 
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: setSelectedRowKeys,
+  };
+
   return (
     <div>
       <Card>
-        <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
-          <Col>
-            <Title level={3} style={{ margin: 0 }}>出库管理</Title>
+        <Row gutter={16} style={{ marginBottom: 16 }}>
+          <Col span={5}>
+            <Select
+              allowClear
+              showSearch
+              placeholder="选择客户"
+              style={{ width: '100%' }}
+              value={filters.customer_short_name}
+              onChange={v => setFilters(f => ({ ...f, customer_short_name: v }))}
+              options={partners.map(p => ({ label: `${p.short_name}(${p.code})`, value: p.short_name }))}
+              filterOption={(input, option) => option.label.toLowerCase().includes(input.toLowerCase())}
+            />
           </Col>
-          <Col>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={handleAdd}
-            >
-              新增出库记录
+          <Col span={5}>
+            <Select
+              allowClear
+              showSearch
+              placeholder="选择产品型号"
+              style={{ width: '100%' }}
+              value={filters.product_model}
+              onChange={v => setFilters(f => ({ ...f, product_model: v }))}
+              options={products.map(p => ({ label: `${p.product_model}(${p.code})`, value: p.product_model }))}
+              filterOption={(input, option) => option.label.toLowerCase().includes(input.toLowerCase())}
+            />
+          </Col>
+          <Col span={8}>
+            <DatePicker.RangePicker
+              style={{ width: '100%' }}
+              value={filters.dateRange && filters.dateRange[0] ? [dayjs(filters.dateRange[0]), dayjs(filters.dateRange[1])] : []}
+              onChange={dates => setFilters(f => ({ ...f, dateRange: dates ? [dates[0]?.format('YYYY-MM-DD'), dates[1]?.format('YYYY-MM-DD')] : [] }))}
+              format="YYYY-MM-DD"
+              placeholder={['开始日期', '结束日期']}
+            />
+          </Col>
+          <Col span={3}>
+            <Button type="primary" icon={<SearchOutlined />} onClick={handleFilter}>
+              筛选
             </Button>
           </Col>
         </Row>
-
         <Divider />
-
         <div className="responsive-table">
           <Table
             columns={columns}
             dataSource={outboundRecords}
             rowKey="id"
             loading={loading}
+            rowSelection={rowSelection}
+            onChange={handleTableChange}
             pagination={{
               pageSize: 10,
               showSizeChanger: true,
               showQuickJumper: true,
-              showTotal: (total, range) =>
-                `第 ${range[0]}-${range[1]} 条/共 ${total} 条`,
+              showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条/共 ${total} 条`,
             }}
             scroll={{ x: 1200 }}
           />
