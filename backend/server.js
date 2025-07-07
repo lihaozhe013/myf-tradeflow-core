@@ -110,16 +110,4 @@ app.listen(PORT, () => {
     console.log('🔧 开发模式运行中');
     console.log('🌐 前端开发服务器: http://localhost:5173');
   }
-  
-  console.log('');
-  console.log('📚 API 接口列表:');
-  console.log('   - /api/partners      - 客户/供应商管理');
-  console.log('   - /api/products      - 产品管理');
-  console.log('   - /api/inbound       - 入库管理');
-  console.log('   - /api/outbound      - 出库管理');
-  console.log('   - /api/stock         - 库存管理');
-  console.log('   - /api/product-prices - 价格管理');
-  console.log('   - /api/report        - 报表导出');
-  console.log('   - /api/debug         - 调试接口');
-  console.log('');
 });
