@@ -9,7 +9,6 @@ router.get('/all-tables', (req, res) => {
     outbound_records: 'SELECT * FROM outbound_records ORDER BY id DESC',
     stock: 'SELECT * FROM stock ORDER BY update_time DESC',
     partners: 'SELECT * FROM partners ORDER BY short_name',
-    products: 'SELECT * FROM products ORDER BY short_name',
     product_prices: 'SELECT * FROM product_prices ORDER BY effective_date DESC'
   };
 

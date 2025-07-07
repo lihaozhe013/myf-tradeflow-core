@@ -8,30 +8,28 @@
 
 - **backend/**
   - `server.js`：Express服务器入口
-  - `db.js`：SQL## 四、核心业务逻辑
-
-- **价格管理**：产品价格按生效日期管理，查询时取最近有效价格。
-- **库存管理**：入库增加库存，出库减少库存，允许库存为负（前端警告）。
-- **财务管理**：应付=总价-已付，应收=总价-已收，支持部分付款/回款。
-- **数据唯一性**：客户/供应商、产品的"代号-简称-全称/型号"三项强绑定，任意一项变更自动同步，后端API校验唯一性。
-- **自动计算**：总价、应付/应收金额自动计算，进出库自动更新库存。
-- **智能输入**：入库/出库界面支持代号或简称/型号输入，自动补全匹配项，强绑定校验，使用AutoComplete组件提供流畅的输入体验。
-
----
-
-## 五、前端页面结构
-
-- 总览调试页（数据库总览、测试数据）
-- 入库管理页（代号-简称强绑定AutoComplete输入）
-- 出库管理页（代号-简称强绑定AutoComplete输入）
-- 库存明细页
-- 客户/供应商管理页（代号-简称-全称三项联动）
-- 产品管理页（代号-简称-型号三项联动）
-- 产品价格管理页
-- 报表导出页/`：API路由模块（如inbound、outbound、stock、partners、products、productPrices、reports等）
+  - `db.js`：SQLite数据库连接和操作
+  - `routes/`：API路由模块（如inbound、outbound、stock、partners、products、productPrices、reports等）
   - `utils/`：数据库结构、测试数据、报表、库存等工具
 - **frontend/**
   - `index.html`、`vite.config.js`、`src/`（App.jsx、main.jsx、pages/等）
+  - `src/pages/`：页面组件
+    - `Inbound/`：入库管理页面目录
+      - `index.jsx`：主入库组件
+      - `components/InboundFilter.jsx`：筛选器组件
+      - `components/InboundTable.jsx`：表格组件
+      - `components/InboundModal.jsx`：弹窗表单组件
+    - `Outbound/`：出库管理页面目录
+      - `index.jsx`：主出库组件
+      - `components/OutboundFilter.jsx`：筛选器组件
+      - `components/OutboundTable.jsx`：表格组件
+      - `components/OutboundModal.jsx`：弹窗表单组件
+    - `Overview.jsx`：总览调试页
+    - `Stock.jsx`：库存明细页
+    - `Partners.jsx`：客户/供应商管理页
+    - `Products.jsx`：产品管理页
+    - `ProductPrices.jsx`：产品价格管理页
+    - `Report.jsx`：报表导出页
 - 根目录：`package.json`、`README.md`、`ask-llm.md`（本文件）
 
 ---
@@ -55,10 +53,6 @@
 | invoice_number | TEXT | 发票号码 |
 | invoice_image_url | TEXT | 发票图片链接 |
 | order_number | TEXT | 订单号 |
-| payment_date | TEXT | 付款日期 |
-| payment_amount | REAL | 付款金额 |
-| payable_amount | REAL | 应付金额（自动计算） |
-| payment_method | TEXT | 付款方式 |
 | remark | TEXT | 备注 |
 
 ### 2. 出库记录表 outbound_records
@@ -78,10 +72,6 @@
 | invoice_number | TEXT | 发票号码 |
 | invoice_image_url | TEXT | 发票图片链接 |
 | order_number | TEXT | 订单号 |
-| collection_date | TEXT | 回款日期 |
-| collection_amount | REAL | 回款金额 |
-| receivable_amount | REAL | 应收金额（自动计算） |
-| collection_method | TEXT | 回款方式 |
 | remark | TEXT | 备注 |
 
 ### 3. 库存表 stock
@@ -107,7 +97,6 @@
 | 字段 | 类型 | 说明 |
 |---|---|---|
 | code | TEXT UNIQUE | 代号（唯一） |
-| short_name | TEXT PRIMARY KEY | 简称（唯一） |
 | category | TEXT | 产品类别 |
 | product_model | TEXT | 产品型号 |
 | remark | TEXT | 备注 |
@@ -158,12 +147,14 @@
 | POST | /api/product-prices | 新增产品价格 |
 | PUT | /api/product-prices/:id | 修改产品价格 |
 | DELETE | /api/product-prices/:id | 删除产品价格 |
+| GET | /api/product-prices/auto | 自动获取产品单价（参数：partner_short_name, product_model, date，返回匹配的单价） |
 | GET | /api/report/stock | 导出库存明细报表 |
 | GET | /api/report/inout | 导出进出货明细报表 |
 | GET | /api/report/finance | 导出收支统计报表 |
 | GET | /api/product-categories | 获取所有产品类型 |
 | POST | /api/product-categories | 新增产品类型（仅后端维护） |
 | DELETE | /api/product-categories/:name | 删除产品类型（仅后端维护） |
+| POST | /api/stock-rebuild/rebuild | 重建库存表（清空后根据入库/出库记录重新汇总，耗时操作，需前端确认） |
 
 ---
 
@@ -171,32 +162,64 @@
 
 - **价格管理**：产品价格按生效日期管理，查询时取最近有效价格。
 - **库存管理**：入库增加库存，出库减少库存，允许库存为负（前端警告）。
-- **财务管理**：应付=总价-已付，应收=总价-已收，支持部分付款/回款。
-- **数据唯一性**：客户/供应商、产品的“代号-简称-全称”三项强绑定，任意一项变更自动同步，后端API校验唯一性。
-- **自动计算**：总价、应付/应收金额自动计算，进出库自动更新库存。
+- **数据唯一性**：客户/供应商、产品的"代号-简称-全称"三项强绑定，任意一项变更自动同步，后端API校验唯一性。
+- **自动计算**：总价自动计算，进出库自动更新库存。
+- **智能输入**：入库/出库界面支持代号或简称/型号输入，自动补全匹配项，强绑定校验，使用AutoComplete组件提供流畅的输入体验。
 
 ---
 
 ## 五、前端页面结构
 
-- 总览调试页（数据库总览、测试数据）
-- 入库管理页
-- 出库管理页
-- 库存明细页
-- 客户/供应商管理页（代号-简称-全称三项联动）
-- 产品管理页（代号-简称-型号三项联动）
-- 产品价格管理页
-- 报表导出页
+### 页面组织结构
+- **总览调试页**：数据库总览、测试数据
+- **入库管理页**：代号-简称强绑定AutoComplete输入
+- **出库管理页**：代号-简称强绑定AutoComplete输入
+- **库存明细页**：库存查询与统计
+- **客户/供应商管理页**：代号-简称-全称三项联动
+- **产品管理页**：代号-简称-型号三项联动
+- **产品价格管理页**：价格历史管理
+- **报表导出页**：各类报表生成
+
+### 组件化架构
+**入库管理 (`pages/Inbound/`)**
+- `index.jsx` - 主入库组件，负责状态管理和业务逻辑
+- `components/InboundFilter.jsx` - 筛选器组件（供应商、产品、日期范围）
+- `components/InboundTable.jsx` - 表格组件（展示、编辑、删除操作）
+- `components/InboundModal.jsx` - 弹窗表单组件（新增/编辑入库记录）
+
+**出库管理 (`pages/Outbound/`)**
+- `index.jsx` - 主出库组件，负责状态管理和业务逻辑
+- `components/OutboundFilter.jsx` - 筛选器组件（客户、产品、日期范围）
+- `components/OutboundTable.jsx` - 表格组件（展示、编辑、删除操作）
+- `components/OutboundModal.jsx` - 弹窗表单组件（新增/编辑出库记录）
+
+### 组件设计原则
+- **单一职责**：每个组件只负责一个特定功能
+- **Props传递**：父组件管理状态，子组件通过props接收数据和回调
+- **业务逻辑集中**：主要业务逻辑集中在index.jsx中，组件只负责UI展示
+- **可复用性**：组件设计考虑复用性，便于维护和扩展
 
 ---
 
 ## 六、开发建议
 
-- API优先，前后端分离
-- 所有业务逻辑在后端实现，数据库仅存数据
-- 代码模块化、注释清晰
+### 代码组织
+- **API优先**：前后端分离，所有业务逻辑在后端实现
+- **组件化开发**：复杂页面拆分为独立组件，提高代码可维护性
+- **状态管理**：主组件负责状态管理，子组件通过props接收数据
+- **模块化设计**：代码模块化、注释清晰，便于团队协作
+
+### 组件拆分策略
+1. **筛选器组件**：独立的筛选条件输入组件
+2. **表格组件**：数据展示和操作的表格组件
+3. **弹窗组件**：新增/编辑的表单弹窗组件
+4. **主组件**：负责数据获取、状态管理和业务逻辑
+
+### 开发优先级
 - 先实现核心功能，再扩展高级特性
 - 测试用例覆盖所有接口
+- 响应式设计，适配不同屏幕尺寸
+- 错误处理和用户友好的提示信息
 
 ---
 

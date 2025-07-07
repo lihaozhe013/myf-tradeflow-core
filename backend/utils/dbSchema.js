@@ -16,10 +16,6 @@ CREATE TABLE IF NOT EXISTS inbound_records (
   invoice_number TEXT,
   invoice_image_url TEXT,
   order_number TEXT,
-  payment_date TEXT,
-  payment_amount REAL,
-  payable_amount REAL,
-  payment_method TEXT,
   remark TEXT
 );
 
@@ -38,10 +34,6 @@ CREATE TABLE IF NOT EXISTS outbound_records (
   invoice_number TEXT,
   invoice_image_url TEXT,
   order_number TEXT,
-  collection_date TEXT,
-  collection_amount REAL,
-  receivable_amount REAL,
-  collection_method TEXT,
   remark TEXT
 );
 
@@ -64,7 +56,6 @@ CREATE TABLE IF NOT EXISTS partners (
 
 CREATE TABLE IF NOT EXISTS products (
   code TEXT UNIQUE,
-  short_name TEXT PRIMARY KEY,
   category TEXT,
   product_model TEXT,
   remark TEXT

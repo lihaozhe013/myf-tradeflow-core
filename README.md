@@ -1,10 +1,5 @@
 # 小型公司进出货 + 账务系统
 
-![License](https://img.shields.io/badge/license-ISC-blue.svg)
-![Node.js](https://img.shields.io/badge/Node.js-18%2B-green.svg)
-![React](https://img.shields.io/badge/React-18-blue.svg)
-![Ant Design](https://img.shields.io/badge/Ant%20Design-5-blue.svg)
-
 一个专为小型企业设计的轻量级库存管理和账务系统，基于现代Web技术栈构建，提供完整的进出货管理、库存跟踪和财务报表功能。
 
 ---
@@ -185,12 +180,6 @@ npm run db:seed       # 填充测试数据
 - Fork、分支开发、Pull Request
 - 代码规范：ESLint + Prettier
 - 问题反馈：Issue 或联系维护者
-
----
-
-## 📄 许可证
-
-ISC License
 
 ---
 

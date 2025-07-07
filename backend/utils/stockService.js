@@ -33,28 +33,27 @@ function updateStock(recordId, productModel, quantity, type) {
   );
 }
 
-// 获取库存明细
+// 获取库存明细（只取每种商品最新一条记录）
 function getStockSummary(productModel, callback) {
   let sql = `
-    SELECT 
-      product_model,
-      SUM(CASE WHEN record_id IN (SELECT id FROM inbound_records) THEN stock_quantity ELSE 0 END) as total_inbound,
-      SUM(CASE WHEN record_id IN (SELECT id FROM outbound_records) THEN ABS(stock_quantity) ELSE 0 END) as total_outbound,
-      SUM(stock_quantity) as current_stock,
-      MAX(update_time) as last_update
-    FROM stock 
-    WHERE 1=1
+    SELECT s.product_model, s.stock_quantity as current_stock, s.update_time as last_update
+    FROM stock s
+    INNER JOIN (
+      SELECT product_model, MAX(update_time) as max_update
+      FROM stock
+      WHERE 1=1
+      ${productModel ? 'AND product_model LIKE ?' : ''}
+      GROUP BY product_model
+    ) latest
+    ON s.product_model = latest.product_model AND s.update_time = latest.max_update
+    ${productModel ? 'WHERE s.product_model LIKE ?' : ''}
+    ORDER BY s.product_model
   `;
-  
   let params = [];
-  
   if (productModel) {
-    sql += ' AND product_model LIKE ?';
+    params.push(`%${productModel}%`);
     params.push(`%${productModel}%`);
   }
-  
-  sql += ' GROUP BY product_model ORDER BY product_model';
-  
   db.all(sql, params, callback);
 }
 
@@ -81,4 +80,4 @@ module.exports = {
   updateStock,
   getStockSummary,
   getStockHistory
-}; 
+};

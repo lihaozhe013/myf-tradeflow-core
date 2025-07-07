@@ -130,4 +130,30 @@ router.delete('/:id', (req, res) => {
   });
 });
 
-module.exports = router; 
+// 自动获取产品价格（完全匹配且生效日期<=指定日期，取最晚的）
+router.get('/auto', (req, res) => {
+  const { partner_short_name, product_model, date } = req.query;
+  if (!partner_short_name || !product_model || !date) {
+    res.status(400).json({ error: '缺少必要参数：partner_short_name, product_model, date' });
+    return;
+  }
+  const sql = `
+    SELECT unit_price FROM product_prices
+    WHERE partner_short_name = ? AND product_model = ? AND effective_date <= ?
+    ORDER BY effective_date DESC
+    LIMIT 1
+  `;
+  db.get(sql, [partner_short_name, product_model, date], (err, row) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    if (!row) {
+      res.status(404).json({ error: '未找到匹配的单价' });
+      return;
+    }
+    res.json({ unit_price: row.unit_price });
+  });
+});
+
+module.exports = router;

@@ -56,6 +56,7 @@ const productsRoutes = require('./routes/products');               // 产品管�
 const productPricesRoutes = require('./routes/productPrices');     // 产品价格管理
 const reportsRoutes = require('./routes/reports');                 // 报表生成
 const productCategoriesRoutes = require('./routes/productCategories'); // 产品类型管理
+const stockRebuildRoutes = require('./routes/stockRebuild');       // 库存重建
 
 // 注册 API 路由
 app.use('/api/debug', debugRoutes);
@@ -67,6 +68,7 @@ app.use('/api/products', productsRoutes);
 app.use('/api/product-prices', productPricesRoutes);
 app.use('/api/report', reportsRoutes);
 app.use('/api/product-categories', productCategoriesRoutes);
+app.use('/api/stock-rebuild', stockRebuildRoutes);
 
 console.log('✅ API 路由已注册');
 
@@ -108,16 +110,4 @@ app.listen(PORT, () => {
     console.log('🔧 开发模式运行中');
     console.log('🌐 前端开发服务器: http://localhost:5173');
   }
-  
-  console.log('');
-  console.log('📚 API 接口列表:');
-  console.log('   - /api/partners      - 客户/供应商管理');
-  console.log('   - /api/products      - 产品管理');
-  console.log('   - /api/inbound       - 入库管理');
-  console.log('   - /api/outbound      - 出库管理');
-  console.log('   - /api/stock         - 库存管理');
-  console.log('   - /api/product-prices - 价格管理');
-  console.log('   - /api/report        - 报表导出');
-  console.log('   - /api/debug         - 调试接口');
-  console.log('');
 });

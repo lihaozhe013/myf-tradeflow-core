@@ -12,9 +12,11 @@ import {
   Space,
   message,
   Statistic,
-  Tag
+  Tag,
+  Modal,
+  Progress
 } from 'antd';
-import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
+import { SearchOutlined, ReloadOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -26,6 +28,10 @@ const Stock = () => {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [productFilter, setProductFilter] = useState('');
   const [products, setProducts] = useState([]);
+  const [rebuildModalVisible, setRebuildModalVisible] = useState(false);
+  const [rebuildModalLoading, setRebuildModalLoading] = useState(false);
+  const [progress, setProgress] = useState({ total: 0, current: 0, running: false });
+  const [progressTimer, setProgressTimer] = useState(null);
 
   // 获取库存数据
   const fetchStockData = async () => {
@@ -98,17 +104,11 @@ const Stock = () => {
     fetchStockHistory();
   };
 
-  // 筛选库存数据
+  // 筛选库存数据（后端已保证每种商品只返回一条最新记录）
   const filteredStockData = stockData.filter(item => {
     if (!productFilter) return true;
     return item.product_model && item.product_model.toLowerCase().includes(productFilter.toLowerCase());
   });
-
-  // 计算统计数据
-  const totalProducts = filteredStockData.length;
-  const totalQuantity = filteredStockData.reduce((sum, item) => sum + (item.current_stock || 0), 0);
-  const lowStockCount = filteredStockData.filter(item => (item.current_stock || 0) < 10).length;
-  const outOfStockCount = filteredStockData.filter(item => (item.current_stock || 0) === 0).length;
 
   // 库存明细表格列定义
   const stockColumns = [
@@ -183,48 +183,61 @@ const Stock = () => {
     },
   ];
 
+  const showRebuildModal = () => setRebuildModalVisible(true);
+
+  const pollProgress = () => {
+    fetch('/api/stock-rebuild/progress')
+      .then(res => res.json())
+      .then(data => {
+        setProgress(data);
+        if (data.running) {
+          setProgressTimer(setTimeout(pollProgress, 500));
+        } else {
+          setProgressTimer(null);
+        }
+      })
+      .catch(() => setProgressTimer(null));
+  };
+
+  const handleRebuildOk = async () => {
+    setRebuildModalLoading(true);
+    setProgress({ total: 0, current: 0, running: true });
+    const hide = message.loading('正在重建库存，请稍候...', 0);
+    try {
+      const response = await fetch('/api/stock-rebuild/rebuild', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      pollProgress(); // 启动进度轮询
+      const result = await response.json();
+      if (response.ok && result.success) {
+        message.success('库存重建成功！');
+        fetchStockData();
+        fetchStockHistory();
+        setRebuildModalVisible(false);
+      } else {
+        message.error(result.error || '库存重建失败');
+      }
+    } catch (error) {
+      message.error('库存重建失败: ' + error.message);
+      console.error('重建库存请求异常:', error);
+    } finally {
+      setRebuildModalLoading(false);
+      hide();
+      setProgressTimer(null);
+    }
+  };
+
+  const handleRebuildCancel = () => setRebuildModalVisible(false);
+
+  React.useEffect(() => {
+    return () => {
+      if (progressTimer) clearTimeout(progressTimer);
+    };
+  }, [progressTimer]);
+
   return (
     <div>
-      {/* 统计卡片 */}
-      <Row gutter={16} style={{ marginBottom: 16 }}>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="产品种类"
-              value={totalProducts}
-              valueStyle={{ color: '#1890ff' }}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="总库存量"
-              value={totalQuantity}
-              valueStyle={{ color: '#52c41a' }}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="库存不足"
-              value={lowStockCount}
-              valueStyle={{ color: '#fa8c16' }}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="缺货产品"
-              value={outOfStockCount}
-              valueStyle={{ color: '#ff4d4f' }}
-            />
-          </Card>
-        </Col>
-      </Row>
-
       {/* 库存明细 */}
       <Card>
         <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
@@ -261,6 +274,14 @@ const Stock = () => {
                 loading={loading}
               >
                 刷新
+              </Button>
+              <Button
+                danger
+                type="primary"
+                onClick={showRebuildModal}
+                loading={loading}
+              >
+                重建库存
               </Button>
             </Space>
           </Col>
@@ -313,6 +334,29 @@ const Stock = () => {
           />
         </div>
       </Card>
+
+      {/* 重建库存数据确认弹窗 */}
+      <Modal
+        title="重建库存数据"
+        open={rebuildModalVisible}
+        onOk={handleRebuildOk}
+        onCancel={handleRebuildCancel}
+        confirmLoading={rebuildModalLoading}
+        okText="确定"
+        cancelText="取消"
+        maskClosable={false}
+        destroyOnClose
+      >
+        <p>此操作将清空并重新计算所有库存数据，过程可能耗时较长，确定要继续吗？</p>
+        {progress.running && progress.total > 0 && (
+          <Progress
+            percent={Math.round((progress.current / progress.total) * 100)}
+            status={progress.current < progress.total ? 'active' : 'success'}
+            style={{ marginTop: 16 }}
+            format={p => `进度：${progress.current}/${progress.total} (${p}%)`}
+          />
+        )}
+      </Modal>
     </div>
   );
 };
