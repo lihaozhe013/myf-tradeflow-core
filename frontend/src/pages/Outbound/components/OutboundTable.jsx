@@ -78,26 +78,24 @@ const OutboundTable = ({
       sorter: true,
     },
     {
-      title: '回款状态',
-      key: 'collection_status',
-      width: 100,
+      title: '发票链接',
+      key: 'invoice_link',
+      width: 120,
       render: (_, record) => {
-        const receivableAmount = record.receivable_amount || 0;
-        if (receivableAmount <= 0) {
-          return <Tag color="green">已回款</Tag>;
-        } else if (record.collection_amount > 0) {
-          return <Tag color="orange">部分回款</Tag>;
-        } else {
-          return <Tag color="red">未回款</Tag>;
+        if (record.invoice_image_url && record.invoice_image_url.trim()) {
+          return (
+            <Button
+              type="link"
+              size="small"
+              onClick={() => window.open(record.invoice_image_url, '_blank')}
+              style={{ padding: 0 }}
+            >
+              点击查看
+            </Button>
+          );
         }
+        return <span style={{ color: '#999' }}>暂无发票链接</span>;
       },
-    },
-    {
-      title: '应收金额',
-      dataIndex: 'receivable_amount',
-      key: 'receivable_amount',
-      width: 100,
-      render: (amount) => `¥${amount || 0}`,
     },
     {
       title: '操作',
@@ -153,7 +151,7 @@ const OutboundTable = ({
           showQuickJumper: true,
           showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条/共 ${total} 条`,
         }}
-        scroll={{ x: 1200 }}
+        scroll={{ x: 1320 }}
       />
     </div>
   );
