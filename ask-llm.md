@@ -275,4 +275,53 @@
 
 ---
 
+## 七、配置管理
+
+### 统一配置架构
+- **配置文件**：`frontend/src/config/appConfig.json` - 集中管理所有应用配置项
+- **导出模块**：`frontend/src/config/index.js` - 提供便捷的配置导入和工具函数
+
+### 配置项说明
+
+#### 付款/回款方式配置 (`paymentMethods`)
+```json
+{
+  "paymentMethods": {
+    "list": ["现金", "银行转账", "支票", "银行承兑汇票", "商业承兑汇票", "支付宝", "微信支付", "其他"],
+    "default": "银行转账",
+    "config": {
+      "cash": { "label": "现金", "code": "CASH" },
+      "bank_transfer": { "label": "银行转账", "code": "BANK_TRANSFER" }
+    }
+  }
+}
+```
+
+#### 产品类别配置 (`productCategories`)
+```json
+{
+  "productCategories": {
+    "list": ["电子产品", "机械设备", "办公用品", "原材料", "化工产品", "其他"],
+    "default": "其他"
+  }
+}
+```
+
+### 配置使用方式
+```javascript
+// 导入配置
+import { PAYMENT_METHODS, PRODUCT_CATEGORIES, DEFAULT_PAYMENT_METHOD } from '../config';
+
+// 使用工具函数
+import { getPaymentMethodOptions, getProductCategoryOptions } from '../config';
+```
+
+### 维护说明
+- **添加新配置**：直接在 `appConfig.json` 中添加配置项
+- **修改生效**：修改配置文件后重启应用即可生效
+- **版本控制**：配置变更可通过Git跟踪，便于团队协作
+- **扩展性**：支持添加更多配置项，如系统设置、UI主题等
+
+---
+
 > 本文件为LLM/AI开发辅助文档，便于理解项目结构、API和业务规则，适合自动化代码生成和智能对话。

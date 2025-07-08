@@ -1,5 +1,6 @@
 import React from 'react';
 import { Modal, Form, Input, InputNumber, DatePicker, Select } from 'antd';
+import { PAYMENT_METHODS, DEFAULT_PAYMENT_METHOD } from '../../../config';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -30,18 +31,6 @@ const PayableModal = ({
     onCancel();
   };
 
-  // 付款方式选项
-  const paymentMethods = [
-    '现金',
-    '银行转账',
-    '支票',
-    '银行承兑汇票',
-    '商业承兑汇票',
-    '支付宝',
-    '微信支付',
-    '其他'
-  ];
-
   return (
     <Modal
       title={editingPayment ? '编辑付款记录' : '新增付款记录'}
@@ -55,7 +44,7 @@ const PayableModal = ({
         form={form}
         layout="vertical"
         initialValues={{
-          pay_method: '银行转账',
+          pay_method: DEFAULT_PAYMENT_METHOD,
         }}
       >
         <Form.Item
@@ -115,7 +104,7 @@ const PayableModal = ({
           rules={[{ required: true, message: '请选择付款方式' }]}
         >
           <Select placeholder="请选择付款方式">
-            {paymentMethods.map(method => (
+            {PAYMENT_METHODS.map(method => (
               <Option key={method} value={method}>
                 {method}
               </Option>
