@@ -45,6 +45,7 @@ const productPricesRoutes = require('./routes/productPrices');     // 产品价�
 const reportsRoutes = require('./routes/reports');                 // 报表生成
 const productCategoriesRoutes = require('./routes/productCategories'); // 产品类型管理
 const stockRebuildRoutes = require('./routes/stockRebuild');       // 库存重建
+const receivableRoutes = require('./routes/receivable');           // 应收账款管理
 
 // 注册 API 路由
 app.use('/api/debug', debugRoutes);
@@ -57,6 +58,7 @@ app.use('/api/product-prices', productPricesRoutes);
 app.use('/api/report', reportsRoutes);
 app.use('/api/product-categories', productCategoriesRoutes);
 app.use('/api/stock-rebuild', stockRebuildRoutes);
+app.use('/api/receivable', receivableRoutes);
 
 // =============================================================================
 // 静态文件托管 (生产环境)

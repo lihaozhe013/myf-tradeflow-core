@@ -1,5 +1,4 @@
 import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
-import { useState } from 'react'
 import React from 'react';
 import Inbound from './pages/Inbound';
 import Outbound from './pages/Outbound';
@@ -9,6 +8,7 @@ import Products from './pages/Products';
 import ProductPrices from './pages/ProductPrices';
 import Report from './pages/Report';
 import Overview from './pages/Overview';
+import Receivable from './pages/Receivable';
 import { Menu, Layout, Alert } from 'antd';
 import './App.css';
 
@@ -54,7 +54,6 @@ class ErrorBoundary extends React.Component {
 
 function AppContent() {
   const location = useLocation();
-  const [count, setCount] = useState(0)
 
   // 根据当前路径确定选中的菜单项
   const getSelectedKey = () => {
@@ -66,6 +65,7 @@ function AppContent() {
     if (path === '/partners') return 'partners';
     if (path === '/products') return 'products';
     if (path === '/product-prices') return 'product-prices';
+    if (path === '/receivable') return 'receivable';
     if (path === '/report') return 'report';
     return 'overview';
   };
@@ -101,6 +101,10 @@ function AppContent() {
       label: <Link to="/product-prices">产品价格管理</Link>,
     },
     {
+      key: 'receivable',
+      label: <Link to="/receivable">应收账款管理</Link>,
+    },
+    {
       key: 'report',
       label: <Link to="/report">报表导出</Link>,
     },
@@ -129,6 +133,7 @@ function AppContent() {
               <Route path="/partners" element={<Partners />} />
               <Route path="/products" element={<Products />} />
               <Route path="/product-prices" element={<ProductPrices />} />
+              <Route path="/receivable" element={<Receivable />} />
               <Route path="/report" element={<Report />} />
               <Route path="*" element={<Navigate to="/overview" replace />} />
             </Routes>

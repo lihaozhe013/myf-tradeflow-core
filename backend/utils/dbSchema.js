@@ -72,6 +72,15 @@ CREATE TABLE IF NOT EXISTS product_prices (
 CREATE TABLE IF NOT EXISTS product_categories (
   name TEXT PRIMARY KEY
 );
+
+CREATE TABLE IF NOT EXISTS receivable_payments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  customer_code TEXT,
+  amount REAL,
+  pay_date TEXT,
+  pay_method TEXT,
+  remark TEXT
+);
 `;
 
 module.exports = {
