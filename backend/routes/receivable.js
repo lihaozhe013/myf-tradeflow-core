@@ -22,23 +22,31 @@ router.get('/', (req, res) => {
   }
 
   const offset = (page - 1) * limit;
-  
+
+  // 修正聚合方式，避免金额重复累加
   const sql = `
-    SELECT 
+    SELECT
       p.code AS customer_code,
       p.short_name AS customer_short_name,
       p.full_name AS customer_full_name,
-      COALESCE(SUM(o.total_price), 0) AS total_receivable,
-      COALESCE(SUM(r.amount), 0) AS total_paid,
-      MAX(r.pay_date) AS last_payment_date,
-      MAX(r.pay_method) AS last_payment_method,
-      COALESCE(SUM(o.total_price), 0) - COALESCE(SUM(r.amount), 0) AS balance,
-      COUNT(DISTINCT r.id) AS payment_count
+      COALESCE(o.total_receivable, 0) AS total_receivable,
+      COALESCE(r.total_paid, 0) AS total_paid,
+      COALESCE(o.total_receivable, 0) - COALESCE(r.total_paid, 0) AS balance,
+      r.last_payment_date,
+      r.last_payment_method,
+      r.payment_count
     FROM partners p
-    LEFT JOIN outbound_records o ON p.code = o.customer_code
-    LEFT JOIN receivable_payments r ON p.code = r.customer_code
+    LEFT JOIN (
+      SELECT customer_code, SUM(total_price) AS total_receivable
+      FROM outbound_records
+      GROUP BY customer_code
+    ) o ON p.code = o.customer_code
+    LEFT JOIN (
+      SELECT customer_code, SUM(amount) AS total_paid, MAX(pay_date) AS last_payment_date, MAX(pay_method) AS last_payment_method, COUNT(*) AS payment_count
+      from receivable_payments
+      GROUP BY customer_code
+    ) r ON p.code = r.customer_code
     WHERE p.type = 1${whereSql}
-    GROUP BY p.code, p.short_name, p.full_name
     ORDER BY ${orderBy}
     LIMIT ? OFFSET ?
   `;

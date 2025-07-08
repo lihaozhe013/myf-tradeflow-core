@@ -22,27 +22,35 @@ router.get('/', (req, res) => {
   }
 
   const offset = (page - 1) * limit;
-  
+
+  // 修正聚合方式，避免金额重复累加
   const sql = `
-    SELECT 
+    SELECT
       p.code AS supplier_code,
       p.short_name AS supplier_short_name,
       p.full_name AS supplier_full_name,
-      COALESCE(SUM(i.total_price), 0) AS total_payable,
-      COALESCE(SUM(pp.amount), 0) AS total_paid,
-      MAX(pp.pay_date) AS last_payment_date,
-      MAX(pp.pay_method) AS last_payment_method,
-      COALESCE(SUM(i.total_price), 0) - COALESCE(SUM(pp.amount), 0) AS balance,
-      COUNT(DISTINCT pp.id) AS payment_count
+      COALESCE(i.total_payable, 0) AS total_payable,
+      COALESCE(pp.total_paid, 0) AS total_paid,
+      COALESCE(i.total_payable, 0) - COALESCE(pp.total_paid, 0) AS balance,
+      pp.last_payment_date,
+      pp.last_payment_method,
+      pp.payment_count
     FROM partners p
-    LEFT JOIN inbound_records i ON p.code = i.supplier_code
-    LEFT JOIN payable_payments pp ON p.code = pp.supplier_code
+    LEFT JOIN (
+      SELECT supplier_code, SUM(total_price) AS total_payable
+      FROM inbound_records
+      GROUP BY supplier_code
+    ) i ON p.code = i.supplier_code
+    LEFT JOIN (
+      SELECT supplier_code, SUM(amount) AS total_paid, MAX(pay_date) AS last_payment_date, MAX(pay_method) AS last_payment_method, COUNT(*) AS payment_count
+      FROM payable_payments
+      GROUP BY supplier_code
+    ) pp ON p.code = pp.supplier_code
     WHERE p.type = 0${whereSql}
-    GROUP BY p.code, p.short_name, p.full_name
     ORDER BY ${orderBy}
     LIMIT ? OFFSET ?
   `;
-  
+
   params.push(parseInt(limit), parseInt(offset));
 
   db.all(sql, params, (err, rows) => {
