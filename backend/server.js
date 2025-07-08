@@ -1,13 +1,3 @@
-/**
- * 小型公司进出货 + 账务系统 - 后端服务器
- * 
- * 功能模块：
- * - 数据库自动初始化和升级
- * - RESTful API 路由管理
- * - 跨域支持 (开发环境)
- * - 静态文件托管 (生产环境)
- */
-
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
@@ -20,8 +10,6 @@ const PORT = process.env.PORT || 3000;
 // =============================================================================
 // 数据库初始化
 // =============================================================================
-
-console.log('🚀 启动小型进出货管理系统...');
 
 // 启动时自动检查和升级数据库结构
 ensureAllTablesAndColumns();
@@ -39,7 +27,7 @@ if (process.env.NODE_ENV !== 'production') {
     origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
     credentials: true
   }));
-  console.log('🔧 开发模式：已启用 CORS 跨域支持');
+  console.log('开发模式：已启用 CORS 跨域支持');
 }
 
 // =============================================================================
@@ -70,8 +58,6 @@ app.use('/api/report', reportsRoutes);
 app.use('/api/product-categories', productCategoriesRoutes);
 app.use('/api/stock-rebuild', stockRebuildRoutes);
 
-console.log('✅ API 路由已注册');
-
 // =============================================================================
 // 静态文件托管 (生产环境)
 // =============================================================================
@@ -86,28 +72,4 @@ if (process.env.NODE_ENV === 'production') {
   app.get(/^\/(?!api).*/, (req, res) => {
     res.sendFile(path.join(frontendDist, 'index.html'));
   });
-  
-  console.log('📦 生产模式：前端静态文件已托管');
 }
-
-// =============================================================================
-// 服务器启动
-// =============================================================================
-
-// =============================================================================
-// 服务器启动
-// =============================================================================
-
-app.listen(PORT, () => {
-  console.log('');
-  console.log('🎉 服务器启动成功！');
-  console.log(`🚀 后端API服务: http://localhost:${PORT}`);
-  
-  if (process.env.NODE_ENV === 'production') {
-    console.log('📦 前端页面已托管在同一端口');
-    console.log(`🌐 访问地址: http://localhost:${PORT}`);
-  } else {
-    console.log('🔧 开发模式运行中');
-    console.log('🌐 前端开发服务器: http://localhost:5173');
-  }
-});

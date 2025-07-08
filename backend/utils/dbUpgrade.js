@@ -15,8 +15,6 @@ function ensureAllTablesAndColumns() {
   const dbPath = path.resolve(__dirname, '../data.db');
   const dbInstance = new sqlite3.Database(dbPath);
   
-  console.log('🔧 开始数据库结构检查...');
-  
   // 1. 执行基础表结构创建
   dbInstance.exec(initSql, (err) => {
     if (err) {
@@ -24,8 +22,6 @@ function ensureAllTablesAndColumns() {
       dbInstance.close();
       return;
     }
-    
-    console.log('✅ 基础表结构已确认');
     
     // 2. 检查并补全字段
     checkAndAddMissingColumns(dbInstance);
@@ -47,12 +43,8 @@ function checkAndAddMissingColumns(dbInstance) {
       dbInstance.run("ALTER TABLE partners ADD COLUMN code TEXT UNIQUE", (err2) => {
         if (err2) {
           console.error('❌ 添加 partners.code 字段失败:', err2.message);
-        } else {
-          console.log('✅ 已补全 partners.code 字段');
         }
       });
-    } else {
-      console.log('✅ partners.code 字段已存在');
     }
     
     pendingChecks--;
@@ -67,12 +59,8 @@ function checkAndAddMissingColumns(dbInstance) {
       dbInstance.run("ALTER TABLE products ADD COLUMN code TEXT UNIQUE", (err2) => {
         if (err2) {
           console.error('❌ 添加 products.code 字段失败:', err2.message);
-        } else {
-          console.log('✅ 已补全 products.code 字段');
         }
       });
-    } else {
-      console.log('✅ products.code 字段已存在');
     }
     
     pendingChecks--;
@@ -91,8 +79,6 @@ function checkAndAddMissingColumns(dbInstance) {
         dbInstance.run("ALTER TABLE inbound_records ADD COLUMN supplier_code TEXT", (err2) => {
           if (err2) {
             console.error('❌ 添加 inbound_records.supplier_code 字段失败:', err2.message);
-          } else {
-            console.log('✅ 已补全 inbound_records.supplier_code 字段');
           }
         });
       }
@@ -101,14 +87,12 @@ function checkAndAddMissingColumns(dbInstance) {
         dbInstance.run("ALTER TABLE inbound_records ADD COLUMN product_code TEXT", (err3) => {
           if (err3) {
             console.error('❌ 添加 inbound_records.product_code 字段失败:', err3.message);
-          } else {
-            console.log('✅ 已补全 inbound_records.product_code 字段');
           }
         });
       }
       
-      if (!needsSupplierCode && !needsProductCode) {
-        console.log('✅ inbound_records 代号字段已存在');
+      if (needsSupplierCode && needsProductCode) {
+        console.log('❌ inbound_records 代号字段未存在');
       }
     }
     
@@ -128,8 +112,6 @@ function checkAndAddMissingColumns(dbInstance) {
         dbInstance.run("ALTER TABLE outbound_records ADD COLUMN customer_code TEXT", (err2) => {
           if (err2) {
             console.error('❌ 添加 outbound_records.customer_code 字段失败:', err2.message);
-          } else {
-            console.log('✅ 已补全 outbound_records.customer_code 字段');
           }
         });
       }
@@ -138,14 +120,12 @@ function checkAndAddMissingColumns(dbInstance) {
         dbInstance.run("ALTER TABLE outbound_records ADD COLUMN product_code TEXT", (err3) => {
           if (err3) {
             console.error('❌ 添加 outbound_records.product_code 字段失败:', err3.message);
-          } else {
-            console.log('✅ 已补全 outbound_records.product_code 字段');
           }
         });
       }
       
-      if (!needsCustomerCode && !needsProductCode) {
-        console.log('✅ outbound_records 代号字段已存在');
+      if (needsCustomerCode && needsProductCode) {
+        console.log('❌ outbound_records 代号字段未存在');
       }
     }
     
@@ -159,7 +139,6 @@ function checkAndAddMissingColumns(dbInstance) {
  * @param {sqlite3.Database} dbInstance 数据库实例
  */
 function finishUpgrade(dbInstance) {
-  console.log('✅ 数据库结构检查/升级完成');
   dbInstance.close((err) => {
     if (err) {
       console.error('❌ 关闭数据库连接失败:', err.message);
