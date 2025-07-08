@@ -9,6 +9,7 @@ import ProductPrices from './pages/ProductPrices';
 import Report from './pages/Report';
 import Overview from './pages/Overview';
 import Receivable from './pages/Receivable';
+import Payable from './pages/Payable';
 import { Menu, Layout, Alert } from 'antd';
 import './App.css';
 
@@ -66,6 +67,7 @@ function AppContent() {
     if (path === '/products') return 'products';
     if (path === '/product-prices') return 'product-prices';
     if (path === '/receivable') return 'receivable';
+    if (path === '/payable') return 'payable';
     if (path === '/report') return 'report';
     return 'overview';
   };
@@ -105,6 +107,10 @@ function AppContent() {
       label: <Link to="/receivable">应收账款管理</Link>,
     },
     {
+      key: 'payable',
+      label: <Link to="/payable">应付账款管理</Link>,
+    },
+    {
       key: 'report',
       label: <Link to="/report">报表导出</Link>,
     },
@@ -134,6 +140,7 @@ function AppContent() {
               <Route path="/products" element={<Products />} />
               <Route path="/product-prices" element={<ProductPrices />} />
               <Route path="/receivable" element={<Receivable />} />
+              <Route path="/payable" element={<Payable />} />
               <Route path="/report" element={<Report />} />
               <Route path="*" element={<Navigate to="/overview" replace />} />
             </Routes>

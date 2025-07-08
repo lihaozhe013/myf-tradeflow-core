@@ -81,6 +81,15 @@ CREATE TABLE IF NOT EXISTS receivable_payments (
   pay_method TEXT,
   remark TEXT
 );
+
+CREATE TABLE IF NOT EXISTS payable_payments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  supplier_code TEXT,
+  amount REAL,
+  pay_date TEXT,
+  pay_method TEXT,
+  remark TEXT
+);
 `;
 
 module.exports = {
