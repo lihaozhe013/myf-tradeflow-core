@@ -167,56 +167,65 @@ router.delete('/payments/:id', (req, res) => {
   });
 });
 
-// 获取供应商的应付账款详情（包含入库记录和付款记录）
+// 获取供应商的应付账款详情（只返回最近10条入库和付款记录）
 router.get('/details/:supplier_code', (req, res) => {
   const { supplier_code } = req.params;
-  
+
   // 获取供应商信息
   const supplierSql = 'SELECT * FROM partners WHERE code = ? AND type = 0';
-  
+
   db.get(supplierSql, [supplier_code], (err, supplier) => {
     if (err) {
       res.status(500).json({ error: err.message });
       return;
     }
-    
+
     if (!supplier) {
       res.status(404).json({ error: '供应商不存在' });
       return;
     }
-    
-    // 获取入库记录
-    const inboundSql = 'SELECT * FROM inbound_records WHERE supplier_code = ? ORDER BY inbound_date DESC';
-    
+
+    // 获取最近10条入库记录
+    const inboundSql = 'SELECT * FROM inbound_records WHERE supplier_code = ? ORDER BY inbound_date DESC LIMIT 10';
     db.all(inboundSql, [supplier_code], (err, inboundRecords) => {
       if (err) {
         res.status(500).json({ error: err.message });
         return;
       }
-      
-      // 获取付款记录
-      const paymentSql = 'SELECT * FROM payable_payments WHERE supplier_code = ? ORDER BY pay_date DESC';
-      
+      // 获取最近10条付款记录
+      const paymentSql = 'SELECT * FROM payable_payments WHERE supplier_code = ? ORDER BY pay_date DESC LIMIT 10';
       db.all(paymentSql, [supplier_code], (err, paymentRecords) => {
         if (err) {
           res.status(500).json({ error: err.message });
           return;
         }
-        
-        // 计算统计数据
-        const totalPayable = inboundRecords.reduce((sum, record) => sum + (record.total_price || 0), 0);
-        const totalPaid = paymentRecords.reduce((sum, record) => sum + (record.amount || 0), 0);
-        const balance = totalPayable - totalPaid;
-        
-        res.json({
-          supplier,
-          summary: {
-            total_payable: totalPayable,
-            total_paid: totalPaid,
-            balance: balance
-          },
-          inbound_records: inboundRecords,
-          payment_records: paymentRecords
+        // 计算统计数据（全量统计）
+        const totalPayableSql = 'SELECT SUM(total_price) as total FROM inbound_records WHERE supplier_code = ?';
+        db.get(totalPayableSql, [supplier_code], (err, totalPayableResult) => {
+          if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+          }
+          const totalPayable = totalPayableResult.total || 0;
+          const totalPaidSql = 'SELECT SUM(amount) as total FROM payable_payments WHERE supplier_code = ?';
+          db.get(totalPaidSql, [supplier_code], (err, totalPaidResult) => {
+            if (err) {
+              res.status(500).json({ error: err.message });
+              return;
+            }
+            const totalPaid = totalPaidResult.total || 0;
+            const balance = totalPayable - totalPaid;
+            res.json({
+              supplier,
+              summary: {
+                total_payable: totalPayable,
+                total_paid: totalPaid,
+                balance: balance
+              },
+              inbound_records: inboundRecords,
+              payment_records: paymentRecords
+            });
+          });
         });
       });
     });

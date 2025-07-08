@@ -153,56 +153,65 @@ router.delete('/payments/:id', (req, res) => {
   });
 });
 
-// 获取客户的应收账款详情（包含出库记录和回款记录）
+// 获取客户的应收账款详情（只返回最近10条出库和回款记录）
 router.get('/details/:customer_code', (req, res) => {
   const { customer_code } = req.params;
-  
+
   // 获取客户信息
   const customerSql = 'SELECT * FROM partners WHERE code = ? AND type = 1';
-  
+
   db.get(customerSql, [customer_code], (err, customer) => {
     if (err) {
       res.status(500).json({ error: err.message });
       return;
     }
-    
+
     if (!customer) {
       res.status(404).json({ error: '客户不存在' });
       return;
     }
-    
-    // 获取出库记录
-    const outboundSql = 'SELECT * FROM outbound_records WHERE customer_code = ? ORDER BY outbound_date DESC';
-    
+
+    // 获取最近10条出库记录
+    const outboundSql = 'SELECT * FROM outbound_records WHERE customer_code = ? ORDER BY outbound_date DESC LIMIT 10';
     db.all(outboundSql, [customer_code], (err, outboundRecords) => {
       if (err) {
         res.status(500).json({ error: err.message });
         return;
       }
-      
-      // 获取回款记录
-      const paymentSql = 'SELECT * FROM receivable_payments WHERE customer_code = ? ORDER BY pay_date DESC';
-      
+      // 获取最近10条回款记录
+      const paymentSql = 'SELECT * FROM receivable_payments WHERE customer_code = ? ORDER BY pay_date DESC LIMIT 10';
       db.all(paymentSql, [customer_code], (err, paymentRecords) => {
         if (err) {
           res.status(500).json({ error: err.message });
           return;
         }
-        
-        // 计算统计数据
-        const totalReceivable = outboundRecords.reduce((sum, record) => sum + (record.total_price || 0), 0);
-        const totalPaid = paymentRecords.reduce((sum, record) => sum + (record.amount || 0), 0);
-        const balance = totalReceivable - totalPaid;
-        
-        res.json({
-          customer,
-          summary: {
-            total_receivable: totalReceivable,
-            total_paid: totalPaid,
-            balance: balance
-          },
-          outbound_records: outboundRecords,
-          payment_records: paymentRecords
+        // 计算统计数据（全量统计）
+        const totalReceivableSql = 'SELECT SUM(total_price) as total FROM outbound_records WHERE customer_code = ?';
+        db.get(totalReceivableSql, [customer_code], (err, totalReceivableResult) => {
+          if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+          }
+          const totalReceivable = totalReceivableResult.total || 0;
+          const totalPaidSql = 'SELECT SUM(amount) as total FROM receivable_payments WHERE customer_code = ?';
+          db.get(totalPaidSql, [customer_code], (err, totalPaidResult) => {
+            if (err) {
+              res.status(500).json({ error: err.message });
+              return;
+            }
+            const totalPaid = totalPaidResult.total || 0;
+            const balance = totalReceivable - totalPaid;
+            res.json({
+              customer,
+              summary: {
+                total_receivable: totalReceivable,
+                total_paid: totalPaid,
+                balance: balance
+              },
+              outbound_records: outboundRecords,
+              payment_records: paymentRecords
+            });
+          });
         });
       });
     });
