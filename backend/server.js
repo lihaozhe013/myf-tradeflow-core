@@ -73,3 +73,15 @@ if (process.env.NODE_ENV === 'production') {
     res.sendFile(path.join(frontendDist, 'index.html'));
   });
 }
+
+app.listen(PORT, () => {
+  console.log('后端服务器启动成功！');
+  console.log(`后端API服务: http://localhost:${PORT}`);
+  if (process.env.NODE_ENV === 'production') {
+    console.log('📦 生产环境运行中');
+    console.log(`🌐 前端开发服务器: http://localhost:${PORT}`);
+  } else {
+    console.log('🔧 开发模式运行中');
+    console.log('🌐 前端开发服务器: http://localhost:5173');
+  }
+});
