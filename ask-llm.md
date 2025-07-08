@@ -9,11 +9,16 @@
 - **backend/**
   - `server.js`：Express服务器入口
   - `db.js`：SQLite数据库连接和操作
-  - `routes/`：API路由模块（如inbound、outbound、stock、partners、products、productPrices、reports等）
+  - `routes/`：API路由模块（如inbound、outbound、stock、partners、products、productPrices、reports、receivable等）
+    - `receivable.js`：应收账款管理API（实时聚合、回款记录CRUD）
   - `utils/`：数据库结构、测试数据、报表、库存等工具
 - **frontend/**
   - `index.html`、`vite.config.js`、`src/`（App.jsx、main.jsx、pages/等）
   - `src/pages/`：页面组件
+    - `Receivable/`：应收账款管理页面目录
+      - `index.jsx`：主页面，表格和逻辑
+      - `components/ReceivableTable.jsx`：表格展示
+      - `components/ReceivableModal.jsx`：新增/编辑回款弹窗
     - `Inbound/`：入库管理页面目录
       - `index.jsx`：主入库组件
       - `components/InboundFilter.jsx`：筛选器组件
@@ -155,6 +160,11 @@
 | POST | /api/product-categories | 新增产品类型（仅后端维护） |
 | DELETE | /api/product-categories/:name | 删除产品类型（仅后端维护） |
 | POST | /api/stock-rebuild/rebuild | 重建库存表（清空后根据入库/出库记录重新汇总，耗时操作，需前端确认） |
+| GET | /api/receivable | 获取应收账款汇总 |
+| GET | /api/receivable/details | 获取应收账款明细 |
+| POST | /api/receivable | 新增应收账款记录 |
+| PUT | /api/receivable/:id | 修改应收账款记录 |
+| DELETE | /api/receivable/:id | 删除应收账款记录 |
 
 ---
 
@@ -178,9 +188,15 @@
 - **客户/供应商管理页**：代号-简称-全称三项联动
 - **产品管理页**：代号-简称-型号三项联动
 - **产品价格管理页**：价格历史管理
+- **应收账款管理页**：实时聚合应收账款、回款记录管理
 - **报表导出页**：各类报表生成
 
 ### 组件化架构
+**应收账款管理 (`pages/Receivable/`)**
+- `index.jsx` - 主页面，负责状态管理和业务逻辑
+- `components/ReceivableTable.jsx` - 表格组件（展示、详情、操作）
+- `components/ReceivableModal.jsx` - 弹窗表单组件（新增/编辑回款记录）
+
 **入库管理 (`pages/Inbound/`)**
 - `index.jsx` - 主入库组件，负责状态管理和业务逻辑
 - `components/InboundFilter.jsx` - 筛选器组件（供应商、产品、日期范围）
