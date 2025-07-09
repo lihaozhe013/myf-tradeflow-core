@@ -9,11 +9,21 @@
 - **backend/**
   - `server.js`：Express服务器入口
   - `db.js`：SQLite数据库连接和操作
-  - `routes/`：API路由模块（如inbound、outbound、stock、partners、products、productPrices、reports等）
+  - `routes/`：API路由模块（如inbound、outbound、stock、partners、products、productPrices、reports、receivable、payable等）
+    - `receivable.js`：应收账款管理API（实时聚合、回款记录CRUD）
+    - `payable.js`：应付账款管理API（实时聚合、付款记录CRUD）
   - `utils/`：数据库结构、测试数据、报表、库存等工具
 - **frontend/**
   - `index.html`、`vite.config.js`、`src/`（App.jsx、main.jsx、pages/等）
   - `src/pages/`：页面组件
+    - `Receivable/`：应收账款管理页面目录
+      - `index.jsx`：主页面，表格和逻辑
+      - `components/ReceivableTable.jsx`：表格展示
+      - `components/ReceivableModal.jsx`：新增/编辑回款弹窗
+    - `Payable/`：应付账款管理页面目录
+      - `index.jsx`：主页面，表格和逻辑
+      - `components/PayableTable.jsx`：表格展示
+      - `components/PayableModal.jsx`：新增/编辑付款弹窗
     - `Inbound/`：入库管理页面目录
       - `index.jsx`：主入库组件
       - `components/InboundFilter.jsx`：筛选器组件
@@ -115,6 +125,26 @@
 |---|---|---|
 | name | TEXT PRIMARY KEY | 产品类型名称 |
 
+### 8. 回款记录表 receivable_payments
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| id | INTEGER PRIMARY KEY AUTOINCREMENT | 唯一标识 |
+| customer_code | TEXT | 客户代号 |
+| amount | REAL | 回款金额 |
+| pay_date | TEXT | 回款日期 |
+| pay_method | TEXT | 回款方式 |
+| remark | TEXT | 备注 |
+
+### 9. 付款记录表 payable_payments
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| id | INTEGER PRIMARY KEY AUTOINCREMENT | 唯一标识 |
+| supplier_code | TEXT | 供应商代号 |
+| amount | REAL | 付款金额 |
+| pay_date | TEXT | 付款日期 |
+| pay_method | TEXT | 付款方式 |
+| remark | TEXT | 备注 |
+
 ---
 
 ## 三、API接口（RESTful）
@@ -155,6 +185,16 @@
 | POST | /api/product-categories | 新增产品类型（仅后端维护） |
 | DELETE | /api/product-categories/:name | 删除产品类型（仅后端维护） |
 | POST | /api/stock-rebuild/rebuild | 重建库存表（清空后根据入库/出库记录重新汇总，耗时操作，需前端确认） |
+| GET | /api/receivable | 获取应收账款列表（分页/筛选/排序） |
+| POST | /api/receivable/payments | 新增回款记录 |
+| PUT | /api/receivable/payments/:id | 修改回款记录 |
+| DELETE | /api/receivable/payments/:id | 删除回款记录 |
+| GET | /api/receivable/details/:customer_code | 获取客户应收账款详情 |
+| GET | /api/payable | 获取应付账款列表（分页/筛选/排序） |
+| POST | /api/payable/payments | 新增付款记录 |
+| PUT | /api/payable/payments/:id | 修改付款记录 |
+| DELETE | /api/payable/payments/:id | 删除付款记录 |
+| GET | /api/payable/details/:supplier_code | 获取供应商应付账款详情 |
 
 ---
 
@@ -178,9 +218,21 @@
 - **客户/供应商管理页**：代号-简称-全称三项联动
 - **产品管理页**：代号-简称-型号三项联动
 - **产品价格管理页**：价格历史管理
+- **应收账款管理页**：实时聚合应收账款、回款记录管理
+- **应付账款管理页**：实时聚合应付账款、付款记录管理
 - **报表导出页**：各类报表生成
 
 ### 组件化架构
+**应收账款管理 (`pages/Receivable/`)**
+- `index.jsx` - 主页面，负责状态管理和业务逻辑
+- `components/ReceivableTable.jsx` - 表格组件（展示、详情、操作）
+- `components/ReceivableModal.jsx` - 弹窗表单组件（新增/编辑回款记录）
+
+**应付账款管理 (`pages/Payable/`)**
+- `index.jsx` - 主页面，负责状态管理和业务逻辑
+- `components/PayableTable.jsx` - 表格组件（展示、详情、操作）
+- `components/PayableModal.jsx` - 弹窗表单组件（新增/编辑付款记录）
+
 **入库管理 (`pages/Inbound/`)**
 - `index.jsx` - 主入库组件，负责状态管理和业务逻辑
 - `components/InboundFilter.jsx` - 筛选器组件（供应商、产品、日期范围）
@@ -220,6 +272,55 @@
 - 测试用例覆盖所有接口
 - 响应式设计，适配不同屏幕尺寸
 - 错误处理和用户友好的提示信息
+
+---
+
+## 七、配置管理
+
+### 统一配置架构
+- **配置文件**：`frontend/src/config/appConfig.json` - 集中管理所有应用配置项
+- **导出模块**：`frontend/src/config/index.js` - 提供便捷的配置导入和工具函数
+
+### 配置项说明
+
+#### 付款/回款方式配置 (`paymentMethods`)
+```json
+{
+  "paymentMethods": {
+    "list": ["现金", "银行转账", "支票", "银行承兑汇票", "商业承兑汇票", "支付宝", "微信支付", "其他"],
+    "default": "银行转账",
+    "config": {
+      "cash": { "label": "现金", "code": "CASH" },
+      "bank_transfer": { "label": "银行转账", "code": "BANK_TRANSFER" }
+    }
+  }
+}
+```
+
+#### 产品类别配置 (`productCategories`)
+```json
+{
+  "productCategories": {
+    "list": ["电子产品", "机械设备", "办公用品", "原材料", "化工产品", "其他"],
+    "default": "其他"
+  }
+}
+```
+
+### 配置使用方式
+```javascript
+// 导入配置
+import { PAYMENT_METHODS, PRODUCT_CATEGORIES, DEFAULT_PAYMENT_METHOD } from '../config';
+
+// 使用工具函数
+import { getPaymentMethodOptions, getProductCategoryOptions } from '../config';
+```
+
+### 维护说明
+- **添加新配置**：直接在 `appConfig.json` 中添加配置项
+- **修改生效**：修改配置文件后重启应用即可生效
+- **版本控制**：配置变更可通过Git跟踪，便于团队协作
+- **扩展性**：支持添加更多配置项，如系统设置、UI主题等
 
 ---
 

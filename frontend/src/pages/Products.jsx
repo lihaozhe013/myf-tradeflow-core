@@ -16,6 +16,7 @@ import {
   Divider
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PRODUCT_CATEGORIES } from '../config/index.js';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -26,8 +27,6 @@ const Products = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [form] = Form.useForm();
-  const [categoryOptions, setCategoryOptions] = useState([]);
-  const [categoryLoading, setCategoryLoading] = useState(false);
   // 新增：用于联动输入的下拉数据
   const [productOptions, setProductOptions] = useState([]);
 
@@ -44,7 +43,7 @@ const Products = () => {
         setProducts([]);
         setProductOptions([]);
       }
-    } catch (error) {
+    } catch {
       setProducts([]);
       setProductOptions([]);
     } finally {
@@ -52,27 +51,11 @@ const Products = () => {
     }
   };
 
-  // 获取产品类型列表
-  const fetchCategories = async () => {
-    setCategoryLoading(true);
-    try {
-      const res = await fetch('/api/product-categories');
-      if (res.ok) {
-        const result = await res.json();
-        setCategoryOptions(Array.isArray(result.data) ? result.data : []);
-      } else {
-        setCategoryOptions([]);
-      }
-    } catch {
-      setCategoryOptions([]);
-    } finally {
-      setCategoryLoading(false);
-    }
-  };
-
   useEffect(() => {
+    // 调试日志：检查配置导入
+    // eslint-disable-next-line no-console
+    console.log('PRODUCT_CATEGORIES:', PRODUCT_CATEGORIES, Array.isArray(PRODUCT_CATEGORIES));
     fetchProducts();
-    fetchCategories();
   }, []);
 
   // 新增产品
@@ -101,7 +84,7 @@ const Products = () => {
       } else {
         message.error('删除失败');
       }
-    } catch (error) {
+    } catch {
       message.error('删除失败');
     }
   };
@@ -129,7 +112,7 @@ const Products = () => {
         const errorData = await response.json();
         message.error(errorData.error || '保存失败');
       }
-    } catch (error) {
+    } catch {
       message.error('保存失败');
     }
   };
@@ -195,7 +178,7 @@ const Products = () => {
   ];
 
   // 联动输入处理（仅按code和型号联动）
-  const handleProductFieldChange = (changed, all) => {
+  const handleProductFieldChange = (changed) => {
     if (changed.code) {
       const match = productOptions.find(p => p.code === changed.code);
       if (match) {
@@ -293,45 +276,11 @@ const Products = () => {
             <Select
               showSearch
               allowClear
-              placeholder="请选择或输入产品分类"
-              loading={categoryLoading}
-              options={categoryOptions.map(name => ({ value: name, label: name }))}
+              placeholder="请选择产品分类"
+              options={PRODUCT_CATEGORIES.map(name => ({ value: name, label: name }))}
               filterOption={(input, option) =>
                 (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
               }
-              dropdownRender={menu => (
-                <>
-                  {menu}
-                  <div style={{ display: 'flex', flexWrap: 'nowrap', padding: 8 }}>
-                    <Input
-                      style={{ flex: 'auto' }}
-                      placeholder="新增产品分类"
-                      onPressEnter={async e => {
-                        const value = e.target.value.trim();
-                        if (!value) return;
-                        if (categoryOptions.includes(value)) return;
-                        setCategoryLoading(true);
-                        try {
-                          const res = await fetch('/api/product-categories', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ name: value })
-                          });
-                          if (res.ok) {
-                            setCategoryOptions(prev => [...prev, value]);
-                            message.success('产品分类添加成功');
-                          } else {
-                            const err = await res.json();
-                            message.error(err.error || '添加失败');
-                          }
-                        } finally {
-                          setCategoryLoading(false);
-                        }
-                      }}
-                    />
-                  </div>
-                </>
-              )}
             />
           </Form.Item>
 
