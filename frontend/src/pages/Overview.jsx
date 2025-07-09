@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Card, Row, Col, Spin, Alert, Typography, Button, Space, message } from 'antd';
+import { Table, Card, Row, Col, Spin, Alert, Typography, Button, Space } from 'antd';
 
 const { Title } = Typography;
 

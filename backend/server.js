@@ -42,11 +42,11 @@ const stockRoutes = require('./routes/stock');                     // 库存管�
 const partnersRoutes = require('./routes/partners');               // 客户/供应商管理
 const productsRoutes = require('./routes/products');               // 产品管理
 const productPricesRoutes = require('./routes/productPrices');     // 产品价格管理
-const reportsRoutes = require('./routes/reports');                 // 报表生成
 const productCategoriesRoutes = require('./routes/productCategories'); // 产品类型管理
 const stockRebuildRoutes = require('./routes/stockRebuild');       // 库存重建
 const receivableRoutes = require('./routes/receivable');           // 应收账款管理
 const payableRoutes = require('./routes/payable');                 // 应付账款管理
+const exportRoutes = require('./routes/export');                   // 导出功能
 
 // 注册 API 路由
 app.use('/api/debug', debugRoutes);
@@ -56,15 +56,20 @@ app.use('/api/stock', stockRoutes);
 app.use('/api/partners', partnersRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/product-prices', productPricesRoutes);
-app.use('/api/report', reportsRoutes);
 app.use('/api/product-categories', productCategoriesRoutes);
 app.use('/api/stock-rebuild', stockRebuildRoutes);
 app.use('/api/receivable', receivableRoutes);
 app.use('/api/payable', payableRoutes);
+app.use('/api/export', exportRoutes);
 
 // =============================================================================
 // 静态文件托管 (生产环境)
 // =============================================================================
+
+// 导出文件静态托管，开发/生产均可用
+const exportedFilesDir = path.resolve(__dirname, 'python_scripts/exported-files');
+app.use('/exported-files', express.static(exportedFilesDir));
+console.log('静态托管目录:', exportedFilesDir);
 
 if (process.env.NODE_ENV === 'production') {
   const frontendDist = path.resolve(__dirname, '../frontend/dist');

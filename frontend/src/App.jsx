@@ -6,7 +6,7 @@ import Stock from './pages/Stock';
 import Partners from './pages/Partners';
 import Products from './pages/Products';
 import ProductPrices from './pages/ProductPrices';
-import Report from './pages/Report';
+import Report from './pages/Report/index';
 import Overview from './pages/Overview';
 import Receivable from './pages/Receivable';
 import Payable from './pages/Payable';

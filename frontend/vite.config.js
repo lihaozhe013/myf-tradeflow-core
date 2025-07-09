@@ -13,6 +13,11 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      '/exported-files': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
   build: {
@@ -33,6 +38,11 @@ export default defineConfig({
     port: 4173,
     proxy: {
       '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/exported-files': {
         target: 'http://localhost:3000',
         changeOrigin: true,
         secure: false,
