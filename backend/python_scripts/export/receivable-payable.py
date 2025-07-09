@@ -6,9 +6,14 @@ import json
 import sys
 import argparse
 from datetime import datetime
+import io
+import os
 
-DB_PATH = '../data.db'
+DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'data.db'))
 FONT_NAME = '微软雅黑'
+
+# 强制stdout为utf-8编码
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 def clean_sheet_name(name):
     return re.sub(r'[\\/*?:\[\]]', '-', name)[:31]

@@ -3,7 +3,8 @@ const path = require('path');
 
 class PythonExporter {
     constructor() {
-        this.scriptsPath = path.join(__dirname, 'python_scripts', 'export');
+        // 修正脚本路径，指向 backend/python_scripts/export
+        this.scriptsPath = path.join(__dirname, '..', 'python_scripts', 'export');
         this.pythonCommand = 'python'; // 根据系统可能需要改为 python3
     }
 
