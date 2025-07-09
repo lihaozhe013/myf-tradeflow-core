@@ -1,0 +1,38 @@
+{
+  "paymentMethods": {
+    "list": [
+      "现金",
+      "银行转账",
+      "支票", 
+      "银行承兑汇票",
+      "商业承兑汇票",
+      "支付宝",
+      "微信支付",
+      "其他"
+    ],
+    "default": "银行转账",
+    "config": {
+      "cash": { "label": "现金", "code": "CASH" },
+      "bank_transfer": { "label": "银行转账", "code": "BANK_TRANSFER" },
+      "check": { "label": "支票", "code": "CHECK" },
+      "bank_acceptance": { "label": "银行承兑汇票", "code": "BANK_ACCEPTANCE" },
+      "commercial_acceptance": { "label": "商业承兑汇票", "code": "COMMERCIAL_ACCEPTANCE" },
+      "alipay": { "label": "支付宝", "code": "ALIPAY" },
+      "wechat": { "label": "微信支付", "code": "WECHAT" },
+      "other": { "label": "其他", "code": "OTHER" }
+    }
+  },
+  "productCategories": {
+    "list": [
+        "贴片二极管",
+        "贴片三极管",
+        "集成电路",
+        "wafer",
+        "包装材料",
+        "发光二极管",
+        "折损",
+        "其他"
+    ],
+    "default": "其他"
+  }
+}
