@@ -205,7 +205,6 @@ const PayableTable = ({
         loading={loading}
         pagination={{
           ...pagination,
-          showSizeChanger: true,
           showQuickJumper: true,
           showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`,
         }}

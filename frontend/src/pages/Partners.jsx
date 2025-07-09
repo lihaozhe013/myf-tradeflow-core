@@ -252,7 +252,6 @@ const Partners = () => {
             loading={loading}
             pagination={{
               pageSize: 10,
-              showSizeChanger: true,
               showQuickJumper: true,
               showTotal: (total, range) =>
                 `第 ${range[0]}-${range[1]} 条/共 ${total} 条`,
