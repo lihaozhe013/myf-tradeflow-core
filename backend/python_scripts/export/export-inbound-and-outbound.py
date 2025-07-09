@@ -11,16 +11,13 @@ FONT_NAME = '微软雅黑'
 TABLES = {
     '1': ('入库记录', 'inbound_records'),
     '2': ('出库记录', 'outbound_records'),
-    '3': ('库存明细', 'stock'),
-    '4': ('客户/供应商', 'partners'),
-    # 可按需扩展
 }
 
 def print_table_options():
     print("请选择要导出的表格（可多选，直接输入数字组合，如12导出入库和出库，不填默认全选）：")
     for k, v in TABLES.items():
         print(f"{k}. {v[0]}")
-    print("示例：13 只导出入库和库存表；1234 全部导出")
+    print("示例：12 只导出入库和出库表；全部导出请直接回车")
 
 def get_user_tables():
     print_table_options()
@@ -38,10 +35,9 @@ def get_filters():
     date_from = get_filter_input("起始日期(YYYY-MM-DD)", "2024-01-01")
     date_to = get_filter_input("结束日期(YYYY-MM-DD)", "2024-12-31")
     product_code = get_filter_input("相关商品代号", "P001")
-    partner_code = get_filter_input("相关合作伙伴代号", "C001/S001")
-    return date_from, date_to, product_code, partner_code
+    return date_from, date_to, product_code
 
-def build_query(table, date_from, date_to, product_code, partner_code):
+def build_query(table, date_from, date_to, product_code):
     where = []
     params = []
     if table in ('inbound_records', 'outbound_records'):
@@ -55,25 +51,12 @@ def build_query(table, date_from, date_to, product_code, partner_code):
         if product_code:
             where.append("product_code = ?")
             params.append(product_code)
-        if partner_code:
-            col = 'supplier_code' if table == 'inbound_records' else 'customer_code'
-            where.append(f"{col} = ?")
-            params.append(partner_code)
-    elif table == 'stock':
-        if product_code:
-            where.append("product_model = ?")
-            params.append(product_code)
-    elif table == 'partners':
-        if partner_code:
-            where.append("code = ?")
-            params.append(partner_code)
     sql = f"SELECT * FROM {table}"
     if where:
         sql += " WHERE " + " AND ".join(where)
     return sql, params
 
 def clean_sheet_name(name):
-    # Excel sheet 名称不能包含 /\*?[]: 等字符，且最长31字符
     return re.sub(r'[\\/*?:\[\]]', '-', name)[:31]
 
 def export_to_excel(data_dict):
@@ -93,14 +76,14 @@ def export_to_excel(data_dict):
     print(f"\n✅ 导出成功，文件名：{EXPORT_FILE}")
 
 def main():
-    print("=== 数据导出工具 ===")
+    print("=== 入库/出库数据导出工具 ===")
     tables = get_user_tables()
-    date_from, date_to, product_code, partner_code = get_filters()
+    date_from, date_to, product_code = get_filters()
     conn = sqlite3.connect(DB_PATH)
     data_dict = {}
     for t in tables:
         name, table = TABLES[t]
-        sql, params = build_query(table, date_from, date_to, product_code, partner_code)
+        sql, params = build_query(table, date_from, date_to, product_code)
         cur = conn.execute(sql, params)
         rows = cur.fetchall()
         headers = [desc[0] for desc in cur.description]

@@ -1,2 +1,4 @@
 openpyxl
 tabulate
+numpy
+pandas
