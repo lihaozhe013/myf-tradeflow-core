@@ -10,9 +10,18 @@
   - `server.js`：Express服务器入口
   - `db.js`：SQLite数据库连接和操作
   - `routes/`：API路由模块（如inbound、outbound、stock、partners、products、productPrices、reports、receivable、payable等）
+    - `reports.js`：报表生成API（实时聚合、数据查询）
+    - `export.js`：Python导出脚本调用API（基础信息、入库出库、应收应付）
     - `receivable.js`：应收账款管理API（实时聚合、回款记录CRUD）
     - `payable.js`：应付账款管理API（实时聚合、付款记录CRUD）
   - `utils/`：数据库结构、测试数据、报表、库存等工具
+    - `pythonExporter.js`：Python导出脚本调用工具类
+  - `python_scripts/`：Python导出脚本目录
+    - `export/`：重构后的导出脚本（支持命令行和Node.js集成）
+      - `base-info.py`：基础信息导出（客户/供应商、产品、产品价格）
+      - `inbound-outbound.py`：入库出库记录导出
+      - `receivable-payable.py`：应收应付明细导出
+    - `export-*.py`：原始交互式导出脚本（保留）
 - **frontend/**
   - `index.html`、`vite.config.js`、`src/`（App.jsx、main.jsx、pages/等）
   - `src/pages/`：页面组件
@@ -40,6 +49,9 @@
     - `Products.jsx`：产品管理页
     - `ProductPrices.jsx`：产品价格管理页
     - `Report.jsx`：报表导出页
+      - 支持原有的在线报表查看和简单导出功能
+      - 新增Python导出功能：基础信息、入库出库记录、应收应付明细
+      - 双模式设计：报表查看模式 + 高级导出模式
 - 根目录：`package.json`、`README.md`、`ask-llm.md`（本文件）
 
 ---
@@ -181,6 +193,9 @@
 | GET | /api/report/stock | 导出库存明细报表 |
 | GET | /api/report/inout | 导出进出货明细报表 |
 | GET | /api/report/finance | 导出收支统计报表 |
+| POST | /api/export/base-info | Python导出基础信息（客户/供应商、产品、产品价格） |
+| POST | /api/export/inbound-outbound | Python导出入库出库记录 |
+| POST | /api/export/receivable-payable | Python导出应收应付明细 |
 | GET | /api/product-categories | 获取所有产品类型 |
 | POST | /api/product-categories | 新增产品类型（仅后端维护） |
 | DELETE | /api/product-categories/:name | 删除产品类型（仅后端维护） |
@@ -220,7 +235,7 @@
 - **产品价格管理页**：价格历史管理
 - **应收账款管理页**：实时聚合应收账款、回款记录管理
 - **应付账款管理页**：实时聚合应付账款、付款记录管理
-- **报表导出页**：各类报表生成
+- **报表导出页**：各类报表生成和Python导出功能集成
 
 ### 组件化架构
 **应收账款管理 (`pages/Receivable/`)**
@@ -254,6 +269,15 @@
 ---
 
 ## 六、开发建议
+
+### 导出功能架构
+- **双模式导出系统**：
+  - 在线报表查看：适合快速查看和轻量级导出
+  - Python导出：适合大数据量和复杂格式的导出
+- **Python脚本集成**：
+  - 交互式脚本：手动执行，适合运维人员
+  - 命令行接口：支持参数传递，适合自动化
+  - Node.js集成：前端按钮直接调用，用户体验优化
 
 ### 代码组织
 - **API优先**：前后端分离，所有业务逻辑在后端实现
@@ -315,6 +339,12 @@ import { PAYMENT_METHODS, PRODUCT_CATEGORIES, DEFAULT_PAYMENT_METHOD } from '../
 // 使用工具函数
 import { getPaymentMethodOptions, getProductCategoryOptions } from '../config';
 ```
+
+### 扩展性
+- **导出格式**：支持Excel、CSV等多种格式
+- **导出范围**：支持全量导出和条件筛选
+- **导出模式**：支持实时导出和后台任务
+- **文件管理**：自动生成时间戳文件名，避免冲突
 
 ### 维护说明
 - **添加新配置**：直接在 `appConfig.json` 中添加配置项
