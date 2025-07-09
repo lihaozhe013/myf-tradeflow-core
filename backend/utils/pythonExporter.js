@@ -1,11 +1,21 @@
-const { spawn } = require('child_process');
+const { spawn, execSync } = require('child_process');
 const path = require('path');
 
 class PythonExporter {
     constructor() {
-        // 修正脚本路径，指向 backend/python_scripts/export
         this.scriptsPath = path.join(__dirname, '..', 'python_scripts', 'export');
-        this.pythonCommand = 'python'; // 根据系统可能需要改为 python3
+        this.pythonCommand = null;
+        try {
+            execSync('python3 --version', { stdio: 'ignore' });
+            this.pythonCommand = 'python3';
+        } catch {
+            try {
+                execSync('python --version', { stdio: 'ignore' });
+                this.pythonCommand = 'python';
+            } catch {
+                throw new Error('Python3 或 Python 未安装，请先安装 Python 环境。');
+            }
+        }
     }
 
     /**
