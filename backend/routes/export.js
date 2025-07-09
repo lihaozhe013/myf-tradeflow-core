@@ -1,4 +1,6 @@
 const express = require('express');
+const path = require('path');
+const fs = require('fs');
 const router = express.Router();
 const PythonExporter = require('../utils/pythonExporter');
 
@@ -65,6 +67,24 @@ router.post('/receivable-payable', async (req, res) => {
             message: `导出失败: ${error.message}`
         });
     }
+});
+
+// 文件下载API
+router.get('/download', (req, res) => {
+    const file = req.query.file;
+    if (!file) {
+        return res.status(400).json({ success: false, message: '缺少文件名参数' });
+    }
+    // 只允许下载exported-files目录下的文件
+    const exportDir = path.resolve(__dirname, '../exported-files');
+    const filePath = path.join(exportDir, file);
+    if (!filePath.startsWith(exportDir)) {
+        return res.status(403).json({ success: false, message: '非法文件路径' });
+    }
+    if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ success: false, message: '文件不存在' });
+    }
+    res.download(filePath, file);
 });
 
 // 获取导出状态（可选，用于长时间运行的导出任务）

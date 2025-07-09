@@ -10,10 +10,12 @@ import io
 import os
 
 DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'data.db'))
+EXPORT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'exported-files'))
 FONT_NAME = '微软雅黑'
 
 # 强制stdout为utf-8编码
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+os.makedirs(EXPORT_DIR, exist_ok=True)
 
 def clean_sheet_name(name):
     return re.sub(r'[\\/*?:\[\]]', '-', name)[:31]
@@ -130,7 +132,8 @@ def export_receivable_payable(outbound_from=None, outbound_to=None, payment_from
     """
     if output_file is None:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_file = f'应收应付明细导出_{timestamp}.xlsx'
+        output_file = f'receivable-payable-export_{timestamp}.xlsx'
+    output_file = os.path.join(EXPORT_DIR, output_file)
     
     try:
         conn = sqlite3.connect(DB_PATH)

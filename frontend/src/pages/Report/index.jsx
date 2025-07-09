@@ -5,8 +5,10 @@ import {
   Row,
   Col,
   message,
-  Tabs
+  Tabs,
+  Button
 } from 'antd';
+import { FileExcelOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import ExportPanel from './components/ExportPanel';
 
@@ -20,11 +22,13 @@ const Report = () => {
     dayjs()
   ]);
   const [selectedProduct, setSelectedProduct] = useState('');
+  const [downloadFile, setDownloadFile] = useState(null); // 新增
 
   // Python导出功能
   const handlePythonExport = async (exportType, params) => {
     try {
       setLoading(true);
+      setDownloadFile(null); // 每次导出前清空
       const response = await fetch(`/api/export/${exportType}`, {
         method: 'POST',
         headers: {
@@ -37,7 +41,11 @@ const Report = () => {
       
       if (result.success) {
         message.success(`导出成功！文件：${result.file_path}`);
-        // 可以添加文件下载链接或进一步处理
+        // 只取文件名部分
+        if (result.file_path) {
+          const fileName = result.file_path.split(/[\\/]/).pop();
+          setDownloadFile(fileName);
+        }
       } else {
         message.error(`导出失败：${result.message}`);
       }
@@ -58,7 +66,19 @@ const Report = () => {
             setDateRange={setDateRange}
             selectedProduct={selectedProduct}
             setSelectedProduct={setSelectedProduct}
+            downloadFile={downloadFile} // 传递给子组件
         />
+        {downloadFile && (
+          <div style={{marginTop: 16}}>
+            <a
+              href={`/exported-files/${encodeURIComponent(downloadFile)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button type="primary" icon={<FileExcelOutlined />}>下载导出文件</Button>
+            </a>
+          </div>
+        )}
     </div>
   );
 };

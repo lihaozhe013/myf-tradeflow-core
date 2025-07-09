@@ -14,12 +14,15 @@ import os
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'data.db'))
+EXPORT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'exported-files'))
 FONT_NAME = '微软雅黑'
 
 TABLES = {
     '1': ('入库记录', 'inbound_records'),
     '2': ('出库记录', 'outbound_records'),
 }
+
+os.makedirs(EXPORT_DIR, exist_ok=True)
 
 def clean_sheet_name(name):
     return re.sub(r'[\\/*?:\[\]]', '-', name)[:31]
@@ -58,7 +61,8 @@ def export_inbound_outbound(tables=None, date_from=None, date_to=None, product_c
     
     if output_file is None:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_file = f'入库出库导出_{timestamp}.xlsx'
+        output_file = f'inbound-outbound-export_{timestamp}.xlsx'
+    output_file = os.path.join(EXPORT_DIR, output_file)
     
     try:
         conn = sqlite3.connect(DB_PATH)

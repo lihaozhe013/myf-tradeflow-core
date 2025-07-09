@@ -66,6 +66,11 @@ app.use('/api/export', exportRoutes);
 // 静态文件托管 (生产环境)
 // =============================================================================
 
+// 导出文件静态托管，开发/生产均可用
+const exportedFilesDir = path.resolve(__dirname, 'python_scripts/exported-files');
+app.use('/exported-files', express.static(exportedFilesDir));
+console.log('静态托管目录:', exportedFilesDir);
+
 if (process.env.NODE_ENV === 'production') {
   const frontendDist = path.resolve(__dirname, '../frontend/dist');
   
