@@ -42,7 +42,6 @@ const stockRoutes = require('./routes/stock');                     // 库存管�
 const partnersRoutes = require('./routes/partners');               // 客户/供应商管理
 const productsRoutes = require('./routes/products');               // 产品管理
 const productPricesRoutes = require('./routes/productPrices');     // 产品价格管理
-const reportsRoutes = require('./routes/reports');                 // 报表生成
 const productCategoriesRoutes = require('./routes/productCategories'); // 产品类型管理
 const stockRebuildRoutes = require('./routes/stockRebuild');       // 库存重建
 const receivableRoutes = require('./routes/receivable');           // 应收账款管理
@@ -57,7 +56,6 @@ app.use('/api/stock', stockRoutes);
 app.use('/api/partners', partnersRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/product-prices', productPricesRoutes);
-app.use('/api/reports', reportsRoutes);
 app.use('/api/product-categories', productCategoriesRoutes);
 app.use('/api/stock-rebuild', stockRebuildRoutes);
 app.use('/api/receivable', receivableRoutes);
