@@ -128,7 +128,7 @@ function AppContent() {
         />
       </Header>
       <Content style={{ padding: '24px', background: '#f0f2f5' }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1800px', margin: '0 auto' }}>
           <ErrorBoundary>
             <Routes>
               <Route path="/" element={<Navigate to="/overview" replace />} />

@@ -104,7 +104,7 @@ const OverviewMain = () => {
           message="系统数据加载失败"
           description={error}
           type="error"
-          showIcon
+          showIcon  
           style={{ 
             borderRadius: '16px', 
             boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
@@ -118,8 +118,11 @@ const OverviewMain = () => {
   return (
     <div style={{ 
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #f8fafc 0%, #e9f5ff 100%)', // 更淡雅的背景
-      padding: '24px'
+      background: 'linear-gradient(135deg, #f8fafc 0%, #e9f5ff 100%)',
+      padding: '24px',
+      borderRadius: '12px',
+      boxShadow: '0 4px 32px rgba(0,0,0,0.04)',
+      transition: 'border-radius 0.3s',
     }}>
       {/* 页面标题区域 */}
       <div style={{ 
