@@ -114,7 +114,7 @@ const Payable = () => {
     setPagination(prev => ({
       ...prev,
       current: paginationConfig.current,
-      pageSize: paginationConfig.pageSize,
+      pageSize: 10, // 固定为10，不允许修改
     }));
     
     if (sorter && sorter.field) {
