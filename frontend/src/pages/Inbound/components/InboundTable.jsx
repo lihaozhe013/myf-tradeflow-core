@@ -11,7 +11,8 @@ const InboundTable = ({
   setSelectedRowKeys, 
   onEdit, 
   onDelete, 
-  onTableChange 
+  onTableChange,
+  pagination 
 }) => {
   const columns = [
     {
@@ -145,11 +146,7 @@ const InboundTable = ({
         loading={loading}
         rowSelection={rowSelection}
         onChange={onTableChange}
-        pagination={{
-          pageSize: 10,
-          showQuickJumper: true,
-          showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条/共 ${total} 条`,
-        }}
+        pagination={pagination}
         scroll={{ x: 1320 }}
       />
     </div>

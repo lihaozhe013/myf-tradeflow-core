@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button, Form, message, Card, Typography, Row, Col, Divider } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -27,33 +27,47 @@ const Inbound = () => {
     order: undefined,
   });
   const [manualPrice, setManualPrice] = useState(false);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
 
   // 获取入库记录列表
-  const fetchInboundRecords = async (params = {}) => {
+  const fetchInboundRecords = useCallback(async (params = {}) => {
     try {
       setLoading(true);
+      const page = params.page !== undefined ? params.page : pagination.current;
       const query = new URLSearchParams({
         ...params,
-        supplier_short_name: params.supplier_short_name || filters.supplier_short_name || '',
-        product_model: params.product_model || filters.product_model || '',
-        start_date: params.start_date || (filters.dateRange[0] ? filters.dateRange[0] : ''),
-        end_date: params.end_date || (filters.dateRange[1] ? filters.dateRange[1] : ''),
-        sort_field: params.sort_field || sorter.field || '',
-        sort_order: params.sort_order || sorter.order || '',
+        page,
+        // limit参数不传，后端已定死10
+        supplier_short_name: params.supplier_short_name !== undefined ? params.supplier_short_name : (filters.supplier_short_name || ''),
+        product_model: params.product_model !== undefined ? params.product_model : (filters.product_model || ''),
+        start_date: params.start_date !== undefined ? params.start_date : (filters.dateRange[0] ? filters.dateRange[0] : ''),
+        end_date: params.end_date !== undefined ? params.end_date : (filters.dateRange[1] ? filters.dateRange[1] : ''),
+        sort_field: params.sort_field !== undefined ? params.sort_field : (sorter.field || ''),
+        sort_order: params.sort_order !== undefined ? params.sort_order : (sorter.order || ''),
       });
       const response = await fetch(`/api/inbound?${query.toString()}`);
       if (response.ok) {
         const result = await response.json();
+        console.log('[Inbound] fetch result:', result);
         setInboundRecords(Array.isArray(result.data) ? result.data : []);
+        setPagination({
+          current: result.pagination.page,
+          pageSize: result.pagination.limit,
+          total: result.pagination.total,
+        });
       } else {
         setInboundRecords([]);
       }
-    } catch (error) {
+    } catch {
       setInboundRecords([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, sorter, pagination.current]);
 
   // 获取供应商列表
   const fetchPartners = async () => {
@@ -94,7 +108,7 @@ const Inbound = () => {
     fetchInboundRecords();
     fetchPartners();
     fetchProducts();
-  }, []);
+  }, [fetchInboundRecords]);
 
   // 新增入库记录
   const handleAdd = () => {
@@ -134,7 +148,7 @@ const Inbound = () => {
       } else {
         message.error('删除失败');
       }
-    } catch (error) {
+    } catch {
       message.error('删除失败');
     }
   };
@@ -182,7 +196,6 @@ const Inbound = () => {
         },
         body: JSON.stringify(formattedValues),
       });
-
       if (response.ok) {
         message.success(editingRecord ? '修改成功' : '新增成功');
         setModalVisible(false);
@@ -191,7 +204,7 @@ const Inbound = () => {
         const errorData = await response.json();
         message.error(errorData.error || '保存失败');
       }
-    } catch (error) {
+    } catch {
       message.error('保存失败');
     }
   };
@@ -277,7 +290,13 @@ const Inbound = () => {
 
   // 筛选区表单提交
   const handleFilter = () => {
+    // 重置分页到第1页
+    setPagination(prev => ({
+      ...prev,
+      current: 1,
+    }));
     fetchInboundRecords({
+      page: 1, // 筛选时从第1页开始
       supplier_short_name: filters.supplier_short_name,
       product_model: filters.product_model,
       start_date: filters.dateRange[0],
@@ -286,11 +305,23 @@ const Inbound = () => {
   };
 
   // 表格排序
-  const handleTableChange = (pagination, filtersTable, sorterTable) => {
+  const handleTableChange = (paginationTable, filtersTable, sorterTable) => {
     let field = sorterTable.field;
     let order = sorterTable.order === 'ascend' ? 'asc' : sorterTable.order === 'descend' ? 'desc' : undefined;
     setSorter({ field, order });
-    fetchInboundRecords({ sort_field: field, sort_order: order });
+    setPagination(prev => ({
+      ...prev,
+      current: paginationTable.current,
+    }));
+    fetchInboundRecords({
+      page: paginationTable.current,
+      supplier_short_name: filters.supplier_short_name,
+      product_model: filters.product_model,
+      start_date: filters.dateRange[0],
+      end_date: filters.dateRange[1],
+      sort_field: field,
+      sort_order: order,
+    });
   };
 
   return (
@@ -331,7 +362,15 @@ const Inbound = () => {
           onEdit={handleEdit}
           onDelete={handleDelete}
           onTableChange={handleTableChange}
+          pagination={{
+            current: pagination.current,
+            pageSize: pagination.pageSize,
+            total: pagination.total,
+            showQuickJumper: true,
+            showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条/共 ${total} 条`,
+          }}
         />
+        {console.log('[Inbound] render: records.length', inboundRecords.length, 'pagination', pagination)}
       </Card>
 
       <InboundModal

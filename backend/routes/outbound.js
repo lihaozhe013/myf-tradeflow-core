@@ -5,39 +5,40 @@ const { updateStock } = require('../utils/stockService');
 
 // 获取出库记录列表
 router.get('/', (req, res) => {
-  const { page = 1, limit = 10, customer_short_name, product_model, start_date, end_date, sort_field, sort_order } = req.query;
+  let { page = 1 } = req.query;
+  const limit = 10; // 固定每页10条
   
   let sql = 'SELECT * FROM outbound_records WHERE 1=1';
   let params = [];
   
-  if (customer_short_name) {
+  if (req.query.customer_short_name) {
     sql += ' AND customer_short_name LIKE ?';
-    params.push(`%${customer_short_name}%`);
+    params.push(`%${req.query.customer_short_name}%`);
   }
-  if (product_model) {
+  if (req.query.product_model) {
     sql += ' AND product_model LIKE ?';
-    params.push(`%${product_model}%`);
+    params.push(`%${req.query.product_model}%`);
   }
-  if (start_date) {
+  if (req.query.start_date) {
     sql += ' AND outbound_date >= ?';
-    params.push(start_date);
+    params.push(req.query.start_date);
   }
-  if (end_date) {
+  if (req.query.end_date) {
     sql += ' AND outbound_date <= ?';
-    params.push(end_date);
+    params.push(req.query.end_date);
   }
 
   // 排序
   const allowedSortFields = ['outbound_date', 'unit_price', 'total_price', 'id'];
   let orderBy = 'id DESC';
-  if (sort_field && allowedSortFields.includes(sort_field)) {
-    orderBy = `${sort_field} ${sort_order && sort_order.toLowerCase() === 'asc' ? 'ASC' : 'DESC'}`;
+  if (req.query.sort_field && allowedSortFields.includes(req.query.sort_field)) {
+    orderBy = `${req.query.sort_field} ${req.query.sort_order && req.query.sort_order.toLowerCase() === 'asc' ? 'ASC' : 'DESC'}`;
   }
   sql += ` ORDER BY ${orderBy}`;
 
   const offset = (page - 1) * limit;
   sql += ' LIMIT ? OFFSET ?';
-  params.push(parseInt(limit), parseInt(offset));
+  params.push(limit, parseInt(offset));
 
   db.all(sql, params, (err, rows) => {
     if (err) {
@@ -46,21 +47,21 @@ router.get('/', (req, res) => {
     }
     let countSql = 'SELECT COUNT(*) as total FROM outbound_records WHERE 1=1';
     let countParams = [];
-    if (customer_short_name) {
+    if (req.query.customer_short_name) {
       countSql += ' AND customer_short_name LIKE ?';
-      countParams.push(`%${customer_short_name}%`);
+      countParams.push(`%${req.query.customer_short_name}%`);
     }
-    if (product_model) {
+    if (req.query.product_model) {
       countSql += ' AND product_model LIKE ?';
-      countParams.push(`%${product_model}%`);
+      countParams.push(`%${req.query.product_model}%`);
     }
-    if (start_date) {
+    if (req.query.start_date) {
       countSql += ' AND outbound_date >= ?';
-      countParams.push(start_date);
+      countParams.push(req.query.start_date);
     }
-    if (end_date) {
+    if (req.query.end_date) {
       countSql += ' AND outbound_date <= ?';
-      countParams.push(end_date);
+      countParams.push(req.query.end_date);
     }
     db.get(countSql, countParams, (err, countResult) => {
       if (err) {
@@ -71,7 +72,7 @@ router.get('/', (req, res) => {
         data: rows,
         pagination: {
           page: parseInt(page),
-          limit: parseInt(limit),
+          limit: limit,
           total: countResult.total,
           pages: Math.ceil(countResult.total / limit)
         }
