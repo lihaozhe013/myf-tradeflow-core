@@ -93,8 +93,8 @@ router.post('/', (req, res) => {
     remark
   } = req.body;
   
-  // 计算总价
-  const total_price = quantity * unit_price;
+  // 计算总价并处理浮点数精度问题
+  const total_price = Math.round((quantity * unit_price) * 100) / 100;
   
   const sql = `
     INSERT INTO inbound_records 
@@ -135,7 +135,8 @@ router.put('/:id', (req, res) => {
     remark
   } = req.body;
   
-  const total_price = quantity * unit_price;
+  // 计算总价并处理浮点数精度问题
+  const total_price = Math.round((quantity * unit_price) * 100) / 100;
   
   const sql = `
     UPDATE inbound_records SET
