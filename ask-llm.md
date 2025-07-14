@@ -202,6 +202,7 @@
 | PUT | /api/payable/payments/:id | 修改付款记录 |
 | DELETE | /api/payable/payments/:id | 删除付款记录 |
 | GET | /api/payable/details/:supplier_code | 获取供应商应付账款详情 |
+| GET | /api/overview/stats | 获取系统统计数据（包含总体数据、入库出库趋势、库存状态分析、热门产品、主要客户/供应商、库存变化趋势、月度趋势等） |
 
 ---
 

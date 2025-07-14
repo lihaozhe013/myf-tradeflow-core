@@ -179,7 +179,7 @@ npm run db:seed       # 填充测试数据
 
 - 一键生成测试数据，API接口可用Postman/curl测试
 - 浏览器开发者工具、React DevTools
-- 后端调试模式：`npm run dev:debug`
+- 后端调试模式：`npm run dev:overview`
 
 ---
 

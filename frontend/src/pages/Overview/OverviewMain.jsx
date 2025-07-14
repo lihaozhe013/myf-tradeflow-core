@@ -1,24 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
-  Card, Row, Col, Spin, Alert, Typography, Button, Space, Statistic, Progress, 
-  List, Avatar, Tag, Divider, Timeline, Badge
+  Card, Row, Col, Spin, Alert, Typography, Button, Space, Statistic
 } from 'antd';
 import { 
-  ShoppingCartOutlined, 
-  TruckOutlined, 
-  UserOutlined, 
-  InboxOutlined,
+  ShoppingCartOutlined,
   RiseOutlined,
-  FallOutlined,
   DollarOutlined,
-  BarChartOutlined,
-  PieChartOutlined,
-  LineChartOutlined,
-  CheckCircleOutlined,
-  ExclamationCircleOutlined,
-  CloseCircleOutlined,
-  SyncOutlined
+  SyncOutlined,
+  ImportOutlined,
+  ExportOutlined
 } from '@ant-design/icons';
+
+import StockStatusData from './StockStatusData';
+import QuickStats from './QuickStats';
+import StockTrendChart from './StockTrendChart';
 
 const { Title, Text } = Typography;
 
@@ -34,11 +29,12 @@ const OverviewMain = () => {
   const fetchStats = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/debug/stats');
+      const response = await fetch('/api/overview/stats');
       const result = await response.json();
       setStats(result);
       setError(null);
     } catch (err) {
+      console.error('❌ 获取数据失败:', err);
       setError('获取数据失败: ' + err.message);
     } finally {
       setLoading(false);
@@ -51,20 +47,50 @@ const OverviewMain = () => {
   const popularProducts = stats.popular_products || [];
   const topCustomers = stats.top_customers || [];
   const topSuppliers = stats.top_suppliers || [];
+  const stockTrend = stats.stock_trend || [];
 
-  // 计算库存状态统计
-  const getStockStatusData = () => {
-    const statusMap = { '缺货': 0, '库存不足': 0, '库存正常': 0, '库存充足': 0 };
-    stockAnalysis.forEach(item => {
-      statusMap[item.status] = item.count;
+  // 处理库存趋势数据用于图表
+  const getStockTrendData = () => {
+    
+    const dailyTotals = {};
+    // 按日期汇总所有产品的库存量，确保cumulative_stock为数字且不为null
+    stockTrend.forEach((item, index) => {
+      
+      const date = item.date.split(' ')[0]; // 只取日期部分
+      const stockValue = Number(item.cumulative_stock);
+      
+      
+      if (isNaN(stockValue) || stockValue == null) {
+      }
+      if (!dailyTotals[date]) {
+        dailyTotals[date] = 0;
+      }
+      dailyTotals[date] += isNaN(stockValue) ? 0 : stockValue;
+      
     });
-    return [
-      { status: '缺货', count: statusMap['缺货'], color: '#ff4d4f', icon: <CloseCircleOutlined /> },
-      { status: '库存不足', count: statusMap['库存不足'], color: '#faad14', icon: <ExclamationCircleOutlined /> },
-      { status: '库存正常', count: statusMap['库存正常'], color: '#52c41a', icon: <CheckCircleOutlined /> },
-      { status: '库存充足', count: statusMap['库存充足'], color: '#1890ff', icon: <CheckCircleOutlined /> }
-    ];
+    
+    
+    const result = Object.entries(dailyTotals)
+      .map(([date, total]) => ({
+        date,
+        value: Number((total / 1000).toFixed(2)), // 转换为千为单位
+        category: '总库存'
+      }))
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    
+    return result;
   };
+
+  // 快速操作函数
+  const handleQuickInbound = () => {
+    window.location.href = '/inbound';
+  };
+
+  const handleQuickOutbound = () => {
+    window.location.href = '/outbound';
+  };
+
 
   // 计算利润率
   const calculateProfitMargin = () => {
@@ -143,6 +169,38 @@ const OverviewMain = () => {
         <Space>
           <Button 
             type="primary" 
+            icon={<ImportOutlined />}
+            onClick={handleQuickInbound}
+            size="large"
+            style={{
+              borderRadius: '12px',
+              background: '#52c41a',
+              border: 'none',
+              color: 'white',
+              boxShadow: '0 2px 8px rgba(82,196,26,0.2)',
+              marginRight: '8px'
+            }}
+          >
+            快速入库
+          </Button>
+          <Button 
+            type="primary" 
+            icon={<ExportOutlined />}
+            onClick={handleQuickOutbound}
+            size="large"
+            style={{
+              borderRadius: '12px',
+              background: '#fa8c16',
+              border: 'none',
+              color: 'white',
+              boxShadow: '0 2px 8px rgba(250,140,22,0.2)',
+              marginRight: '8px'
+            }}
+          >
+            快速出库
+          </Button>
+          <Button 
+            type="primary" 
             icon={<SyncOutlined />}
             onClick={fetchStats} 
             loading={loading}
@@ -203,195 +261,20 @@ const OverviewMain = () => {
           <Card
             title="库存状态"
             bordered={false}
-            style={{ borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}
+            style={{ borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)', height: '100%' }}
+            bodyStyle={{ height: 'calc(100% - 56px)', display: 'flex', alignItems: 'center' }}
           >
-            <Row gutter={16}>
-              {getStockStatusData().map(item => (
-                <Col span={6} key={item.status}>
-                  <Card
-                    bordered={false}
-                    style={{ 
-                      borderRadius: '12px', 
-                      textAlign: 'center', 
-                      backgroundColor: item.color, 
-                      color: '#fff',
-                      padding: '16px 0'
-                    }}
-                  >
-                    <div style={{ fontSize: '24px' }}>{item.icon}</div>
-                    <div style={{ marginTop: '8px', fontSize: '18px' }}>{item.status}</div>
-                    <div style={{ fontSize: '16px' }}>{item.count} 件</div>
-                  </Card>
-                </Col>
-              ))}
-            </Row>
+            <StockStatusData stockAnalysis={stockAnalysis} />
           </Card>
         </Col>
-
         <Col span={8}>
-          <Card
-            title="订单状态"
-            bordered={false}
-            style={{ borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}
-          >
-            <Statistic
-              title="待发货订单"
-              value={overview.pending_orders}
-              prefix={<SyncOutlined spin />}
-              valueStyle={{ color: '#3f8600' }}
-              style={{ marginBottom: '16px' }}
-            />
-            <Statistic
-              title="已发货订单"
-              value={overview.shipped_orders}
-              prefix={<TruckOutlined />}
-              valueStyle={{ color: '#3f8600' }}
-              style={{ marginBottom: '16px' }}
-            />
-            <Statistic
-              title="已完成订单"
-              value={overview.completed_orders}
-              prefix={<CheckCircleOutlined />}
-              valueStyle={{ color: '#3f8600' }}
-            />
-          </Card>
+          <QuickStats overview={overview} />
         </Col>
       </Row>
 
       <Row gutter={24} style={{ marginTop: '24px' }}>
         <Col span={24}>
-          <Card
-            title="销售趋势"
-            bordered={false}
-            style={{ borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}
-          >
-            <LineChartOutlined style={{ fontSize: '24px', color: '#1890ff', marginBottom: '16px' }} />
-            <Divider />
-            <Row gutter={16}>
-              <Col span={8}>
-                <Statistic
-                  title="今日销售"
-                  value={overview.today_sales}
-                  prefix={<DollarOutlined />}
-                  valueStyle={{ color: '#3f8600' }}
-                />
-              </Col>
-              <Col span={8}>
-                <Statistic
-                  title="昨日销售"
-                  value={overview.yesterday_sales}
-                  prefix={<DollarOutlined />}
-                  valueStyle={{ color: '#3f8600' }}
-                />
-              </Col>
-              <Col span={8}>
-                <Statistic
-                  title="本月销售"
-                  value={overview.monthly_sales}
-                  prefix={<DollarOutlined />}
-                  valueStyle={{ color: '#3f8600' }}
-                />
-              </Col>
-            </Row>
-          </Card>
-        </Col>
-      </Row>
-
-      <Row gutter={24} style={{ marginTop: '24px' }}>
-        <Col span={12}>
-          <Card
-            title="热门产品"
-            bordered={false}
-            style={{ borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}
-          >
-            <List
-              itemLayout="horizontal"
-              dataSource={popularProducts}
-              renderItem={item => (
-                <List.Item>
-                  <List.Item.Meta
-                    avatar={<Avatar src={item.image} />}
-                    title={<a href={`/product/${item.id}`}>{item.name}</a>}
-                    description={`销售量: ${item.sales_volume} 件`}
-                  />
-                </List.Item>
-              )}
-            />
-          </Card>
-        </Col>
-
-        <Col span={12}>
-          <Card
-            title="客户统计"
-            bordered={false}
-            style={{ borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}
-          >
-            <Statistic
-              title="活跃客户"
-              value={overview.active_customers}
-              prefix={<UserOutlined />}
-              valueStyle={{ color: '#3f8600' }}
-              style={{ marginBottom: '16px' }}
-            />
-            <Statistic
-              title="新注册客户"
-              value={overview.new_customers}
-              prefix={<UserOutlined />}
-              valueStyle={{ color: '#3f8600' }}
-            />
-          </Card>
-        </Col>
-      </Row>
-
-      <Row gutter={24} style={{ marginTop: '24px' }}>
-        <Col span={12}>
-          <Card
-            title="供应商统计"
-            bordered={false}
-            style={{ borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}
-          >
-            <Statistic
-              title="活跃供应商"
-              value={overview.active_suppliers}
-              prefix={<UserOutlined />}
-              valueStyle={{ color: '#3f8600' }}
-              style={{ marginBottom: '16px' }}
-            />
-            <Statistic
-              title="新注册供应商"
-              value={overview.new_suppliers}
-              prefix={<UserOutlined />}
-              valueStyle={{ color: '#3f8600' }}
-            />
-          </Card>
-        </Col>
-
-        <Col span={12}>
-          <Card
-            title="系统健康状态"
-            bordered={false}
-            style={{ borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}
-          >
-            <Row gutter={16}>
-              <Col span={12}>
-                <Statistic
-                  title="API 响应时间"
-                  value={overview.api_response_time}
-                  suffix="ms"
-                  prefix={<SyncOutlined />}
-                  valueStyle={{ color: '#3f8600' }}
-                />
-              </Col>
-              <Col span={12}>
-                <Statistic
-                  title="数据库连接"
-                  value={overview.db_connections}
-                  prefix={<SyncOutlined />}
-                  valueStyle={{ color: '#3f8600' }}
-                />
-              </Col>
-            </Row>
-          </Card>
+          <StockTrendChart stockTrend={stockTrend} />
         </Col>
       </Row>
     </div>

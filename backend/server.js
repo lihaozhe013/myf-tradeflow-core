@@ -35,7 +35,7 @@ if (process.env.NODE_ENV !== 'production') {
 // =============================================================================
 
 // 导入所有路由模块
-const debugRoutes = require('./routes/debug');                     // 调试接口
+const overviewRoutes = require('./routes/overview');                     // 总览接口
 const inboundRoutes = require('./routes/inbound');                 // 入库管理
 const outboundRoutes = require('./routes/outbound');               // 出库管理
 const stockRoutes = require('./routes/stock');                     // 库存管理
@@ -49,7 +49,7 @@ const payableRoutes = require('./routes/payable');                 // 应付账�
 const exportRoutes = require('./routes/export');                   // 导出功能
 
 // 注册 API 路由
-app.use('/api/debug', debugRoutes);
+app.use('/api/overview', overviewRoutes);
 app.use('/api/inbound', inboundRoutes);
 app.use('/api/outbound', outboundRoutes);
 app.use('/api/stock', stockRoutes);

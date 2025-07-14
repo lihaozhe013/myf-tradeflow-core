@@ -6,7 +6,7 @@ const db = require('../db');
 router.get('/stats', (req, res) => {
   const stats = {};
   let completed = 0;
-  const totalQueries = 8;
+  const totalQueries = 9;
 
   // 基础统计查询
   const queries = [
@@ -115,6 +115,25 @@ router.get('/stats', (req, res) => {
         GROUP BY supplier_short_name
         ORDER BY total_amount DESC
         LIMIT 10
+      `
+    },
+    // 库存变化趋势（最近30天）
+    {
+      key: 'stock_trend',
+      query: `
+        SELECT 
+          update_time as date,
+          product_model,
+          stock_quantity,
+          (SELECT SUM(
+            CASE 
+              WHEN s2.record_id < 0 THEN -s2.stock_quantity 
+              ELSE s2.stock_quantity 
+            END
+          ) FROM stock s2 WHERE s2.product_model = s.product_model AND s2.update_time <= s.update_time) as cumulative_stock
+        FROM stock s
+        WHERE date(update_time) >= date('now', '-30 days')
+        ORDER BY update_time ASC
       `
     },
     // 月度趋势统计
