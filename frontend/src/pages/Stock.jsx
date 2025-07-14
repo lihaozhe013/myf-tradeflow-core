@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Table,
   Card,
@@ -32,16 +32,40 @@ const Stock = () => {
   const [rebuildModalLoading, setRebuildModalLoading] = useState(false);
   const [progress, setProgress] = useState({ total: 0, current: 0, running: false });
   const [progressTimer, setProgressTimer] = useState(null);
+  // 添加分页状态
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    pages: 0
+  });
+  const [historyPagination, setHistoryPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    pages: 0
+  });
 
   // 获取库存数据
-  const fetchStockData = async () => {
+  const fetchStockData = useCallback(async (page = 1, productModelFilter = productFilter) => {
     try {
       setLoading(true);
-      const response = await fetch('/api/stock');
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: pagination.limit.toString(),
+      });
+      
+      if (productModelFilter) {
+        params.append('product_model', productModelFilter);
+      }
+      
+      const response = await fetch(`/api/stock?${params}`);
       if (response.ok) {
         const result = await response.json();
-        // API返回格式为 {data: [...]}
         setStockData(Array.isArray(result.data) ? result.data : []);
+        if (result.pagination) {
+          setPagination(result.pagination);
+        }
       } else {
         console.error('获取库存数据失败');
         setStockData([]);
@@ -52,17 +76,28 @@ const Stock = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.limit, productFilter]);
 
   // 获取库存历史记录
-  const fetchStockHistory = async () => {
+  const fetchStockHistory = useCallback(async (page = 1, productModelFilter = productFilter) => {
     try {
       setHistoryLoading(true);
-      const response = await fetch('/api/stock/history');
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: historyPagination.limit.toString(),
+      });
+      
+      if (productModelFilter) {
+        params.append('product_model', productModelFilter);
+      }
+      
+      const response = await fetch(`/api/stock/history?${params}`);
       if (response.ok) {
         const result = await response.json();
-        // API返回格式为 {data: [...]}
         setStockHistory(Array.isArray(result.data) ? result.data : []);
+        if (result.pagination) {
+          setHistoryPagination(result.pagination);
+        }
       } else {
         console.error('获取库存历史失败');
         setStockHistory([]);
@@ -73,7 +108,7 @@ const Stock = () => {
     } finally {
       setHistoryLoading(false);
     }
-  };
+  }, [historyPagination.limit, productFilter]);
 
   // 获取产品列表用于筛选
   const fetchProducts = async () => {
@@ -93,22 +128,23 @@ const Stock = () => {
   };
 
   useEffect(() => {
-    fetchStockData();
-    fetchStockHistory();
+    fetchStockData(1);
+    fetchStockHistory(1);
     fetchProducts();
-  }, []);
+  }, [fetchStockData, fetchStockHistory]);
 
   // 刷新所有数据
   const handleRefresh = () => {
-    fetchStockData();
-    fetchStockHistory();
+    fetchStockData(pagination.page);
+    fetchStockHistory(historyPagination.page);
   };
 
-  // 筛选库存数据（后端已保证每种商品只返回一条最新记录）
-  const filteredStockData = stockData.filter(item => {
-    if (!productFilter) return true;
-    return item.product_model && item.product_model.toLowerCase().includes(productFilter.toLowerCase());
-  });
+  // 处理产品筛选变化
+  const handleProductFilterChange = (value) => {
+    setProductFilter(value);
+    setPagination(prev => ({ ...prev, page: 1 })); // 重置到第一页
+    fetchStockData(1, value);
+  };
 
   // 库存明细表格列定义
   const stockColumns = [
@@ -212,8 +248,11 @@ const Stock = () => {
       const result = await response.json();
       if (response.ok && result.success) {
         message.success('库存重建成功！');
-        fetchStockData();
-        fetchStockHistory();
+        // 重置分页并刷新数据
+        setPagination(prev => ({ ...prev, page: 1 }));
+        setHistoryPagination(prev => ({ ...prev, page: 1 }));
+        fetchStockData(1);
+        fetchStockHistory(1);
         setRebuildModalVisible(false);
       } else {
         message.error(result.error || '库存重建失败');
@@ -250,7 +289,7 @@ const Stock = () => {
                 placeholder="搜索产品型号"
                 prefix={<SearchOutlined />}
                 value={productFilter}
-                onChange={(e) => setProductFilter(e.target.value)}
+                onChange={(e) => handleProductFilterChange(e.target.value)}
                 style={{ width: 200 }}
                 allowClear
               />
@@ -258,7 +297,7 @@ const Stock = () => {
                 placeholder="选择产品"
                 style={{ width: 200 }}
                 value={productFilter}
-                onChange={setProductFilter}
+                onChange={handleProductFilterChange}
                 allowClear
                 showSearch
               >
@@ -292,14 +331,20 @@ const Stock = () => {
         <div className="responsive-table">
           <Table
             columns={stockColumns}
-            dataSource={filteredStockData}
+            dataSource={stockData}
             rowKey="product_model"
             loading={loading}
             pagination={{
-              pageSize: 10,
+              current: pagination.page,
+              pageSize: pagination.limit,
+              total: pagination.total,
               showQuickJumper: true,
               showTotal: (total, range) =>
                 `第 ${range[0]}-${range[1]} 条/共 ${total} 条`,
+              onChange: (page) => {
+                setPagination(prev => ({ ...prev, page }));
+                fetchStockData(page);
+              },
             }}
             scroll={{ x: 600 }}
           />
@@ -323,10 +368,16 @@ const Stock = () => {
             rowKey={(record, index) => `${record.record_id}-${index}`}
             loading={historyLoading}
             pagination={{
-              pageSize: 10,
+              current: historyPagination.page,
+              pageSize: historyPagination.limit,
+              total: historyPagination.total,
               showQuickJumper: true,
               showTotal: (total, range) =>
                 `第 ${range[0]}-${range[1]} 条/共 ${total} 条`,
+              onChange: (page) => {
+                setHistoryPagination(prev => ({ ...prev, page }));
+                fetchStockHistory(page);
+              },
             }}
             scroll={{ x: 600 }}
           />
