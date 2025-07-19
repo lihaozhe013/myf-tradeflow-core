@@ -22,6 +22,7 @@ const Report = () => {
     dayjs()
   ]);
   const [selectedProduct, setSelectedProduct] = useState('');
+  const [selectedCustomer, setSelectedCustomer] = useState(''); // 新增
   const [downloadFile, setDownloadFile] = useState(null); // 新增
 
   // Python导出功能
@@ -66,6 +67,8 @@ const Report = () => {
             setDateRange={setDateRange}
             selectedProduct={selectedProduct}
             setSelectedProduct={setSelectedProduct}
+            selectedCustomer={selectedCustomer}
+            setSelectedCustomer={setSelectedCustomer}
             downloadFile={downloadFile} // 传递给子组件
         />
         {downloadFile && (

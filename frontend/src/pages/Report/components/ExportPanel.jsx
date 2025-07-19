@@ -19,7 +19,9 @@ const ExportPanel = ({
   dateRange, 
   setDateRange,
   selectedProduct,
-  setSelectedProduct
+  setSelectedProduct,
+  selectedCustomer,
+  setSelectedCustomer
 }) => {
   return (
     <div>
@@ -78,6 +80,14 @@ const ExportPanel = ({
                   style={{ width: 120 }}
                 />
               </Form.Item>
+              <Form.Item label="合作伙伴代号">
+                <Input
+                  placeholder="可选"
+                  value={selectedCustomer}
+                  onChange={(e) => setSelectedCustomer(e.target.value)}
+                  style={{ width: 120 }}
+                />
+              </Form.Item>
             </Form>
             <Space wrap>
               <Button
@@ -87,7 +97,8 @@ const ExportPanel = ({
                   tables: '12',
                   dateFrom: dateRange[0].format('YYYY-MM-DD'),
                   dateTo: dateRange[1].format('YYYY-MM-DD'),
-                  productCode: selectedProduct || undefined
+                  productCode: selectedProduct || undefined,
+                  customerCode: selectedCustomer || undefined
                 })}
                 loading={loading}
               >
@@ -99,7 +110,8 @@ const ExportPanel = ({
                   tables: '1',
                   dateFrom: dateRange[0].format('YYYY-MM-DD'),
                   dateTo: dateRange[1].format('YYYY-MM-DD'),
-                  productCode: selectedProduct || undefined
+                  productCode: selectedProduct || undefined,
+                  customerCode: selectedCustomer || undefined
                 })}
                 loading={loading}
               >
@@ -111,7 +123,8 @@ const ExportPanel = ({
                   tables: '2',
                   dateFrom: dateRange[0].format('YYYY-MM-DD'),
                   dateTo: dateRange[1].format('YYYY-MM-DD'),
-                  productCode: selectedProduct || undefined
+                  productCode: selectedProduct || undefined,
+                  customerCode: selectedCustomer || undefined
                 })}
                 loading={loading}
               >

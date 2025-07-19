@@ -27,7 +27,7 @@ os.makedirs(EXPORT_DIR, exist_ok=True)
 def clean_sheet_name(name):
     return re.sub(r'[\\/*?:\[\]]', '-', name)[:31]
 
-def build_query(table, date_from, date_to, product_code):
+def build_query(table, date_from, date_to, product_code, customer_code):
     where = []
     params = []
     if table in ('inbound_records', 'outbound_records'):
@@ -41,18 +41,26 @@ def build_query(table, date_from, date_to, product_code):
         if product_code:
             where.append("product_code = ?")
             params.append(product_code)
+        # 添加客户代号筛选
+        if customer_code:
+            if table == 'inbound_records':
+                where.append("supplier_code = ?")
+            else:  # outbound_records
+                where.append("customer_code = ?")
+            params.append(customer_code)
     sql = f"SELECT * FROM {table}"
     if where:
         sql += " WHERE " + " AND ".join(where)
     return sql, params
 
-def export_inbound_outbound(tables=None, date_from=None, date_to=None, product_code=None, output_file=None):
+def export_inbound_outbound(tables=None, date_from=None, date_to=None, product_code=None, customer_code=None, output_file=None):
     """
     导出入库出库记录的核心函数
     :param tables: 要导出的表列表，默认全部
     :param date_from: 起始日期
     :param date_to: 结束日期
     :param product_code: 产品代号
+    :param customer_code: 客户代号（入库时为供应商代号，出库时为客户代号）
     :param output_file: 输出文件名，默认为时间戳命名
     :return: 包含结果信息的字典
     """
@@ -73,7 +81,7 @@ def export_inbound_outbound(tables=None, date_from=None, date_to=None, product_c
             if t not in TABLES:
                 continue
             name, table = TABLES[t]
-            sql, params = build_query(table, date_from, date_to, product_code)
+            sql, params = build_query(table, date_from, date_to, product_code, customer_code)
             cur = conn.execute(sql, params)
             rows = cur.fetchall()
             headers = [desc[0] for desc in cur.description]
@@ -108,7 +116,8 @@ def export_inbound_outbound(tables=None, date_from=None, date_to=None, product_c
                 'filters': {
                     'date_from': date_from,
                     'date_to': date_to,
-                    'product_code': product_code
+                    'product_code': product_code,
+                    'customer_code': customer_code
                 }
             }
         else:
@@ -121,7 +130,8 @@ def export_inbound_outbound(tables=None, date_from=None, date_to=None, product_c
                 'filters': {
                     'date_from': date_from,
                     'date_to': date_to,
-                    'product_code': product_code
+                    'product_code': product_code,
+                    'customer_code': customer_code
                 }
             }
     
@@ -135,7 +145,8 @@ def export_inbound_outbound(tables=None, date_from=None, date_to=None, product_c
             'filters': {
                 'date_from': date_from,
                 'date_to': date_to,
-                'product_code': product_code
+                'product_code': product_code,
+                'customer_code': customer_code
             }
         }
 
@@ -161,14 +172,15 @@ def get_filters():
     date_from = get_filter_input("起始日期(YYYY-MM-DD)", "2024-01-01")
     date_to = get_filter_input("结束日期(YYYY-MM-DD)", "2024-12-31")
     product_code = get_filter_input("相关商品代号", "P001")
-    return date_from, date_to, product_code
+    customer_code = get_filter_input("客户/供应商代号", "C001")
+    return date_from, date_to, product_code, customer_code
 
 def interactive_mode():
     """交互模式"""
     print("=== 入库/出库数据导出工具 ===")
     tables = get_user_tables()
-    date_from, date_to, product_code = get_filters()
-    result = export_inbound_outbound(tables, date_from, date_to, product_code)
+    date_from, date_to, product_code, customer_code = get_filters()
+    result = export_inbound_outbound(tables, date_from, date_to, product_code, customer_code)
     print(f"\n{result['message']}")
     
     # 显示预览
@@ -178,7 +190,7 @@ def interactive_mode():
             if t not in TABLES:
                 continue
             name, table = TABLES[t]
-            sql, params = build_query(table, date_from, date_to, product_code)
+            sql, params = build_query(table, date_from, date_to, product_code, customer_code)
             cur = conn.execute(sql, params)
             rows = cur.fetchall()
             headers = [desc[0] for desc in cur.description]
@@ -198,6 +210,7 @@ def command_line_mode():
     parser.add_argument('--date-from', type=str, help='起始日期 (YYYY-MM-DD)', default=None)
     parser.add_argument('--date-to', type=str, help='结束日期 (YYYY-MM-DD)', default=None)
     parser.add_argument('--product-code', type=str, help='产品代号', default=None)
+    parser.add_argument('--customer-code', type=str, help='客户/供应商代号', default=None)
     parser.add_argument('--output', type=str, help='输出文件名', default=None)
     parser.add_argument('--json', action='store_true', help='以JSON格式输出结果')
     
@@ -206,7 +219,7 @@ def command_line_mode():
     # 解析表格编号
     tables = [c for c in args.tables if c in TABLES]
     
-    result = export_inbound_outbound(tables, args.date_from, args.date_to, args.product_code, args.output)
+    result = export_inbound_outbound(tables, args.date_from, args.date_to, args.product_code, args.customer_code, args.output)
     
     if args.json:
         print(json.dumps(result, ensure_ascii=False))

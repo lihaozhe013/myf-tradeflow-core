@@ -186,7 +186,7 @@
 | DELETE | /api/product-prices/:id | 删除产品价格 |
 | GET | /api/product-prices/auto | 自动获取产品单价（参数：partner_short_name, product_model, date，返回匹配的单价） |
 | POST | /api/export/base-info | Python导出基础信息（客户/供应商、产品、产品价格） |
-| POST | /api/export/inbound-outbound | Python导出入库出库记录 |
+| POST | /api/export/inbound-outbound | Python导出入库出库记录（支持日期、产品代号、客户代号筛选） |
 | POST | /api/export/receivable-payable | Python导出应收应付明细 |
 | GET | /api/product-categories | 获取所有产品类型 |
 | POST | /api/product-categories | 新增产品类型（仅后端维护） |

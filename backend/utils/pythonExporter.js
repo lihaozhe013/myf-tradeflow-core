@@ -89,6 +89,7 @@ class PythonExporter {
      * @param {string} options.dateFrom - 起始日期
      * @param {string} options.dateTo - 结束日期
      * @param {string} options.productCode - 产品代号
+     * @param {string} options.customerCode - 客户代号
      * @param {string} options.output - 输出文件名
      * @returns {Promise<Object>} 导出结果
      */
@@ -109,6 +110,10 @@ class PythonExporter {
         
         if (options.productCode) {
             args.push('--product-code', options.productCode);
+        }
+        
+        if (options.customerCode) {
+            args.push('--customer-code', options.customerCode);
         }
         
         if (options.output) {

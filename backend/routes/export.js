@@ -28,13 +28,14 @@ router.post('/base-info', async (req, res) => {
 // 导出入库出库记录
 router.post('/inbound-outbound', async (req, res) => {
     try {
-        const { tables, dateFrom, dateTo, productCode, output } = req.body;
+        const { tables, dateFrom, dateTo, productCode, customerCode, output } = req.body;
         
         const result = await exporter.exportInboundOutbound({
             tables: tables || '12',
             dateFrom,
             dateTo,
             productCode,
+            customerCode,
             output
         });
         
