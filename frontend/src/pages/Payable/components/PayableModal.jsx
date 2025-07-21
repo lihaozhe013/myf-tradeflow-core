@@ -73,14 +73,13 @@ const PayableModal = ({
           label="付款金额"
           rules={[
             { required: true, message: '请输入付款金额' },
-            { type: 'number', min: 0.01, message: '付款金额必须大于0' }
+            { type: 'number', message: '请输入有效的数字' }
           ]}
         >
           <InputNumber
-            placeholder="请输入付款金额"
+            placeholder="请输入付款金额（支持负数调整）"
             style={{ width: '100%' }}
             precision={2}
-            min={0.01}
             formatter={(value) => `¥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
             parser={(value) => value.replace(/¥\s?|(,*)/g, '')}
           />
