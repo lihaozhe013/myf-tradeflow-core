@@ -132,8 +132,8 @@ app.listen(PORT, () => {
   
   if (process.env.NODE_ENV === 'production') {
     console.log('📦 生产环境运行中');
-    console.log(`🌐 前端开发服务器: http://localhost:${PORT}`);
-    logger.info('生产环境运行中', { frontend_url: `http://localhost:${PORT}` });
+    console.log(`🌐 前端生产服务器: http://localhost:8080`);
+    logger.info('生产环境运行中', { frontend_url: `http://localhost:8080` });
   } else {
     console.log('🔧 开发模式运行中');
     console.log('🌐 前端开发服务器: http://localhost:5173');
