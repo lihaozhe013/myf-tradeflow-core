@@ -210,6 +210,7 @@
 | DELETE | /api/payable/payments/:id | 删除付款记录 |
 | GET | /api/payable/details/:supplier_code | 获取供应商应付账款详情 |
 | GET | /api/overview/stats | 获取系统统计数据（包含总体数据、入库出库趋势、库存状态分析、热门产品、主要客户/供应商、库存变化趋势、月度趋势等） |
+| GET | /api/overview/monthly-stock-change/:productModel | 获取指定产品的本月库存变化量（参数：产品型号productModel，返回月初库存、当前库存、本月变化量、入库/出库次数和总量等） |
 
 ---
 

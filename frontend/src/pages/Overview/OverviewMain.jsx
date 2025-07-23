@@ -12,7 +12,7 @@ import {
 } from '@ant-design/icons';
 
 import StockStatusData from './StockStatusData';
-import QuickStats from './QuickStats';
+import MonthlyStockChange from './MonthlyStockChange';
 import StockTrendChart from './StockTrendChart';
 
 const { Title, Text } = Typography;
@@ -44,9 +44,6 @@ const OverviewMain = () => {
   // 处理数据格式
   const overview = stats.overview?.[0] || {};
   const stockAnalysis = stats.stock_analysis || [];
-  const popularProducts = stats.popular_products || [];
-  const topCustomers = stats.top_customers || [];
-  const topSuppliers = stats.top_suppliers || [];
   const stockTrend = stats.stock_trend || [];
 
   // 处理库存趋势数据用于图表
@@ -222,7 +219,7 @@ const OverviewMain = () => {
         <Col span={24}>
           <Card
             title="概览"
-            bordered={false}
+            variant="outlined"
             style={{ borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}
           >
             <Row gutter={16}>
@@ -268,7 +265,7 @@ const OverviewMain = () => {
           </Card>
         </Col>
         <Col span={8}>
-          <QuickStats overview={overview} />
+          <MonthlyStockChange />
         </Col>
       </Row>
 

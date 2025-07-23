@@ -390,4 +390,123 @@ function updateStock(recordId, productModel, quantity) {
   });
 }
 
+// 获取指定产品的本月库存变化量
+router.get('/monthly-stock-change/:productModel', (req, res) => {
+  const productModel = req.params.productModel;
+  
+  if (!productModel) {
+    return res.status(400).json({
+      success: false,
+      message: '产品型号不能为空'
+    });
+  }
+
+  // 获取本月第一天的日期
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthStartStr = monthStart.toISOString().split('T')[0];
+  
+  // 查询本月库存变化数据
+  const queries = {
+    // 获取月初库存（月初第一天之前的累计库存）
+    monthStartStock: `
+      SELECT COALESCE(SUM(
+        CASE 
+          WHEN record_id < 0 THEN -stock_quantity 
+          ELSE stock_quantity 
+        END
+      ), 0) as stock
+      FROM stock 
+      WHERE product_model = ? AND date(update_time) < ?
+    `,
+    
+    // 获取当前库存
+    currentStock: `
+      SELECT COALESCE(SUM(
+        CASE 
+          WHEN record_id < 0 THEN -stock_quantity 
+          ELSE stock_quantity 
+        END
+      ), 0) as stock
+      FROM stock 
+      WHERE product_model = ?
+    `,
+    
+    // 获取本月入库统计
+    monthlyInbound: `
+      SELECT 
+        COUNT(*) as inbound_count,
+        COALESCE(SUM(quantity), 0) as total_inbound
+      FROM inbound_records 
+      WHERE product_model = ? AND date(inbound_date) >= ?
+    `,
+    
+    // 获取本月出库统计
+    monthlyOutbound: `
+      SELECT 
+        COUNT(*) as outbound_count,
+        COALESCE(SUM(quantity), 0) as total_outbound
+      FROM outbound_records 
+      WHERE product_model = ? AND date(outbound_date) >= ?
+    `
+  };
+
+  const results = {};
+  let completed = 0;
+  const totalQueries = Object.keys(queries).length;
+  let hasError = false;
+
+  // 执行所有查询
+  Object.keys(queries).forEach(key => {
+    let params;
+    if (key === 'monthStartStock') {
+      params = [productModel, monthStartStr];
+    } else if (key === 'currentStock') {
+      params = [productModel];
+    } else {
+      params = [productModel, monthStartStr];
+    }
+
+    db.get(queries[key], params, (err, row) => {
+      if (err) {
+        console.error(`查询${key}失败:`, err);
+        hasError = true;
+      } else {
+        if (key === 'monthStartStock') {
+          results.month_start_stock = row.stock || 0;
+        } else if (key === 'currentStock') {
+          results.current_stock = row.stock || 0;
+        } else if (key === 'monthlyInbound') {
+          results.inbound_count = row.inbound_count || 0;
+          results.total_inbound = row.total_inbound || 0;
+        } else if (key === 'monthlyOutbound') {
+          results.outbound_count = row.outbound_count || 0;
+          results.total_outbound = row.total_outbound || 0;
+        }
+      }
+
+      completed++;
+      if (completed === totalQueries) {
+        if (hasError) {
+          res.status(500).json({
+            success: false,
+            message: '查询库存数据时发生错误'
+          });
+        } else {
+          // 计算库存变化量
+          const monthStartStock = results.month_start_stock || 0;
+          const currentStock = results.current_stock || 0;
+          results.stock_change = currentStock - monthStartStock;
+
+          res.json({
+            success: true,
+            data: results,
+            message: '获取库存变化数据成功'
+          });
+        }
+      }
+    });
+  });
+});
+
 module.exports = router;
