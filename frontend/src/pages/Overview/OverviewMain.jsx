@@ -11,9 +11,10 @@ import {
   ExportOutlined
 } from '@ant-design/icons';
 
-import StockStatusData from './StockStatusData';
+
 import MonthlyStockChange from './MonthlyStockChange';
 import StockTrendChart from './StockTrendChart';
+import OutOfStockModal from './OutOfStockModal';
 
 const { Title, Text } = Typography;
 
@@ -45,6 +46,18 @@ const OverviewMain = () => {
   const overview = stats.overview?.[0] || {};
   const stockAnalysis = stats.stock_analysis || [];
   const stockTrend = stats.stock_trend || [];
+
+  // 缺货产品数量
+  const outOfStockList = Array.isArray(stockAnalysis)
+    ? stockAnalysis.find(item => item.status === '缺货' && item.count > 0)
+    : null;
+
+  // 缺货产品明细直接用后端返回
+  const outOfStockProducts = Array.isArray(stats.out_of_stock_products)
+    ? stats.out_of_stock_products.map(item => ({ product_model: item.product_model }))
+    : [];
+
+  const [modalVisible, setModalVisible] = useState(false);
 
   // 处理库存趋势数据用于图表
   const getStockTrendData = () => {
@@ -254,18 +267,32 @@ const OverviewMain = () => {
       </Row>
 
       <Row gutter={24} style={{ marginTop: '24px' }}>
-        <Col span={16}>
+        <Col span={8}>
+          <MonthlyStockChange />
+        </Col>
+        <Col span={8} />
+        <Col span={8}>
           <Card
             title="库存状态"
             bordered={false}
             style={{ borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)', height: '100%' }}
-            bodyStyle={{ height: 'calc(100% - 56px)', display: 'flex', alignItems: 'center' }}
+            bodyStyle={{ height: 'calc(100% - 56px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            <StockStatusData stockAnalysis={stockAnalysis} />
+            <div style={{ textAlign: 'center', width: '100%' }}>
+              <div style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>缺货</div>
+              <div style={{ fontSize: 32, color: '#ff4d4f', fontWeight: 700, marginBottom: 16 }}>
+                {outOfStockList ? outOfStockList.count : 0}
+              </div>
+              <Button type="primary" onClick={() => setModalVisible(true)}>
+                查看详细
+              </Button>
+            </div>
+            <OutOfStockModal
+              visible={modalVisible}
+              onClose={() => setModalVisible(false)}
+              products={outOfStockProducts}
+            />
           </Card>
-        </Col>
-        <Col span={8}>
-          <MonthlyStockChange />
         </Col>
       </Row>
 

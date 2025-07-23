@@ -6,10 +6,23 @@ const db = require('../db');
 router.get('/stats', (req, res) => {
   const stats = {};
   let completed = 0;
-  const totalQueries = 9;
+  const totalQueries = 10; // 增加一个查询
 
   // 基础统计查询
   const queries = [
+    // 缺货产品明细
+    {
+      key: 'out_of_stock_products',
+      query: `
+        SELECT product_model
+        FROM (
+          SELECT product_model, SUM(CASE WHEN record_id < 0 THEN -stock_quantity ELSE stock_quantity END) as stock_quantity
+          FROM stock
+          GROUP BY product_model
+        )
+        WHERE stock_quantity <= 0
+      `
+    },
     // 总体数据统计
     {
       key: 'overview',
