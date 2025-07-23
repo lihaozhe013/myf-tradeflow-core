@@ -3,7 +3,7 @@ import openpyxl
 from openpyxl.styles import Font
 import re
 
-DB_PATH = '../data.db'
+DB_PATH = '../../data/data.db'
 EXPORT_FILE = '基础信息导出.xlsx'
 FONT_NAME = '微软雅黑'
 

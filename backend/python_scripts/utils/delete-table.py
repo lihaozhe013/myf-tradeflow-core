@@ -1,6 +1,6 @@
 import sqlite3
 
-db_path = '../data.db'  # 根据你的目录结构调整路径
+db_path = '../../data/data.db'  # 根据你的目录结构调整路径
 
 def drop_product_categories_table():
     conn = sqlite3.connect(db_path)

@@ -8,7 +8,7 @@
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:frontend": "cd frontend && npm run dev",
     "dev:backend": "cd backend && npm run dev",
-    "build": "cd frontend && npm run build",
+    "build": "node \"backend/utils/initCopyCfg.js\" && cd frontend && npm run build",
     "start:backend": "cd backend && npm start",
     "start": "concurrently \"cd backend && cross-env NODE_ENV=production npm start\" \"cd frontend && npm start\"",
     "start:prod": "cross-env NODE_ENV=production npm run start:backend",
@@ -24,7 +24,8 @@
     "logs:access": "tail -f data/log/access.log"
   },
   "dependencies": {
-    "concurrently": "^9.2.0"
+    "concurrently": "^9.2.0",
+    "fs-extra": "^11.3.0"
   },
   "devDependencies": {
     "cross-env": "^7.0.3"

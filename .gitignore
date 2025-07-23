@@ -27,7 +27,8 @@ dist-ssr
 
 # Data
 data/
-backend/._data.db
-backend/data.db
+backend/._../data/data.db
+backend/../data/data.db
 backend/python_scripts/exported-files
 frontend/src/config/appConfig.json
+backend/data.db

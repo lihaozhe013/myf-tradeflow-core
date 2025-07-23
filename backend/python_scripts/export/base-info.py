@@ -12,7 +12,7 @@ import os
 # 修复Windows下print中文json时UnicodeEncodeError，强制stdout为utf-8编码
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'data.db'))
+DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', '../data/data.db'))
 EXPORT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'exported-files'))
 FONT_NAME = '微软雅黑'
 

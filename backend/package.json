@@ -17,6 +17,7 @@
     "express": "^5.1.0",
     "multer": "^2.0.1",
     "sqlite3": "^5.1.7",
+    "fs-extra": "^11.3.0",
     "winston": "^3.17.0"
   },
   "devDependencies": {
