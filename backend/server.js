@@ -3,6 +3,8 @@ const path = require('path');
 const cors = require('cors');
 const db = require('./db');
 const { ensureAllTablesAndColumns } = require('./utils/dbUpgrade');
+const { logger } = require('./utils/logger');
+const { requestLogger, errorLogger } = require('./utils/loggerMiddleware');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,11 +14,20 @@ const PORT = process.env.PORT || 3000;
 // =============================================================================
 
 // 启动时自动检查和升级数据库结构
-ensureAllTablesAndColumns();
+try {
+  ensureAllTablesAndColumns();
+  logger.info('数据库初始化完成');
+} catch (error) {
+  logger.error('数据库初始化失败', { error: error.message, stack: error.stack });
+  process.exit(1);
+}
 
 // =============================================================================
 // 中间件配置
 // =============================================================================
+
+// 请求日志中间件 (在其他中间件之前)
+app.use(requestLogger);
 
 // JSON 解析中间件
 app.use(express.json());
@@ -28,6 +39,9 @@ if (process.env.NODE_ENV !== 'production') {
     credentials: true
   }));
   console.log('开发模式：已启用 CORS 跨域支持');
+  logger.info('开发模式：已启用 CORS 跨域支持');
+} else {
+  logger.info('生产模式：CORS 已禁用');
 }
 
 // =============================================================================
@@ -63,6 +77,28 @@ app.use('/api/payable', payableRoutes);
 app.use('/api/export', exportRoutes);
 
 // =============================================================================
+// 错误处理中间件
+// =============================================================================
+
+// 错误日志中间件 (在所有路由之后)
+app.use(errorLogger);
+
+// 全局错误处理中间件
+app.use((err, req, res, next) => {
+  logger.error('Unhandled Error', {
+    error: err.message,
+    stack: err.stack,
+    url: req.originalUrl,
+    method: req.method
+  });
+  
+  res.status(500).json({
+    success: false,
+    message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message
+  });
+});
+
+// =============================================================================
 // 静态文件托管 (生产环境)
 // =============================================================================
 
@@ -70,6 +106,7 @@ app.use('/api/export', exportRoutes);
 const exportedFilesDir = path.resolve(__dirname, 'python_scripts/exported-files');
 app.use('/exported-files', express.static(exportedFilesDir));
 console.log('静态托管目录:', exportedFilesDir);
+logger.info('静态托管目录已配置', { path: exportedFilesDir });
 
 if (process.env.NODE_ENV === 'production') {
   const frontendDist = path.resolve(__dirname, '../frontend/dist');
@@ -86,11 +123,20 @@ if (process.env.NODE_ENV === 'production') {
 app.listen(PORT, () => {
   console.log('后端服务器启动成功！');
   console.log(`后端API服务: http://localhost:${PORT}`);
+  
+  logger.info('后端服务器启动成功', { 
+    port: PORT, 
+    environment: process.env.NODE_ENV || 'development',
+    pid: process.pid
+  });
+  
   if (process.env.NODE_ENV === 'production') {
     console.log('📦 生产环境运行中');
     console.log(`🌐 前端开发服务器: http://localhost:${PORT}`);
+    logger.info('生产环境运行中', { frontend_url: `http://localhost:${PORT}` });
   } else {
     console.log('🔧 开发模式运行中');
     console.log('🌐 前端开发服务器: http://localhost:5173');
+    logger.info('开发模式运行中', { frontend_url: 'http://localhost:5173' });
   }
 });
