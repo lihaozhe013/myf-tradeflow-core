@@ -1,14 +1,31 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const fs = require('fs');
+const path = require('path');
 
 // 获取系统统计数据
+// GET 只读缓存
 router.get('/stats', (req, res) => {
+  const statsFile = path.resolve(__dirname, '../../data/overview-stats.json');
+  if (fs.existsSync(statsFile)) {
+    try {
+      const json = fs.readFileSync(statsFile, 'utf-8');
+      return res.json(JSON.parse(json));
+    } catch (e) {
+      // 读取失败则继续重新计算
+    }
+  }
+  // 缓存不存在或读取失败，返回空或错误
+  return res.status(503).json({ error: '统计数据未生成，请先刷新。' });
+});
+
+// POST 强制刷新并写入缓存
+router.post('/stats', (req, res) => {
+  const statsFile = path.resolve(__dirname, '../../data/overview-stats.json');
   const stats = {};
   let completed = 0;
-  const totalQueries = 10; // 增加一个查询
-
-  // 基础统计查询
+  const totalQueries = 10;
   const queries = [
     // 缺货产品明细
     {
@@ -189,9 +206,15 @@ router.get('/stats', (req, res) => {
       } else {
         stats[key] = rows;
       }
-      
       completed++;
       if (completed === totalQueries) {
+        // 写入缓存文件
+        try {
+          fs.mkdirSync(path.dirname(statsFile), { recursive: true }); // 确保 data 目录存在
+          fs.writeFileSync(statsFile, JSON.stringify(stats, null, 2), 'utf-8');
+        } catch (e) {
+          console.error('写入 overview-stats.json 失败:', e);
+        }
         res.json(stats);
       }
     });

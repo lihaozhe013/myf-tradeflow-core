@@ -209,7 +209,17 @@
 | PUT | /api/payable/payments/:id | 修改付款记录 |
 | DELETE | /api/payable/payments/:id | 删除付款记录 |
 | GET | /api/payable/details/:supplier_code | 获取供应商应付账款详情 |
-| GET | /api/overview/stats | 获取系统统计数据（包含总体数据、入库出库趋势、库存状态分析、热门产品、主要客户/供应商、库存变化趋势、月度趋势等，**含缺货产品明细字段 out_of_stock_products**） |
+| GET | /api/overview/stats | 获取系统统计数据（只读缓存，包含总体数据、入库出库趋势、库存状态分析、热门产品、主要客户/供应商、库存变化趋势、月度趋势等，**含缺货产品明细字段 out_of_stock_products**，**支持缓存与刷新机制**） |
+| POST | /api/overview/stats | 强制刷新统计数据，重新计算并写入缓存，返回最新统计数据 |
+#### /api/overview/stats 缓存与刷新机制
+
+- GET `/api/overview/stats`：只读缓存，直接读取 `data/overview-stats.json` 文件返回统计数据，**极大提升响应速度**。
+- POST `/api/overview/stats`：强制刷新，重新计算所有统计数据，并将结果写入 `data/overview-stats.json`，然后返回最新数据。
+- 前端“刷新”按钮应调用 `POST /api/overview/stats`，普通访问直接 `GET /api/overview/stats` 即可。
+
+示例：
+- GET `/api/overview/stats` —— 读取缓存
+- POST `/api/overview/stats` —— 重新计算并更新缓存
 ### 新增API字段说明
 
 #### GET /api/overview/stats 返回字段 out_of_stock_products

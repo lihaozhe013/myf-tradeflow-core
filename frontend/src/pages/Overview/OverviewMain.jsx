@@ -23,20 +23,40 @@ const OverviewMain = () => {
   const [stats, setStats] = useState({});
   const [error, setError] = useState(null);
 
+
   useEffect(() => {
     fetchStats();
   }, []);
 
-  const fetchStats = async () => {
+  // 获取统计数据（只读缓存）
+  const fetchStats = async (autoCreate = true) => {
     try {
       setLoading(true);
       const response = await fetch('/api/overview/stats');
+      if (response.status === 503 && autoCreate) {
+        // 自动刷新并重试
+        await fetch('/api/overview/stats', { method: 'POST' });
+        return await fetchStats(false);
+      }
+      if (!response.ok) throw new Error('统计数据未生成，请先刷新');
       const result = await response.json();
       setStats(result);
       setError(null);
     } catch (err) {
-      console.error('❌ 获取数据失败:', err);
       setError('获取数据失败: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 刷新统计数据（POST，刷新后再GET）
+  const refreshStats = async () => {
+    try {
+      setLoading(true);
+      await fetch('/api/overview/stats', { method: 'POST' });
+      await fetchStats();
+    } catch (err) {
+      setError('刷新数据失败: ' + err.message);
     } finally {
       setLoading(false);
     }
@@ -212,7 +232,7 @@ const OverviewMain = () => {
           <Button 
             type="primary" 
             icon={<SyncOutlined />}
-            onClick={fetchStats} 
+            onClick={refreshStats} 
             loading={loading}
             size="large"
             style={{

@@ -26,6 +26,7 @@ dist-ssr
 *.sw?
 
 # Data
+data/
 backend/._data.db
 backend/data.db
 backend/python_scripts/exported-files
