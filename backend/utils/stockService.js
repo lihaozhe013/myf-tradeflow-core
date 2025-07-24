@@ -4,9 +4,9 @@ const db = require('../db');
 function updateStock(recordId, productModel, quantity, type) {
   const now = new Date().toISOString().replace('T', ' ').substr(0, 19);
   
-  // 获取当前库存
+  // 获取当前最新库存
   db.get(
-    'SELECT SUM(stock_quantity) as current_stock FROM stock WHERE product_model = ?',
+    'SELECT stock_quantity FROM stock WHERE product_model = ? ORDER BY update_time DESC, record_id DESC LIMIT 1',
     [productModel],
     (err, row) => {
       if (err) {
@@ -14,10 +14,10 @@ function updateStock(recordId, productModel, quantity, type) {
         return;
       }
       
-      const currentStock = row.current_stock || 0;
+      const currentStock = row ? row.stock_quantity : 0;
       const newStock = currentStock + quantity;
       
-      // 插入库存记录
+      // 插入库存记录（存储操作后的累积库存）
       db.run(
         'INSERT INTO stock (record_id, product_model, stock_quantity, update_time) VALUES (?, ?, ?, ?)',
         [recordId, productModel, newStock, now],

@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
-const { updateStock } = require('../utils/stockService');
 const { logger } = require('../utils/logger');
 
 // 获取入库记录列表
@@ -118,9 +117,6 @@ router.post('/', (req, res) => {
       res.status(500).json({ error: err.message });
       return;
     }
-    
-    // 更新库存
-    updateStock(this.lastID, product_model, quantity, 'inbound');
     
     res.json({ id: this.lastID, message: '入库记录创建成功' });
   });

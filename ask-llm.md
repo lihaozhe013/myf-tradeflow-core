@@ -98,13 +98,29 @@
 | order_number | TEXT | 订单号 |
 | remark | TEXT | 备注 |
 
-### 3. 库存表 stock
-| 字段 | 类型 | 说明 |
-|---|---|---|
-| record_id | INTEGER | 记录编号（与进/出库记录id一致） |
-| product_model | TEXT | 产品型号 |
-| stock_quantity | INTEGER | 操作后库存数量 |
-| update_time | TEXT | 更新时间 |
+### 3. 库存缓存文件 stock-summary.json
+**说明**：移除库存表，改用JSON文件存储每个产品的当前库存总量，通过入库/出库记录异步计算生成
+
+**文件位置**：`/data/stock-summary.json`
+
+**数据结构**：
+```json
+{
+  "last_updated": "2025-07-24T10:30:00.000Z",
+  "products": {
+    "产品型号A": {
+      "current_stock": 100,
+      "last_inbound": "2025-07-20",
+      "last_outbound": "2025-07-22"
+    },
+    "产品型号B": {
+      "current_stock": -5,
+      "last_inbound": "2025-07-15",
+      "last_outbound": "2025-07-23"
+    }
+  }
+}
+```
 
 ### 4. 客户/供应商表 partners
 | 字段 | 类型 | 说明 |
@@ -176,8 +192,8 @@
 | POST | /api/outbound | 新增出库记录 |
 | PUT | /api/outbound/:id | 修改出库记录 |
 | DELETE | /api/outbound/:id | 删除出库记录 |
-| GET | /api/stock | 获取库存明细 |
-| GET | /api/stock/history | 获取库存历史记录 |
+| GET | /api/stock | 获取库存明细（读取缓存文件，支持产品筛选分页） |
+| POST | /api/stock/refresh | 重新计算并刷新库存缓存（基于入库/出库记录重新计算所有产品库存） |
 | GET | /api/partners | 获取客户/供应商列表 |
 | POST | /api/partners | 新增客户/供应商 |
 | PUT | /api/partners/:short_name | 修改客户/供应商 |
@@ -198,7 +214,7 @@
 | GET | /api/product-categories | 获取所有产品类型 |
 | POST | /api/product-categories | 新增产品类型（仅后端维护） |
 | DELETE | /api/product-categories/:name | 删除产品类型（仅后端维护） |
-| POST | /api/stock-rebuild/rebuild | 重建库存表（清空后根据入库/出库记录重新汇总，耗时操作，需前端确认） |
+| POST | /api/stock-rebuild/rebuild | **已废弃** - 改用 POST /api/stock/refresh |
 | GET | /api/receivable | 获取应收账款列表（分页/筛选/排序） |
 | POST | /api/receivable/payments | 新增回款记录 |
 | PUT | /api/receivable/payments/:id | 修改回款记录 |
@@ -209,7 +225,7 @@
 | PUT | /api/payable/payments/:id | 修改付款记录 |
 | DELETE | /api/payable/payments/:id | 删除付款记录 |
 | GET | /api/payable/details/:supplier_code | 获取供应商应付账款详情 |
-| GET | /api/overview/stats | 获取系统统计数据（只读缓存，包含总体数据、入库出库趋势、库存状态分析、热门产品、主要客户/供应商、库存变化趋势、月度趋势等，**含缺货产品明细字段 out_of_stock_products**，**支持缓存与刷新机制**） |
+| GET | /api/overview/stats | 获取系统统计数据（只读缓存，包含总体数据、入库出库趋势、库存状态分析、热门产品、主要客户/供应商、库存变化趋势、月度趋势等，**含缺货产品明细字段 out_of_stock_products**，**支持缓存与刷新机制**，**库存数据从stock-summary.json读取**） |
 | POST | /api/overview/stats | 强制刷新统计数据，重新计算并写入缓存，返回最新统计数据 |
 #### /api/overview/stats 缓存与刷新机制
 
@@ -245,7 +261,7 @@
 ## 四、核心业务逻辑
 
 - **价格管理**：产品价格按生效日期管理，查询时取最近有效价格。
-- **库存管理**：入库增加库存，出库减少库存，允许库存为负（前端警告）。
+- **库存管理**：入库增加库存，出库减少库存，允许库存为负（前端警告）。**库存数据存储在JSON缓存文件中，通过刷新按钮异步重新计算**。
 - **数据唯一性**：客户/供应商、产品的"代号-简称-全称"三项强绑定，任意一项变更自动同步，后端API校验唯一性。
 - **自动计算**：总价自动计算，进出库自动更新库存。
 - **智能输入**：入库/出库界面支持代号或简称/型号输入，自动补全匹配项，强绑定校验，使用AutoComplete组件提供流畅的输入体验。
@@ -258,7 +274,7 @@
 - **总览调试页**：数据库总览、测试数据
 - **入库管理页**：代号-简称强绑定AutoComplete输入，支持筛选和数据导出
 - **出库管理页**：代号-简称强绑定AutoComplete输入，支持筛选和数据导出
-- **库存明细页**：库存查询与统计
+- **库存明细页**：库存查询与统计，**移除库存历史记录功能**，**添加库存刷新功能**
 - **客户/供应商管理页**：代号-简称-全称三项联动
 - **产品管理页**：代号-简称-型号三项联动
 - **产品价格管理页**：价格历史管理
