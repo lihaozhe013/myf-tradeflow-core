@@ -11,8 +11,10 @@ import {
   ExportOutlined
 } from '@ant-design/icons';
 
+
 import MonthlyStockChange from './MonthlyStockChange';
 import OutOfStockModal from './OutOfStockModal';
+import TopSalesPieChart from './TopSalesPieChart';
 
 const { Title, Text } = Typography;
 
@@ -246,17 +248,19 @@ const OverviewMain = () => {
         <Col span={8}>
           <MonthlyStockChange />
         </Col>
-        <Col span={8} />
+        <Col span={8}>
+          <TopSalesPieChart />
+        </Col>
         <Col span={8}>
           <Card
             title="库存状态"
             bordered={false}
-            style={{ borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)', height: '100%' }}
-            bodyStyle={{ height: 'calc(100% - 56px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)', minHeight: 280 }}
+            bodyStyle={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             <div style={{ textAlign: 'center', width: '100%' }}>
-              <div style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>缺货</div>
-              <div style={{ fontSize: 32, color: '#ff4d4f', fontWeight: 700, marginBottom: 16 }}>
+              <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>缺货</div>
+              <div style={{ fontSize: 28, color: '#ff4d4f', fontWeight: 700, marginBottom: 12 }}>
                 {outOfStockCount}
               </div>
               <Button type="primary" onClick={() => setModalVisible(true)}>

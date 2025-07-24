@@ -9,7 +9,8 @@
 - **backend/**
   - `server.js`：Express服务器入口
   - `db.js`：SQLite数据库连接和操作
-  - `routes/`：API路由模块（如inbound、outbound、stock、partners、products、productPrices、receivable、payable等）
+  - `routes/`：API路由模块（如inbound、outbound、stock、partners、products、productPrices、receiv| GET | /api/overview/monthly-stock-change/:productModel | 获取指定产品的本月库存变化量（**纯读取overview-stats.json缓存文件中的monthly_stock_changes字段**，参数：产品型号productModel，返回月初库存、当前库存、本月变化量，无任何数据库查询） |
+| GET | /api/overview/top-sales-products | 获取销售额前10的商品及"其他"合计（**纯读取overview-stats.json缓存文件**，返回格式：[{ product_model, total_sales }...]，最后一项为"其他"合计，无任何数据库查询） |le、payable等）
     - `export.js`：Python导出脚本调用API（基础信息、入库出库、应收应付）
     - `receivable.js`：应收账款管理API（实时聚合、回款记录CRUD）
     - `payable.js`：应付账款管理API（实时聚合、付款记录CRUD）
@@ -225,8 +226,8 @@
 | PUT | /api/payable/payments/:id | 修改付款记录 |
 | DELETE | /api/payable/payments/:id | 删除付款记录 |
 | GET | /api/payable/details/:supplier_code | 获取供应商应付账款详情 |
-| GET | /api/overview/stats | 获取系统统计数据（只读缓存，仅包含总体数据、缺货产品明细字段 out_of_stock_products，支持缓存与刷新机制，库存数据从stock-summary.json读取） |
-| POST | /api/overview/stats | 强制刷新统计数据，重新计算并写入缓存，返回最新统计数据 |
+| GET | /api/overview/stats | 获取系统统计数据（**纯读取overview-stats.json缓存文件**，包含总体数据、缺货产品明细字段 out_of_stock_products，无任何计算逻辑） |
+| POST | /api/overview/stats | 强制刷新统计数据，**执行所有概览相关计算并写入缓存**，包括销售额分布、库存状态、所有产品本月变化量等，返回最新统计数据 |
 
 #### GET /api/overview/stats 返回字段 out_of_stock_products
 
@@ -245,10 +246,42 @@
 }
 ```
 | GET | /api/overview/monthly-stock-change/:productModel | 获取指定产品的本月库存变化量（简化版本，参数：产品型号productModel，返回月初库存、当前库存、本月变化量，移除额外的统计信息以减少计算量） |
+| GET | /api/overview/top-sales-products | 获取销售额前10的商品及“其他”合计（返回格式：[{ product_model, total_sales }...]，最后一项为“其他”合计，**只读overview-stats.json缓存，避免每次请求实时计算**） |
 
 ---
 
+
 ## 四、核心业务逻辑
+
+## 四、核心业务逻辑
+
+### 概览页数据缓存机制（重点说明）
+
+**严格的缓存分离架构**：
+- **POST 刷新机制**：所有概览统计数据的计算**仅在 POST /api/overview/stats 时执行**，包括：
+  - 系统总览统计（销售额、采购额、客户供应商数量等）
+  - 缺货产品列表
+  - 销售额前10商品分布及"其他"合计
+  - **所有产品的本月库存变化量**（预计算所有产品，避免单独查询）
+- **JSON 缓存存储**：计算结果统一写入 `/data/overview-stats.json` 缓存文件，包含以下结构：
+  ```json
+  {
+    "overview": { /* 总览统计 */ },
+    "out_of_stock_products": [ /* 缺货产品 */ ],
+    "top_sales_products": [ /* 销售额前10及其他 */ ],
+    "monthly_stock_changes": { 
+      "产品型号A": { /* 本月库存变化详情 */ },
+      "产品型号B": { /* 本月库存变化详情 */ }
+    }
+  }
+  ```
+- **GET 纯读取**：所有 GET 接口（`/api/overview/stats`、`/api/overview/top-sales-products`、`/api/overview/monthly-stock-change/:productModel`）**严格只读取 JSON 缓存文件**，无任何数据库查询和计算逻辑
+- **性能优势**：前端页面响应毫秒级，避免复杂聚合查询阻塞系统
+
+**数据更新流程**：
+1. 数据变更后（入库、出库、基础数据修改），调用 POST /api/overview/stats 刷新
+2. 后端执行所有统计计算，写入 overview-stats.json
+3. 前端 GET 请求直接返回缓存数据，无计算延迟
 
 - **价格管理**：产品价格按生效日期管理，查询时取最近有效价格。
 - **库存管理**：入库增加库存，出库减少库存，允许库存为负（前端警告）。**库存数据存储在JSON缓存文件中，通过刷新按钮异步重新计算**。

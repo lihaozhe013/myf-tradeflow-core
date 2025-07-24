@@ -67,7 +67,7 @@ const MonthlyStockChange = () => {
       if (result.success) {
         setStockData(result.data);
       } else {
-        setError(result.message || '获取库存变化数据失败');
+        setError(result.message || result.error || '获取库存变化数据失败，请先刷新统计数据');
       }
     } catch (err) {
       console.error('获取库存变化数据失败:', err);
@@ -101,7 +101,7 @@ const MonthlyStockChange = () => {
     <Card
       title="本月库存变化量"
       variant="outlined"
-      style={{ borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)', height: '100%' }}
+      style={{ borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)', minHeight: 280 }}
       extra={
         <Select
           value={selectedProduct}
@@ -122,9 +122,9 @@ const MonthlyStockChange = () => {
       }
     >
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+        <div style={{ textAlign: 'center', padding: '20px 0' }}>
           <Spin size="large" />
-          <div style={{ marginTop: '16px' }}>
+          <div style={{ marginTop: '8px' }}>
             <Text type="secondary">正在加载库存数据...</Text>
           </div>
         </div>
@@ -134,16 +134,16 @@ const MonthlyStockChange = () => {
           description={error}
           type="error"
           showIcon
-          style={{ margin: '20px 0' }}
+          style={{ margin: '10px 0' }}
         />
       ) : stockData ? (
-        <Row gutter={[16, 16]}>
+        <Row gutter={[8, 8]}>
           <Col span={24}>
             <Statistic
               title="月初库存"
               value={stockData.month_start_stock || 0}
               prefix={<InboxOutlined />}
-              valueStyle={{ color: '#1677ff' }}
+              valueStyle={{ color: '#1677ff', fontSize: '16px' }}
             />
           </Col>
           <Col span={24}>
@@ -151,7 +151,7 @@ const MonthlyStockChange = () => {
               title="当前库存"
               value={stockData.current_stock || 0}
               prefix={<StockOutlined />}
-              valueStyle={{ color: '#722ed1' }}
+              valueStyle={{ color: '#722ed1', fontSize: '16px' }}
             />
           </Col>
           <Col span={24}>
@@ -160,12 +160,12 @@ const MonthlyStockChange = () => {
               value={Math.abs(stockData.monthly_change || 0)}
               prefix={getTrendIcon(stockData.monthly_change)}
               suffix={stockData.monthly_change > 0 ? '(增加)' : stockData.monthly_change < 0 ? '(减少)' : '(无变化)'}
-              valueStyle={{ color: getTrendColor(stockData.monthly_change) }}
+              valueStyle={{ color: getTrendColor(stockData.monthly_change), fontSize: '16px' }}
             />
           </Col>
         </Row>
       ) : (
-        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+        <div style={{ textAlign: 'center', padding: '20px 0' }}>
           <Text type="secondary">请选择产品查看库存变化</Text>
         </div>
       )}
