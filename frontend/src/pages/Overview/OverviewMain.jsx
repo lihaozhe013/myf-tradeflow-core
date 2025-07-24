@@ -11,9 +11,7 @@ import {
   ExportOutlined
 } from '@ant-design/icons';
 
-
 import MonthlyStockChange from './MonthlyStockChange';
-import StockTrendChart from './StockTrendChart';
 import OutOfStockModal from './OutOfStockModal';
 
 const { Title, Text } = Typography;
@@ -63,54 +61,12 @@ const OverviewMain = () => {
   };
 
   // 处理数据格式
-  const overview = stats.overview?.[0] || {};
-  const stockAnalysis = stats.stock_analysis || [];
-  const stockTrend = stats.stock_trend || [];
-
-  // 缺货产品数量
-  const outOfStockList = Array.isArray(stockAnalysis)
-    ? stockAnalysis.find(item => item.status === '缺货' && item.count > 0)
-    : null;
-
-  // 缺货产品明细直接用后端返回
+  const overview = stats.overview || {};
+  const outOfStockCount = Array.isArray(stats.out_of_stock_products) ? stats.out_of_stock_products.length : 0;
   const outOfStockProducts = Array.isArray(stats.out_of_stock_products)
     ? stats.out_of_stock_products.map(item => ({ product_model: item.product_model }))
     : [];
-
   const [modalVisible, setModalVisible] = useState(false);
-
-  // 处理库存趋势数据用于图表
-  const getStockTrendData = () => {
-    
-    const dailyTotals = {};
-    // 按日期汇总所有产品的库存量，确保cumulative_stock为数字且不为null
-    stockTrend.forEach((item, index) => {
-      
-      const date = item.date.split(' ')[0]; // 只取日期部分
-      const stockValue = Number(item.cumulative_stock);
-      
-      
-      if (isNaN(stockValue) || stockValue == null) {
-      }
-      if (!dailyTotals[date]) {
-        dailyTotals[date] = 0;
-      }
-      dailyTotals[date] += isNaN(stockValue) ? 0 : stockValue;
-      
-    });
-    
-    
-    const result = Object.entries(dailyTotals)
-      .map(([date, total]) => ({
-        date,
-        value: Number((total / 1000).toFixed(2)), // 转换为千为单位
-        category: '总库存'
-      }))
-      .sort((a, b) => new Date(a.date) - new Date(b.date));
-    
-    
-    return result;
-  };
 
   // 快速操作函数
   const handleQuickInbound = () => {
@@ -301,7 +257,7 @@ const OverviewMain = () => {
             <div style={{ textAlign: 'center', width: '100%' }}>
               <div style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>缺货</div>
               <div style={{ fontSize: 32, color: '#ff4d4f', fontWeight: 700, marginBottom: 16 }}>
-                {outOfStockList ? outOfStockList.count : 0}
+                {outOfStockCount}
               </div>
               <Button type="primary" onClick={() => setModalVisible(true)}>
                 查看详细
@@ -313,12 +269,6 @@ const OverviewMain = () => {
               products={outOfStockProducts}
             />
           </Card>
-        </Col>
-      </Row>
-
-      <Row gutter={24} style={{ marginTop: '24px' }}>
-        <Col span={24}>
-          <StockTrendChart stockTrend={stockTrend} />
         </Col>
       </Row>
     </div>

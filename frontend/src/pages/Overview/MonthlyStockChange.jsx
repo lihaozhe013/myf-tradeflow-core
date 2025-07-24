@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { 
-  Card, Select, Statistic, Row, Col, Spin, Alert, Typography, Space 
+  Card, Select, Statistic, Row, Col, Spin, Alert, Typography 
 } from 'antd';
 import { 
   ArrowUpOutlined, 
@@ -32,8 +32,6 @@ const MonthlyStockChange = () => {
     try {
       const response = await fetch('/api/products');
       const result = await response.json();
-      
-      console.log('产品API响应:', result); // 调试日志
       
       if (result.data && Array.isArray(result.data)) {
         setProducts(result.data);
@@ -159,31 +157,11 @@ const MonthlyStockChange = () => {
           <Col span={24}>
             <Statistic
               title="本月变化量"
-              value={Math.abs(stockData.stock_change || 0)}
-              prefix={getTrendIcon(stockData.stock_change)}
-              suffix={stockData.stock_change > 0 ? '(增加)' : stockData.stock_change < 0 ? '(减少)' : '(无变化)'}
-              valueStyle={{ color: getTrendColor(stockData.stock_change) }}
+              value={Math.abs(stockData.monthly_change || 0)}
+              prefix={getTrendIcon(stockData.monthly_change)}
+              suffix={stockData.monthly_change > 0 ? '(增加)' : stockData.monthly_change < 0 ? '(减少)' : '(无变化)'}
+              valueStyle={{ color: getTrendColor(stockData.monthly_change) }}
             />
-          </Col>
-          <Col span={24}>
-            <div style={{ 
-              padding: '12px', 
-              background: '#f6f6f6', 
-              borderRadius: '8px',
-              marginTop: '8px'
-            }}>
-              <Space direction="vertical" size="small" style={{ width: '100%' }}>
-                <Text type="secondary" style={{ fontSize: '12px' }}>本月统计信息</Text>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Text style={{ fontSize: '12px' }}>入库次数: {stockData.inbound_count || 0}</Text>
-                  <Text style={{ fontSize: '12px' }}>出库次数: {stockData.outbound_count || 0}</Text>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Text style={{ fontSize: '12px' }}>入库总量: {stockData.total_inbound || 0}</Text>
-                  <Text style={{ fontSize: '12px' }}>出库总量: {stockData.total_outbound || 0}</Text>
-                </div>
-              </Space>
-            </div>
           </Col>
         </Row>
       ) : (

@@ -26,49 +26,20 @@ router.post('/stats', (req, res) => {
   const statsFile = path.resolve(__dirname, '../../data/overview-stats.json');
   const stats = {};
   let completed = 0;
-  const totalQueries = 8; // 更新总查询数
+  const totalQueries = 2;
   const queries = [
     {
       key: 'out_of_stock_products',
       customHandler: (callback) => {
         getAllStockData((err, stockData) => {
           if (err) return callback(err);
-          
           const outOfStockProducts = Object.entries(stockData)
             .filter(([, data]) => data.current_stock <= 0)
             .map(([product_model]) => ({ product_model }));
-          
           callback(null, outOfStockProducts);
         });
       }
     },
-    {
-      key: 'stock_analysis',
-      customHandler: (callback) => {
-        getAllStockData((err, stockData) => {
-          if (err) return callback(err);
-          
-          const analysis = {
-            '缺货': 0,
-            '库存不足': 0,
-            '库存正常': 0,
-            '库存充足': 0
-          };
-          
-          Object.values(stockData).forEach(product => {
-            const stock = product.current_stock;
-            if (stock <= 0) analysis['缺货']++;
-            else if (stock <= 10) analysis['库存不足']++;
-            else if (stock <= 50) analysis['库存正常']++;
-            else analysis['库存充足']++;
-          });
-          
-          const result = Object.entries(analysis).map(([status, count]) => ({ status, count }));
-          callback(null, result);
-        });
-      }
-    },
-    // 总体数据统计
     {
       key: 'overview',
       customHandler: (callback) => {
@@ -83,10 +54,8 @@ router.post('/stats', (req, res) => {
             (SELECT SUM(total_price) FROM outbound_records) as total_sales_amount
         `, [], (err, row) => {
           if (err) return callback(err);
-          
           getAllStockData((stockErr, stockData) => {
             if (stockErr) return callback(stockErr);
-            
             const result = {
               ...row,
               stocked_products: Object.keys(stockData).length
@@ -95,154 +64,28 @@ router.post('/stats', (req, res) => {
           });
         });
       }
-    },
-    // 最近7天的入库趋势
-    {
-      key: 'inbound_trend',
-      query: `
-        SELECT 
-          inbound_date as date,
-          COUNT(*) as count,
-          SUM(total_price) as amount
-        FROM inbound_records 
-        WHERE date(inbound_date) >= date('now', '-7 days')
-        GROUP BY inbound_date
-        ORDER BY inbound_date DESC
-      `
-    },
-    // 最近7天的出库趋势
-    {
-      key: 'outbound_trend',
-      query: `
-        SELECT 
-          outbound_date as date,
-          COUNT(*) as count,
-          SUM(total_price) as amount
-        FROM outbound_records 
-        WHERE date(outbound_date) >= date('now', '-7 days')
-        GROUP BY outbound_date
-        ORDER BY outbound_date DESC
-      `
-    },
-    // 热门产品（按出库量）
-    {
-      key: 'popular_products',
-      query: `
-        SELECT 
-          product_model,
-          SUM(quantity) as total_quantity,
-          SUM(total_price) as total_amount,
-          COUNT(*) as order_count
-        FROM outbound_records
-        GROUP BY product_model
-        ORDER BY total_quantity DESC
-        LIMIT 10
-      `
-    },
-    // 主要客户（按销售额）
-    {
-      key: 'top_customers',
-      query: `
-        SELECT 
-          customer_short_name,
-          SUM(total_price) as total_amount,
-          COUNT(*) as order_count
-        FROM outbound_records
-        GROUP BY customer_short_name
-        ORDER BY total_amount DESC
-        LIMIT 10
-      `
-    },
-    // 主要供应商（按采购额）
-    {
-      key: 'top_suppliers',
-      query: `
-        SELECT 
-          supplier_short_name,
-          SUM(total_price) as total_amount,
-          COUNT(*) as order_count
-        FROM inbound_records
-        GROUP BY supplier_short_name
-        ORDER BY total_amount DESC
-        LIMIT 10
-      `
-    },
-    // 月度趋势统计
-    {
-      key: 'monthly_trend',
-      query: `
-        SELECT 
-          strftime('%Y-%m', inbound_date) as month,
-          COUNT(*) as inbound_count,
-          SUM(total_price) as inbound_amount,
-          0 as outbound_count,
-          0 as outbound_amount
-        FROM inbound_records
-        WHERE date(inbound_date) >= date('now', '-6 months')
-        GROUP BY strftime('%Y-%m', inbound_date)
-        
-        UNION ALL
-        
-        SELECT 
-          strftime('%Y-%m', outbound_date) as month,
-          0 as inbound_count,
-          0 as inbound_amount,
-          COUNT(*) as outbound_count,
-          SUM(total_price) as outbound_amount
-        FROM outbound_records
-        WHERE date(outbound_date) >= date('now', '-6 months')
-        GROUP BY strftime('%Y-%m', outbound_date)
-        
-        ORDER BY month DESC
-      `
     }
   ];
 
-  // 执行所有查询
-  queries.forEach(({ key, query, customHandler }) => {
-    if (customHandler) {
-      // 使用自定义处理器
-      customHandler((err, result) => {
-        if (err) {
-          console.error(`Error in ${key} customHandler:`, err);
-          stats[key] = { error: err.message };
-        } else {
-          stats[key] = result;
+  queries.forEach(({ key, customHandler }) => {
+    customHandler((err, result) => {
+      if (err) {
+        console.error(`Error in ${key} customHandler:`, err);
+        stats[key] = { error: err.message };
+      } else {
+        stats[key] = result;
+      }
+      completed++;
+      if (completed === totalQueries) {
+        try {
+          fs.mkdirSync(path.dirname(statsFile), { recursive: true });
+          fs.writeFileSync(statsFile, JSON.stringify(stats, null, 2), 'utf-8');
+        } catch (e) {
+          console.error('写入 overview-stats.json 失败:', e);
         }
-        completed++;
-        if (completed === totalQueries) {
-          // 写入缓存文件
-          try {
-            fs.mkdirSync(path.dirname(statsFile), { recursive: true });
-            fs.writeFileSync(statsFile, JSON.stringify(stats, null, 2), 'utf-8');
-          } catch (e) {
-            console.error('写入 overview-stats.json 失败:', e);
-          }
-          res.json(stats);
-        }
-      });
-    } else {
-      // 使用数据库查询
-      db.all(query, [], (err, rows) => {
-        if (err) {
-          console.error(`Error in ${key} query:`, err);
-          stats[key] = { error: err.message };
-        } else {
-          stats[key] = rows;
-        }
-        completed++;
-        if (completed === totalQueries) {
-          // 写入缓存文件
-          try {
-            fs.mkdirSync(path.dirname(statsFile), { recursive: true });
-            fs.writeFileSync(statsFile, JSON.stringify(stats, null, 2), 'utf-8');
-          } catch (e) {
-            console.error('写入 overview-stats.json 失败:', e);
-          }
-          res.json(stats);
-        }
-      });
-    }
+        res.json(stats);
+      }
+    });
   });
 });
 
@@ -276,7 +119,7 @@ router.get('/all-tables', (req, res) => {
   });
 });
 
-// 获取指定产品的本月库存变化量
+// 获取指定产品的本月库存变化量（简化版本，移除额外统计）
 router.get('/monthly-stock-change/:productModel', (req, res) => {
   const productModel = req.params.productModel;
   
@@ -292,7 +135,7 @@ router.get('/monthly-stock-change/:productModel', (req, res) => {
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const monthStartStr = monthStart.toISOString().split('T')[0];
   
-  // 查询本月库存变化数据
+  // 简化查询，只计算基本库存变化
   const queries = {
     // 获取月初前的累计入库
     beforeMonthInbound: `
@@ -308,20 +151,16 @@ router.get('/monthly-stock-change/:productModel', (req, res) => {
       WHERE product_model = ? AND date(outbound_date) < ?
     `,
     
-    // 获取本月入库统计
+    // 获取本月入库总量
     monthlyInbound: `
-      SELECT 
-        COUNT(*) as inbound_count,
-        COALESCE(SUM(quantity), 0) as total_inbound
+      SELECT COALESCE(SUM(quantity), 0) as total_inbound
       FROM inbound_records 
       WHERE product_model = ? AND date(inbound_date) >= ?
     `,
     
-    // 获取本月出库统计
+    // 获取本月出库总量
     monthlyOutbound: `
-      SELECT 
-        COUNT(*) as outbound_count,
-        COALESCE(SUM(quantity), 0) as total_outbound
+      SELECT COALESCE(SUM(quantity), 0) as total_outbound
       FROM outbound_records 
       WHERE product_model = ? AND date(outbound_date) >= ?
     `
@@ -346,10 +185,8 @@ router.get('/monthly-stock-change/:productModel', (req, res) => {
         } else if (key === 'beforeMonthOutbound') {
           results.before_month_outbound = row.total || 0;
         } else if (key === 'monthlyInbound') {
-          results.inbound_count = row.inbound_count || 0;
           results.total_inbound = row.total_inbound || 0;
         } else if (key === 'monthlyOutbound') {
-          results.outbound_count = row.outbound_count || 0;
           results.total_outbound = row.total_outbound || 0;
         }
       }
@@ -374,10 +211,6 @@ router.get('/monthly-stock-change/:productModel', (req, res) => {
               month_start_stock: monthStartStock,
               current_stock: currentStock,
               monthly_change: monthlyChange,
-              inbound_count: results.inbound_count,
-              total_inbound: results.total_inbound,
-              outbound_count: results.outbound_count,
-              total_outbound: results.total_outbound,
               query_date: new Date().toISOString()
             }
           });
