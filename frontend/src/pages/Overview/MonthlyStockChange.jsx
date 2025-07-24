@@ -101,7 +101,7 @@ const MonthlyStockChange = () => {
     <Card
       title="本月库存变化量"
       variant="outlined"
-      style={{ borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)', minHeight: 280 }}
+      style={{ borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)', height: 370 }}
       extra={
         <Select
           value={selectedProduct}

@@ -57,7 +57,7 @@ const TopSalesPieChart = () => {
       style={{ borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)', minHeight: 280 }}
       bodyStyle={{ padding: '8px' }}
     >
-      <ResponsiveContainer width="100%" height={200}>
+      <ResponsiveContainer width="100%" height={500}>
         <PieChart>
           <Pie
             data={data}
@@ -65,8 +65,8 @@ const TopSalesPieChart = () => {
             cy="50%"
             labelLine={false}
             label={renderCustomizedLabel}
-            outerRadius={60}
-            innerRadius={30}
+            outerRadius={140}
+            innerRadius={70}
             fill="#8884d8"
             dataKey="value"
           >
