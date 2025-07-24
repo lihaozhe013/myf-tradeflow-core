@@ -12,7 +12,7 @@ const { initSql } = require('./dbSchema');
  * 包含数据库结构升级逻辑，确保字段完整性
  */
 function ensureAllTablesAndColumns() {
-  const dbPath = path.resolve(__dirname, '../data.db');
+  const dbPath = path.resolve(__dirname, '../../data/data.db');
   const dbInstance = new sqlite3.Database(dbPath);
   
   // 1. 执行基础表结构创建

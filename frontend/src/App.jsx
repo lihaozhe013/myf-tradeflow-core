@@ -76,7 +76,7 @@ function AppContent() {
   const menuItems = [
     {
       key: 'overview',
-      label: <Link to="/overview">总览调试</Link>,
+      label: <Link to="/overview">系统总览</Link>,
     },
     {
       key: 'inbound',

@@ -9,7 +9,7 @@ from datetime import datetime
 import io
 import os
 
-DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'data.db'))
+DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', '../data/data.db'))
 EXPORT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'exported-files'))
 FONT_NAME = '微软雅黑'
 

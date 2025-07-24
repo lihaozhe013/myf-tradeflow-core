@@ -38,7 +38,7 @@ const StockTrendChart = ({ stockTrend = [] }) => {
           总库存变化趋势 (最近30天)
         </Space>
       }
-      bordered={false}
+      variant="outlined"
       style={{ borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}
     >
       {data.length > 0 ? (

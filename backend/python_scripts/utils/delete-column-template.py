@@ -1,6 +1,6 @@
 import sqlite3
 
-DB_PATH = 'data.db'
+DB_PATH = '../data/data.db'
 TABLE_NAME = 'products'
 COLUMN_TO_REMOVE = 'short_name'
 

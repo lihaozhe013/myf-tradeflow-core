@@ -4,7 +4,7 @@ from openpyxl.styles import Font
 from tabulate import tabulate
 import re
 
-DB_PATH = '../data.db'
+DB_PATH = '../../data/data.db'
 EXPORT_FILE = '导出结果.xlsx'
 FONT_NAME = '微软雅黑'
 

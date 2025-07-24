@@ -11,9 +11,10 @@ import {
   ExportOutlined
 } from '@ant-design/icons';
 
-import StockStatusData from './StockStatusData';
-import QuickStats from './QuickStats';
+
+import MonthlyStockChange from './MonthlyStockChange';
 import StockTrendChart from './StockTrendChart';
+import OutOfStockModal from './OutOfStockModal';
 
 const { Title, Text } = Typography;
 
@@ -22,20 +23,40 @@ const OverviewMain = () => {
   const [stats, setStats] = useState({});
   const [error, setError] = useState(null);
 
+
   useEffect(() => {
     fetchStats();
   }, []);
 
-  const fetchStats = async () => {
+  // 获取统计数据（只读缓存）
+  const fetchStats = async (autoCreate = true) => {
     try {
       setLoading(true);
       const response = await fetch('/api/overview/stats');
+      if (response.status === 503 && autoCreate) {
+        // 自动刷新并重试
+        await fetch('/api/overview/stats', { method: 'POST' });
+        return await fetchStats(false);
+      }
+      if (!response.ok) throw new Error('统计数据未生成，请先刷新');
       const result = await response.json();
       setStats(result);
       setError(null);
     } catch (err) {
-      console.error('❌ 获取数据失败:', err);
       setError('获取数据失败: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 刷新统计数据（POST，刷新后再GET）
+  const refreshStats = async () => {
+    try {
+      setLoading(true);
+      await fetch('/api/overview/stats', { method: 'POST' });
+      await fetchStats();
+    } catch (err) {
+      setError('刷新数据失败: ' + err.message);
     } finally {
       setLoading(false);
     }
@@ -44,10 +65,19 @@ const OverviewMain = () => {
   // 处理数据格式
   const overview = stats.overview?.[0] || {};
   const stockAnalysis = stats.stock_analysis || [];
-  const popularProducts = stats.popular_products || [];
-  const topCustomers = stats.top_customers || [];
-  const topSuppliers = stats.top_suppliers || [];
   const stockTrend = stats.stock_trend || [];
+
+  // 缺货产品数量
+  const outOfStockList = Array.isArray(stockAnalysis)
+    ? stockAnalysis.find(item => item.status === '缺货' && item.count > 0)
+    : null;
+
+  // 缺货产品明细直接用后端返回
+  const outOfStockProducts = Array.isArray(stats.out_of_stock_products)
+    ? stats.out_of_stock_products.map(item => ({ product_model: item.product_model }))
+    : [];
+
+  const [modalVisible, setModalVisible] = useState(false);
 
   // 处理库存趋势数据用于图表
   const getStockTrendData = () => {
@@ -202,7 +232,7 @@ const OverviewMain = () => {
           <Button 
             type="primary" 
             icon={<SyncOutlined />}
-            onClick={fetchStats} 
+            onClick={refreshStats} 
             loading={loading}
             size="large"
             style={{
@@ -222,7 +252,7 @@ const OverviewMain = () => {
         <Col span={24}>
           <Card
             title="概览"
-            bordered={false}
+            variant="outlined"
             style={{ borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}
           >
             <Row gutter={16}>
@@ -257,18 +287,32 @@ const OverviewMain = () => {
       </Row>
 
       <Row gutter={24} style={{ marginTop: '24px' }}>
-        <Col span={16}>
+        <Col span={8}>
+          <MonthlyStockChange />
+        </Col>
+        <Col span={8} />
+        <Col span={8}>
           <Card
             title="库存状态"
             bordered={false}
             style={{ borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)', height: '100%' }}
-            bodyStyle={{ height: 'calc(100% - 56px)', display: 'flex', alignItems: 'center' }}
+            bodyStyle={{ height: 'calc(100% - 56px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            <StockStatusData stockAnalysis={stockAnalysis} />
+            <div style={{ textAlign: 'center', width: '100%' }}>
+              <div style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>缺货</div>
+              <div style={{ fontSize: 32, color: '#ff4d4f', fontWeight: 700, marginBottom: 16 }}>
+                {outOfStockList ? outOfStockList.count : 0}
+              </div>
+              <Button type="primary" onClick={() => setModalVisible(true)}>
+                查看详细
+              </Button>
+            </div>
+            <OutOfStockModal
+              visible={modalVisible}
+              onClose={() => setModalVisible(false)}
+              products={outOfStockProducts}
+            />
           </Card>
-        </Col>
-        <Col span={8}>
-          <QuickStats overview={overview} />
         </Col>
       </Row>
 

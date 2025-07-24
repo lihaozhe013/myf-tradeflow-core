@@ -4,7 +4,7 @@ from openpyxl.styles import Font
 import re
 from datetime import datetime
 
-DB_PATH = '../data.db'
+DB_PATH = '../../data/data.db'
 EXPORT_FILE = '应收应付明细导出.xlsx'
 FONT_NAME = '微软雅黑'
 
