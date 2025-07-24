@@ -1,6 +1,7 @@
 const db = require('../db');
 const fs = require('fs');
 const path = require('path');
+const { logger } = require('./logger');
 
 const STOCK_CACHE_FILE = path.resolve(__dirname, '../../data/stock-summary.json');
 
@@ -129,13 +130,21 @@ function refreshStockCache(callback) {
 function getStockCache(callback) {
   try {
     if (!fs.existsSync(STOCK_CACHE_FILE)) {
-      return callback(new Error('库存缓存不存在，请先刷新'));
+      logger.warn('库存缓存不存在，尝试刷新缓存');
+      return refreshStockCache((refreshErr) => {
+        if (refreshErr) {
+          logger.error('刷新库存缓存失败', { error: refreshErr.message });
+          return callback(new Error('库存缓存不存在且刷新失败，请检查系统设置'));
+        }
+        getStockCache(callback); // 递归调用以获取刷新后的缓存
+      });
     }
-    
+
     const data = fs.readFileSync(STOCK_CACHE_FILE, 'utf8');
     const stockData = JSON.parse(data);
     callback(null, stockData);
   } catch (err) {
+    logger.error('读取库存缓存失败', { error: err.message });
     callback(err);
   }
 }
@@ -200,7 +209,10 @@ function getStockSummaryCount(productModel, callback) {
 // 获取所有产品的库存数据（用于overview统计）
 function getAllStockData(callback) {
   getStockCache((err, stockData) => {
-    if (err) return callback(err);
+    if (err) {
+      logger.error('获取库存数据失败', { error: err.message });
+      return callback(err);
+    }
     callback(null, stockData.products);
   });
 }
