@@ -32,7 +32,8 @@ const ExportPanel = ({
           <Card title="基础信息导出" size="small">
             <Space wrap>
               <Button
-                type="primary"
+                type="default"
+                className="hover-primary"
                 icon={<DatabaseOutlined />}
                 onClick={() => handleExport('base-info', { tables: '123' })}
                 loading={loading}
@@ -40,6 +41,8 @@ const ExportPanel = ({
                 导出全部基础信息
               </Button>
               <Button
+                type="default"
+                className="hover-primary"
                 icon={<DatabaseOutlined />}
                 onClick={() => handleExport('base-info', { tables: '1' })}
                 loading={loading}
@@ -47,6 +50,8 @@ const ExportPanel = ({
                 仅导出客户/供应商
               </Button>
               <Button
+                type="default"
+                className="hover-primary"
                 icon={<DatabaseOutlined />}
                 onClick={() => handleExport('base-info', { tables: '2' })}
                 loading={loading}
@@ -54,6 +59,8 @@ const ExportPanel = ({
                 仅导出产品
               </Button>
               <Button
+                type="default"
+                className="hover-primary"
                 icon={<DatabaseOutlined />}
                 onClick={() => handleExport('base-info', { tables: '3' })}
                 loading={loading}
@@ -92,8 +99,9 @@ const ExportPanel = ({
               </Form.Item>
             </Form>
             <Space wrap>
-                            <Button
-                type="primary"
+              <Button
+                type="default"
+                className="hover-primary"
                 icon={<FileExcelOutlined />}
                 onClick={() => handleExport('inbound-outbound', {
                   tables: '12',
@@ -107,6 +115,8 @@ const ExportPanel = ({
                 导出入库出库记录
               </Button>
               <Button
+                type="default"
+                className="hover-primary"
                 icon={<FileExcelOutlined />}
                 onClick={() => handleExport('inbound-outbound', {
                   tables: '1',
@@ -120,6 +130,8 @@ const ExportPanel = ({
                 仅导出入库记录
               </Button>
               <Button
+                type="default"
+                className="hover-primary"
                 icon={<FileExcelOutlined />}
                 onClick={() => handleExport('inbound-outbound', {
                   tables: '2',
@@ -157,7 +169,8 @@ const ExportPanel = ({
             </Form>
             <Space wrap>
               <Button
-                type="primary"
+                type="default"
+                className="hover-primary"
                 icon={<FileExcelOutlined />}
                 onClick={() => handleExport('receivable-payable', {
                   outboundFrom: dateRange[0].format('YYYY-MM-DD'),

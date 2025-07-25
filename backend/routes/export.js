@@ -81,14 +81,6 @@ router.post('/receivable-payable', async (req, res) => {
     }
 });
 
-// 文件下载API (已废弃，保留兼容性)
-router.get('/download', (req, res) => {
-    res.status(410).json({ 
-        success: false, 
-        message: '文件下载API已废弃，请使用新的直接下载方式' 
-    });
-});
-
 // 获取导出状态
 router.get('/status', (req, res) => {
     res.json({

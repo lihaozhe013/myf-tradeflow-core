@@ -94,22 +94,6 @@ const Report = () => {
 
   return (
     <div>
-        <Card 
-          title="数据导出中心" 
-          size="small" 
-          style={{ marginBottom: 16 }}
-          extra={
-            <span style={{ fontSize: '12px', color: '#666' }}>
-              ✨ Node.js原生实现 | 即时下载 | 无临时文件
-            </span>
-          }
-        >
-          <p style={{ margin: 0, color: '#666' }}>
-            支持基础信息、入库出库记录、应收应付明细的Excel导出。
-            导出过程完全在内存中进行，响应速度快，无需等待文件生成。
-          </p>
-        </Card>
-        
         <ExportPanel
             handleExport={handleExport}
             loading={loading}
