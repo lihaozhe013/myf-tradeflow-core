@@ -1,4 +1,0 @@
-openpyxl
-tabulate
-numpy
-pandas
