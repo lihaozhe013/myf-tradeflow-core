@@ -9,21 +9,16 @@
 - **backend/**
   - `server.js`：Express服务器入口
   - `db.js`：SQLite数据库连接和操作
-  - `routes/`：API路由模块（如inbound、outbound、stock、partners、products、productPrices、receiv| GET | /api/overview/monthly-stock-change/:productModel | 获取指定产品的本月库存变化量（**纯读取overview-stats.json缓存文件中的monthly_stock_changes字段**，参数：产品型号productModel，返回月初库存、当前库存、本月变化量，无任何数据库查询） |
-| GET | /api/overview/top-sales-products | 获取销售额前10的商品及"其他"合计（**纯读取overview-stats.json缓存文件**，返回格式：[{ product_model, total_sales }...]，最后一项为"其他"合计，无任何数据库查询） |le、payable等）
-    - `export.js`：Python导出脚本调用API（基础信息、入库出库、应收应付）
+  - `routes/`：API路由模块（如inbound、outbound、stock、partners、products、productPrices、receivable、payable等）
+    - `export.js`：Node.js原生Excel导出API（基础信息、入库出库、应收应付）
     - `receivable.js`：应收账款管理API（实时聚合、回款记录CRUD）
     - `payable.js`：应付账款管理API（实时聚合、付款记录CRUD）
   - `utils/`：数据库结构、测试数据、库存等工具
-    - `pythonExporter.js`：Python导出脚本调用工具类
+    - `excelExporter.js`：Excel导出核心类（Node.js + xlsx实现）
+    - `exportTemplates.js`：Excel导出模板定义
+    - `exportQueries.js`：导出数据查询模块
     - `logger.js`：Winston日志配置文件
     - `loggerMiddleware.js`：日志中间件（请求日志、错误日志）
-  - `python_scripts/`：Python导出脚本目录
-    - `export/`：重构后的导出脚本（支持命令行和Node.js集成）
-      - `base-info.py`：基础信息导出（客户/供应商、产品、产品价格）
-      - `inbound-outbound.py`：入库出库记录导出
-      - `receivable-payable.py`：应收应付明细导出
-    - `export-*.py`：原始交互式导出脚本（保留）
 - **frontend/**
   - `index.html`、`vite.config.js`、`src/`（App.jsx、main.jsx、pages/等）
   - `src/pages/`：页面组件
@@ -210,9 +205,9 @@
 | PUT | /api/product-prices/:id | 修改产品价格 |
 | DELETE | /api/product-prices/:id | 删除产品价格 |
 | GET | /api/product-prices/auto | 自动获取产品单价（参数：partner_short_name, product_model, date，返回匹配的单价） |
-| POST | /api/export/base-info | Python导出基础信息（客户/供应商、产品、产品价格） |
-| POST | /api/export/inbound-outbound | Python导出入库出库记录（支持日期、产品代号、客户代号筛选） |
-| POST | /api/export/receivable-payable | Python导出应收应付明细 |
+| POST | /api/export/base-info | Node.js Excel导出基础信息（客户/供应商、产品、产品价格），直接返回Excel文件流 |
+| POST | /api/export/inbound-outbound | Node.js Excel导出入库出库记录（支持日期、产品代号、客户代号筛选），直接返回Excel文件流 |
+| POST | /api/export/receivable-payable | Node.js Excel导出应收应付明细，直接返回Excel文件流 |
 | GET | /api/product-categories | 获取所有产品类型 |
 | POST | /api/product-categories | 新增产品类型（仅后端维护） |
 | DELETE | /api/product-categories/:name | 删除产品类型（仅后端维护） |
@@ -339,12 +334,18 @@
 ## 六、开发建议
 
 ### 导出功能架构
-- **页面内筛选导出**：在入库/出库页面直接筛选和导出数据，满足日常查询需求
-- **Python脚本深度导出**：适合大数据量和复杂格式的导出，支持多表关联
-- **Python脚本集成**：
-  - 交互式脚本：手动执行，适合运维人员
-  - 命令行接口：支持参数传递，适合自动化
-  - Node.js集成：后端API调用Python脚本，无需独立页面
+- **Node.js原生导出**：使用xlsx库实现Excel导出，内存操作，无临时文件，响应速度快（<50ms）
+- **直接下载模式**：前端fetch请求 → 后端生成Excel Buffer → 前端blob下载，一步到位
+- **多表导出支持**：
+  - 基础信息导出：客户/供应商、产品、产品价格（支持选择性导出）
+  - 入库出库记录：支持日期、产品、客户筛选，分别或同时导出
+  - 应收应付明细：包含汇总、明细、回款/付款记录多个工作表
+- **技术优势**：
+  - ✅ 纯Node.js实现，无Python依赖
+  - ✅ 内存导出，零磁盘占用  
+  - ✅ 即时响应，无需等待文件生成
+  - ✅ 支持并发导出请求
+  - ✅ Excel格式完全兼容
 
 ### 代码组织
 - **API优先**：前后端分离，所有业务逻辑在后端实现
