@@ -14,10 +14,12 @@ import { DatabaseOutlined, FileExcelOutlined } from '@ant-design/icons';
 const { RangePicker } = DatePicker;
 
 const ExportPanel = ({ 
-  handlePythonExport, 
+  handleExport, 
   loading, 
   dateRange, 
   setDateRange,
+  paymentDateRange,
+  setPaymentDateRange,
   selectedProduct,
   setSelectedProduct,
   selectedCustomer,
@@ -32,28 +34,28 @@ const ExportPanel = ({
               <Button
                 type="primary"
                 icon={<DatabaseOutlined />}
-                onClick={() => handlePythonExport('base-info', { tables: '123' })}
+                onClick={() => handleExport('base-info', { tables: '123' })}
                 loading={loading}
               >
                 导出全部基础信息
               </Button>
               <Button
                 icon={<DatabaseOutlined />}
-                onClick={() => handlePythonExport('base-info', { tables: '1' })}
+                onClick={() => handleExport('base-info', { tables: '1' })}
                 loading={loading}
               >
                 仅导出客户/供应商
               </Button>
               <Button
                 icon={<DatabaseOutlined />}
-                onClick={() => handlePythonExport('base-info', { tables: '2' })}
+                onClick={() => handleExport('base-info', { tables: '2' })}
                 loading={loading}
               >
                 仅导出产品
               </Button>
               <Button
                 icon={<DatabaseOutlined />}
-                onClick={() => handlePythonExport('base-info', { tables: '3' })}
+                onClick={() => handleExport('base-info', { tables: '3' })}
                 loading={loading}
               >
                 仅导出产品价格
@@ -90,10 +92,10 @@ const ExportPanel = ({
               </Form.Item>
             </Form>
             <Space wrap>
-              <Button
+                            <Button
                 type="primary"
                 icon={<FileExcelOutlined />}
-                onClick={() => handlePythonExport('inbound-outbound', {
+                onClick={() => handleExport('inbound-outbound', {
                   tables: '12',
                   dateFrom: dateRange[0].format('YYYY-MM-DD'),
                   dateTo: dateRange[1].format('YYYY-MM-DD'),
@@ -106,7 +108,7 @@ const ExportPanel = ({
               </Button>
               <Button
                 icon={<FileExcelOutlined />}
-                onClick={() => handlePythonExport('inbound-outbound', {
+                onClick={() => handleExport('inbound-outbound', {
                   tables: '1',
                   dateFrom: dateRange[0].format('YYYY-MM-DD'),
                   dateTo: dateRange[1].format('YYYY-MM-DD'),
@@ -119,7 +121,7 @@ const ExportPanel = ({
               </Button>
               <Button
                 icon={<FileExcelOutlined />}
-                onClick={() => handlePythonExport('inbound-outbound', {
+                onClick={() => handleExport('inbound-outbound', {
                   tables: '2',
                   dateFrom: dateRange[0].format('YYYY-MM-DD'),
                   dateTo: dateRange[1].format('YYYY-MM-DD'),
@@ -146,6 +148,8 @@ const ExportPanel = ({
               </Form.Item>
               <Form.Item label="回付款日期">
                 <RangePicker
+                  value={paymentDateRange}
+                  onChange={setPaymentDateRange}
                   format="YYYY-MM-DD"
                   placeholder={['回付款开始日期', '回付款结束日期']}
                 />
@@ -155,11 +159,11 @@ const ExportPanel = ({
               <Button
                 type="primary"
                 icon={<FileExcelOutlined />}
-                onClick={() => handlePythonExport('receivable-payable', {
+                onClick={() => handleExport('receivable-payable', {
                   outboundFrom: dateRange[0].format('YYYY-MM-DD'),
                   outboundTo: dateRange[1].format('YYYY-MM-DD'),
-                  paymentFrom: dateRange[0].format('YYYY-MM-DD'),
-                  paymentTo: dateRange[1].format('YYYY-MM-DD')
+                  paymentFrom: paymentDateRange[0].format('YYYY-MM-DD'),
+                  paymentTo: paymentDateRange[1].format('YYYY-MM-DD')
                 })}
                 loading={loading}
               >
