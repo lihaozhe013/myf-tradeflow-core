@@ -102,11 +102,8 @@ app.use((err, req, res, next) => {
 // 静态文件托管 (生产环境)
 // =============================================================================
 
-// 导出文件静态托管，开发/生产均可用
-const exportedFilesDir = path.resolve(__dirname, 'python_scripts/exported-files');
-app.use('/exported-files', express.static(exportedFilesDir));
-console.log('静态托管目录:', exportedFilesDir);
-logger.info('静态托管目录已配置', { path: exportedFilesDir });
+// 注意：导出文件静态托管已移除，现在使用直接下载方式
+// 无需再托管 exported-files 目录
 
 if (process.env.NODE_ENV === 'production') {
   const frontendDist = path.resolve(__dirname, '../frontend/dist');

@@ -56,6 +56,7 @@
     - `app.log`：应用主日志
     - `error.log`：错误日志
     - `access.log`：HTTP访问日志
+  - `data.db` SQLite 数据库文件
 
 ---
 

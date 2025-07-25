@@ -1,0 +1,141 @@
+// Excel导出模板定义
+const TEMPLATES = {
+  partners: {
+    sheetName: '客户供应商',
+    columns: [
+      { label: '代号', key: 'code' },
+      { label: '简称', key: 'short_name' },
+      { label: '全称', key: 'full_name' },
+      { label: '类型', key: 'type_name' },
+      { label: '地址', key: 'address' },
+      { label: '联系人', key: 'contact_person' },
+      { label: '联系电话', key: 'contact_phone' }
+    ]
+  },
+  products: {
+    sheetName: '产品信息',
+    columns: [
+      { label: '产品代号', key: 'code' },
+      { label: '产品类别', key: 'category' },
+      { label: '产品型号', key: 'product_model' },
+      { label: '备注', key: 'remark' }
+    ]
+  },
+  prices: {
+    sheetName: '产品价格',
+    columns: [
+      { label: '客户/供应商简称', key: 'partner_short_name' },
+      { label: '产品型号', key: 'product_model' },
+      { label: '生效日期', key: 'effective_date' },
+      { label: '单价', key: 'unit_price' }
+    ]
+  },
+  inbound: {
+    sheetName: '入库记录',
+    columns: [
+      { label: '入库单号', key: 'id' },
+      { label: '供应商代号', key: 'supplier_code' },
+      { label: '供应商简称', key: 'supplier_short_name' },
+      { label: '供应商全称', key: 'supplier_full_name' },
+      { label: '产品代号', key: 'product_code' },
+      { label: '产品型号', key: 'product_model' },
+      { label: '数量', key: 'quantity' },
+      { label: '单价', key: 'unit_price' },
+      { label: '总价', key: 'total_price' },
+      { label: '入库时间', key: 'inbound_date' },
+      { label: '开票日期', key: 'invoice_date' },
+      { label: '发票号码', key: 'invoice_number' },
+      { label: '订单号', key: 'order_number' },
+      { label: '备注', key: 'remark' }
+    ]
+  },
+  outbound: {
+    sheetName: '出库记录',
+    columns: [
+      { label: '出库单号', key: 'id' },
+      { label: '客户代号', key: 'customer_code' },
+      { label: '客户简称', key: 'customer_short_name' },
+      { label: '客户全称', key: 'customer_full_name' },
+      { label: '产品代号', key: 'product_code' },
+      { label: '产品型号', key: 'product_model' },
+      { label: '数量', key: 'quantity' },
+      { label: '单价', key: 'unit_price' },
+      { label: '总价', key: 'total_price' },
+      { label: '出库时间', key: 'outbound_date' },
+      { label: '开票日期', key: 'invoice_date' },
+      { label: '发票号码', key: 'invoice_number' },
+      { label: '订单号', key: 'order_number' },
+      { label: '备注', key: 'remark' }
+    ]
+  },
+  receivable_summary: {
+    sheetName: '应收账款汇总',
+    columns: [
+      { label: '客户代号', key: 'customer_code' },
+      { label: '客户简称', key: 'customer_short_name' },
+      { label: '客户全称', key: 'customer_full_name' },
+      { label: '销售总额', key: 'total_sales' },
+      { label: '回款总额', key: 'total_payments' },
+      { label: '应收余额', key: 'balance' }
+    ]
+  },
+  receivable_details: {
+    sheetName: '应收明细',
+    columns: [
+      { label: '出库单号', key: 'record_id' },
+      { label: '客户代号', key: 'customer_code' },
+      { label: '客户简称', key: 'customer_short_name' },
+      { label: '产品型号', key: 'product_model' },
+      { label: '销售金额', key: 'total_price' },
+      { label: '出库日期', key: 'outbound_date' },
+      { label: '备注', key: 'remark' }
+    ]
+  },
+  receivable_payments: {
+    sheetName: '回款记录',
+    columns: [
+      { label: '回款编号', key: 'id' },
+      { label: '客户代号', key: 'customer_code' },
+      { label: '回款金额', key: 'amount' },
+      { label: '回款日期', key: 'pay_date' },
+      { label: '回款方式', key: 'pay_method' },
+      { label: '备注', key: 'remark' }
+    ]
+  },
+  payable_summary: {
+    sheetName: '应付账款汇总',
+    columns: [
+      { label: '供应商代号', key: 'supplier_code' },
+      { label: '供应商简称', key: 'supplier_short_name' },
+      { label: '供应商全称', key: 'supplier_full_name' },
+      { label: '采购总额', key: 'total_purchases' },
+      { label: '付款总额', key: 'total_payments' },
+      { label: '应付余额', key: 'balance' }
+    ]
+  },
+  payable_details: {
+    sheetName: '应付明细',
+    columns: [
+      { label: '入库单号', key: 'record_id' },
+      { label: '供应商代号', key: 'supplier_code' },
+      { label: '供应商简称', key: 'supplier_short_name' },
+      { label: '产品型号', key: 'product_model' },
+      { label: '采购金额', key: 'total_price' },
+      { label: '入库日期', key: 'inbound_date' },
+      { label: '备注', key: 'remark' }
+    ]
+  },
+  payable_payments: {
+    sheetName: '付款记录',
+    columns: [
+      { label: '付款编号', key: 'id' },
+      { label: '供应商代号', key: 'supplier_code' },
+      { label: '付款金额', key: 'amount' },
+      { label: '付款日期', key: 'pay_date' },
+      { label: '付款方式', key: 'pay_method' },
+      { label: '备注', key: 'remark' }
+    ]
+  }
+};
+
+module.exports = { TEMPLATES };
