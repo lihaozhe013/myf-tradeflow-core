@@ -80,12 +80,12 @@ const OverviewMain = () => {
   };
 
 
-  // 计算利润率
+  // 计算利润率（基于已售商品成本）
   const calculateProfitMargin = () => {
-    const purchase = overview.total_purchase_amount || 0;
+    const soldGoodsCost = overview.sold_goods_cost || 0;
     const sales = overview.total_sales_amount || 0;
-    if (purchase === 0) return 0;
-    return ((sales - purchase) / purchase * 100).toFixed(1);
+    if (soldGoodsCost === 0) return 0;
+    return ((sales - soldGoodsCost) / soldGoodsCost * 100).toFixed(1);
   };
 
   if (loading) {
@@ -244,7 +244,7 @@ const OverviewMain = () => {
               bodyStyle={{ height: '100%' }}
             >
               <Row gutter={16} style={{ height: '100%' }}>
-                <Col span={8}>
+                <Col span={6}>
                   <Statistic
                     title="总销售额"
                     value={overview.total_sales_amount}
@@ -252,21 +252,29 @@ const OverviewMain = () => {
                     valueStyle={{ color: '#3f8600' }}
                   />
                 </Col>
-                <Col span={8}>
+                <Col span={6}>
                   <Statistic
-                    title="总采购额"
-                    value={overview.total_purchase_amount}
+                    title="已售成本"
+                    value={overview.sold_goods_cost}
                     prefix={<ShoppingCartOutlined />}
-                    valueStyle={{ color: '#3f8600' }}
+                    valueStyle={{ color: '#fa8c16' }}
                   />
                 </Col>
-                <Col span={8}>
+                <Col span={6}>
                   <Statistic
                     title="利润率"
                     value={calculateProfitMargin()}
                     suffix="%"
                     prefix={<RiseOutlined />}
                     valueStyle={{ color: '#3f8600' }}
+                  />
+                </Col>
+                <Col span={6}>
+                  <Statistic
+                    title="总采购额"
+                    value={overview.total_purchase_amount}
+                    prefix={<ShoppingCartOutlined />}
+                    valueStyle={{ color: '#1677ff' }}
                   />
                 </Col>
               </Row>
@@ -280,9 +288,9 @@ const OverviewMain = () => {
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <Card
-                title={<span style={{ fontWeight: 600 }}>库存状态（缺货 {outOfStockCount}）</span>}
+                title={<span style={{ fontWeight: 600 }}>库存状态</span>}
                 bordered={false}
-                style={{ borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)', height: 370, width: '100%' }}
+                style={{ borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)', height: '370px', width: '100%' }}
                 bodyStyle={{ padding: 16, height: '100%', display: 'flex', flexDirection: 'column' }}
               >
                 <div style={{ flex: 1, overflow: 'auto' }}>

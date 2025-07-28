@@ -5,6 +5,87 @@ const fs = require('fs');
 const path = require('path');
 const { getAllStockData } = require('../utils/stockCacheService');
 
+/**
+ * 计算已售商品的真实成本（FIFO先进先出原则）
+ * @param {Function} callback 回调函数 (err, totalCost)
+ */
+function calculateSoldGoodsCost(callback) {
+  // 1. 获取所有出库记录，按日期排序
+  db.all(`
+    SELECT product_model, quantity, outbound_date, unit_price as selling_price
+    FROM outbound_records 
+    ORDER BY date(outbound_date) ASC, id ASC
+  `, [], (err, outboundRecords) => {
+    if (err) return callback(err);
+    
+    if (outboundRecords.length === 0) {
+      return callback(null, 0);
+    }
+
+    // 2. 获取所有入库记录，按日期排序（FIFO）
+    db.all(`
+      SELECT product_model, quantity, unit_price, inbound_date
+      FROM inbound_records 
+      ORDER BY date(inbound_date) ASC, id ASC
+    `, [], (err, inboundRecords) => {
+      if (err) return callback(err);
+
+      // 3. 按产品分组计算成本
+      const productInboundMap = {};
+      inboundRecords.forEach(record => {
+        if (!productInboundMap[record.product_model]) {
+          productInboundMap[record.product_model] = [];
+        }
+        productInboundMap[record.product_model].push({
+          quantity: record.quantity,
+          unit_price: record.unit_price,
+          inbound_date: record.inbound_date
+        });
+      });
+
+      let totalSoldGoodsCost = 0;
+
+      // 4. 为每个出库记录分配入库成本（FIFO原则）
+      outboundRecords.forEach(outRecord => {
+        const productModel = outRecord.product_model;
+        const soldQuantity = outRecord.quantity;
+        
+        if (!productInboundMap[productModel]) {
+          // 如果没有对应的入库记录，使用出库价格作为成本（保守估计）
+          totalSoldGoodsCost += soldQuantity * (outRecord.selling_price || 0);
+          return;
+        }
+
+        let remainingQuantity = soldQuantity;
+        let productCost = 0;
+
+        // FIFO：从最早的入库记录开始分配成本
+        for (let i = 0; i < productInboundMap[productModel].length && remainingQuantity > 0; i++) {
+          const inRecord = productInboundMap[productModel][i];
+          
+          if (inRecord.quantity <= 0) continue; // 已经用完的入库记录
+
+          const availableQuantity = Math.min(inRecord.quantity, remainingQuantity);
+          productCost += availableQuantity * (inRecord.unit_price || 0);
+          
+          // 更新剩余数量
+          inRecord.quantity -= availableQuantity;
+          remainingQuantity -= availableQuantity;
+        }
+
+        // 如果入库数量不足以覆盖出库数量，剩余部分使用出库价格作为成本
+        if (remainingQuantity > 0) {
+          productCost += remainingQuantity * (outRecord.selling_price || 0);
+        }
+
+        totalSoldGoodsCost += productCost;
+      });
+
+      callback(null, Math.round(totalSoldGoodsCost * 100) / 100); // 保留两位小数
+    });
+  });
+}
+
 // 获取系统统计数据
 // GET 只读缓存
 router.get('/stats', (req, res) => {
@@ -43,6 +124,7 @@ router.post('/stats', (req, res) => {
     {
       key: 'overview',
       customHandler: (callback) => {
+        // 获取基础统计数据
         db.get(`
           SELECT 
             (SELECT COUNT(*) FROM inbound_records) as total_inbound,
@@ -54,13 +136,20 @@ router.post('/stats', (req, res) => {
             (SELECT SUM(total_price) FROM outbound_records) as total_sales_amount
         `, [], (err, row) => {
           if (err) return callback(err);
-          getAllStockData((stockErr, stockData) => {
-            if (stockErr) return callback(stockErr);
-            const result = {
-              ...row,
-              stocked_products: Object.keys(stockData).length
-            };
-            callback(null, result);
+          
+          // 计算已售商品的真实成本
+          calculateSoldGoodsCost((costErr, soldGoodsCost) => {
+            if (costErr) return callback(costErr);
+            
+            getAllStockData((stockErr, stockData) => {
+              if (stockErr) return callback(stockErr);
+              const result = {
+                ...row,
+                sold_goods_cost: soldGoodsCost, // 新增：已售商品成本
+                stocked_products: Object.keys(stockData).length
+              };
+              callback(null, result);
+            });
           });
         });
       }
