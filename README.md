@@ -1,6 +1,8 @@
-# 小型公司进出货 + 账务系统
+# 小型贸易公司进出货 + 账务系统
 
-一个专为小型企业设计的轻量级库存管理和账务系统，基于现代Web技术栈构建，提供完整的进出货管理、库存跟踪和数据导出功能。
+一个专为myf公司设计的轻量级库存管理和账务系统，基于现代Web技术栈构建，提供完整的进出货管理、库存跟踪和数据导出功能。
+
+> 注意：本项目当前只是为小型贸易公司设计，进货和出货的商品是默认一样的，并不是进出货分开管理的。
 
 ---
 
@@ -11,11 +13,6 @@
 - npm >= 8.0.0
 
 ### 一键安装和启动
-```bash
-# 克隆项目
-git clone <repository-url>
-cd myf-db-systool
-
 # 安装所有依赖
 npm run install:all
 
@@ -48,18 +45,12 @@ npm run dev
 ## 🏗 技术架构
 
 ### 前端技术栈
-- React 18 + Ant Design 5 + Vite + dayjs
+- React 19 + React Router 6 + Ant Design + Vite
 - 响应式设计，支持桌面和移动设备
 
 ### 后端技术栈  
-- Node.js 18+ + Express + SQLite + CORS
+- Node.js (开发基于Node.js v24) + Express + SQLite3 + CORS
 - xlsx库实现Excel导出，内存操作，高性能
-
-### 导出功能重构 ✨
-- **Node.js原生实现**：完全脱离Python依赖，统一技术栈
-- **性能飞跃**：响应时间从3-5秒降至50毫秒以内（提升98%+）
-- **即时下载**：内存导出，无临时文件，点击即下载
-- **并发支持**：支持多用户同时导出，无性能瓶颈
 
 ---
 
@@ -89,9 +80,8 @@ myf-db-systool/
 ## 📋 使用指南
 
 ### 1. 初始化数据
-- 访问 http://localhost:5173
-- 进入“总览调试”页面，点击“设置测试数据”按钮
-- 系统自动生成示例数据
+- 系统总览 和 库存明细 页面使用缓存设计，即每次手动点击刷新才会重新计算，并将计算结果保存在一个json文件中，首次启动无法正常加载主页，需要手动点击刷新按钮才会刷新缓存
+- 系统总览 页面依赖 库存明细 页面的数据，如果无法正常显示 系统总览 页面，请先刷新 库存明细 页面。
 
 ### 2. 基础数据设置
 - 客户/供应商管理：添加合作伙伴信息
@@ -111,12 +101,10 @@ myf-db-systool/
 - **批量导入/导出**：支持Excel等格式的数据批量处理
 
 ### 5. 配置管理
-- **统一配置文件**：`frontend/src/config/appConfig.json` 集中管理所有应用配置项
+- **统一配置文件**：`data/appConfig.json` 集中管理所有应用配置项
   - **付款/回款方式**：支持现金、银行转账、支票、承兑汇票、在线支付等多种方式
   - **产品类别**：预设常用产品分类，如电子产品、机械设备、办公用品等
-- **配置导出模块**：`frontend/src/config/index.js` 提供便捷的配置导入和工具函数
-- **维护便利性**：修改JSON配置文件后重启应用即可生效，无需修改代码
-- **版本控制友好**：配置变更可跟踪，便于团队协作
+- **配置导出模块**：`data/exportConfig.json` 可以方便修改报表导出xlsx文件中列的顺序
 
 ### 6. 应收/应付账款管理
 - **应收账款**：实时聚合客户欠款，支持回款记录和明细查询
@@ -132,42 +120,19 @@ myf-db-systool/
 ```bash
 npm run install:all   # 安装所有依赖
 npm run dev           # 启动开发环境
-npm run build:prod    # 构建生产版本
-npm run start:prod    # 启动生产环境
-npm run clean         # 清理构建文件
-npm run lint          # 代码检查
-```
-
-### 前端独立命令
-```bash
-cd frontend
-npm run dev           # 启动前端开发服务器
-npm run build         # 构建前端
-npm run preview       # 预览构建结果
-npm run lint:fix      # 自动修复代码格式
-```
-
-### 后端独立命令
-```bash
-cd backend
-npm start             # 启动生产服务器
-npm run dev           # 启动开发服务器
-npm run dev:debug     # 启动调试模式
-npm run db:init       # 初始化数据库
-npm run db:seed       # 填充测试数据
+npm run build         # 构建生产版本
+npm start         # 启动生产环境
 ```
 
 ---
 
 ## 📊 数据库核心表
 
-- **inbound_records**：入库记录（含supplier_code、product_code字段）
-- **outbound_records**：出库记录（含customer_code、product_code字段）
-- **stock**：库存明细（基于product_model跟踪）
-- **partners**：客户/供应商（代号-简称-全称强绑定）
-- **products**：产品信息（代号-简称-型号强绑定）
-- **product_prices**：产品价格（按日期管理）
-- **product_categories**：产品类型
+- **inbound_records**：入库记录（含supplier_code、product_code字段
+- **outbound_records**：出库记录（含customer_code、product_code字段
+- **partners**：客户/供应商（代号-简称-全称强绑定
+- **products**：产品信息（代号-简称-型号强绑定
+- **product_prices**：产品价格（按日期管理
 
 ---
 
@@ -187,14 +152,6 @@ npm run db:seed       # 填充测试数据
 
 ---
 
-## 🧪 测试与调试
-
-- 一键生成测试数据，API接口可用Postman/curl测试
-- 浏览器开发者工具、React DevTools
-- 后端调试模式：`npm run dev:overview`
-
----
-
 ## 📈 性能与扩展
 
 ### 性能优化
@@ -203,20 +160,8 @@ npm run db:seed       # 填充测试数据
 - **导出功能**：内存操作，响应时间<50ms，支持并发
 
 ### 扩展功能
-- ✅ Node.js原生Excel导出（已完成重构）
+- ✅ Node.js原生Excel导出
 - 🔄 文件上传、Excel导入功能
 - 🔄 用户权限管理系统
 - 🔄 数据备份与恢复
 - 🔄 API文档自动生成
-
----
-
-## 🤝 贡献与支持
-
-- Fork、分支开发、Pull Request
-- 代码规范：ESLint + Prettier
-- 问题反馈：Issue 或联系维护者
-
----
-
-**🎯 本系统专为小型企业设计，简单易用，功能完整，开箱即用！**
