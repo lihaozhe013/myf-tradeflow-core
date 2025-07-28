@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import Inbound from './pages/Inbound';
 import Outbound from './pages/Outbound';
 import Stock from './pages/Stock';
@@ -10,10 +11,11 @@ import Report from './pages/Report/index';
 import Overview from './pages/Overview';
 import Receivable from './pages/Receivable';
 import Payable from './pages/Payable';
-import { Menu, Layout, Alert } from 'antd';
+import { Menu, Layout, Alert, Select, Space } from 'antd';
+import { GlobalOutlined } from '@ant-design/icons';
 import './App.css';
 
-const { Header, Content } = Layout;
+const { Header, Content, Footer } = Layout;
 
 // 错误边界组件
 class ErrorBoundary extends React.Component {
@@ -53,8 +55,45 @@ class ErrorBoundary extends React.Component {
   }
 }
 
+// 语言选择器组件
+function LanguageSelector() {
+  const { i18n, t } = useTranslation();
+  
+  const languageOptions = [
+    { value: 'zh', label: t('common.chinese'), flag: '🇨🇳' },
+    { value: 'en', label: t('common.english'), flag: '🇺🇸' },
+    { value: 'ko', label: t('common.korean'), flag: '🇰🇷' },
+  ];
+
+  const handleLanguageChange = (value) => {
+    i18n.changeLanguage(value);
+  };
+
+  return (
+    <Space>
+      <GlobalOutlined style={{ color: '#666' }} />
+      <Select
+        value={i18n.language}
+        onChange={handleLanguageChange}
+        style={{ minWidth: 120 }}
+        size="small"
+        options={languageOptions.map(option => ({
+          value: option.value,
+          label: (
+            <Space>
+              <span>{option.flag}</span>
+              <span>{option.label}</span>
+            </Space>
+          )
+        }))}
+      />
+    </Space>
+  );
+}
+
 function AppContent() {
   const location = useLocation();
+  const { t } = useTranslation();
 
   // 根据当前路径确定选中的菜单项
   const getSelectedKey = () => {
@@ -76,43 +115,43 @@ function AppContent() {
   const menuItems = [
     {
       key: 'overview',
-      label: <Link to="/overview">系统总览</Link>,
+      label: <Link to="/overview">{t('nav.overview')}</Link>,
     },
     {
       key: 'inbound',
-      label: <Link to="/inbound">入库管理</Link>,
+      label: <Link to="/inbound">{t('nav.inbound')}</Link>,
     },
     {
       key: 'outbound',
-      label: <Link to="/outbound">出库管理</Link>,
+      label: <Link to="/outbound">{t('nav.outbound')}</Link>,
     },
     {
       key: 'stock',
-      label: <Link to="/stock">库存明细</Link>,
+      label: <Link to="/stock">{t('nav.stock')}</Link>,
     },
     {
       key: 'partners',
-      label: <Link to="/partners">客户/供应商管理</Link>,
+      label: <Link to="/partners">{t('nav.partners')}</Link>,
     },
     {
       key: 'products',
-      label: <Link to="/products">产品管理</Link>,
+      label: <Link to="/products">{t('nav.products')}</Link>,
     },
     {
       key: 'product-prices',
-      label: <Link to="/product-prices">产品价格管理</Link>,
+      label: <Link to="/product-prices">{t('nav.productPrices')}</Link>,
     },
     {
       key: 'receivable',
-      label: <Link to="/receivable">应收账款管理</Link>,
+      label: <Link to="/receivable">{t('nav.receivable')}</Link>,
     },
     {
       key: 'payable',
-      label: <Link to="/payable">应付账款管理</Link>,
+      label: <Link to="/payable">{t('nav.payable')}</Link>,
     },
     {
       key: 'report',
-      label: <Link to="/report">报表导出</Link>,
+      label: <Link to="/report">{t('nav.report')}</Link>,
     },
   ];
 
@@ -147,6 +186,17 @@ function AppContent() {
           </ErrorBoundary>
         </div>
       </Content>
+      <Footer style={{ 
+        textAlign: 'center', 
+        background: '#fff', 
+        borderTop: '1px solid #e8e8e8',
+        padding: '12px 24px'
+      }}>
+        <Space>
+          <span style={{ color: '#666' }}>{t('common.language')}:</span>
+          <LanguageSelector />
+        </Space>
+      </Footer>
     </Layout>
   )
 }

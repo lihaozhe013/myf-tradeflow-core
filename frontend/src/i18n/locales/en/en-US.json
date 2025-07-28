@@ -1,0 +1,30 @@
+{
+  "nav": {
+    "overview": "System Overview",
+    "inbound": "Inbound Management", 
+    "outbound": "Outbound Management",
+    "stock": "Stock Details",
+    "partners": "Partners Management",
+    "products": "Products Management",
+    "productPrices": "Product Prices Management",
+    "receivable": "Receivable Management",
+    "payable": "Payable Management",
+    "report": "Report Export"
+  },
+  "common": {
+    "language": "Language",
+    "chinese": "中文",
+    "english": "English",
+    "korean": "한국어",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "add": "Add",
+    "edit": "Edit",
+    "delete": "Delete",
+    "search": "Search",
+    "refresh": "Refresh",
+    "export": "Export",
+    "save": "Save",
+    "reset": "Reset"
+  }
+}

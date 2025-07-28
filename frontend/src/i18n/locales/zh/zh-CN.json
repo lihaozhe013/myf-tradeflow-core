@@ -1,0 +1,30 @@
+{
+  "nav": {
+    "overview": "系统总览",
+    "inbound": "入库管理", 
+    "outbound": "出库管理",
+    "stock": "库存明细",
+    "partners": "客户/供应商管理",
+    "products": "产品管理",
+    "productPrices": "产品价格管理",
+    "receivable": "应收账款管理",
+    "payable": "应付账款管理",
+    "report": "报表导出"
+  },
+  "common": {
+    "language": "语言",
+    "chinese": "中文",
+    "english": "English",
+    "korean": "한국어",
+    "confirm": "确认",
+    "cancel": "取消",
+    "add": "新增",
+    "edit": "编辑",
+    "delete": "删除",
+    "search": "搜索",
+    "refresh": "刷新",
+    "export": "导出",
+    "save": "保存",
+    "reset": "重置"
+  }
+}

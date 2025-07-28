@@ -1,0 +1,30 @@
+{
+  "nav": {
+    "overview": "시스템 개요",
+    "inbound": "입고 관리", 
+    "outbound": "출고 관리",
+    "stock": "재고 세부정보",
+    "partners": "파트너 관리",
+    "products": "제품 관리",
+    "productPrices": "제품 가격 관리",
+    "receivable": "매출채권 관리",
+    "payable": "매입채무 관리",
+    "report": "보고서 내보내기"
+  },
+  "common": {
+    "language": "언어",
+    "chinese": "中文",
+    "english": "English",
+    "korean": "한국어",
+    "confirm": "확인",
+    "cancel": "취소",
+    "add": "추가",
+    "edit": "편집",
+    "delete": "삭제",
+    "search": "검색",
+    "refresh": "새로고침",
+    "export": "내보내기",
+    "save": "저장",
+    "reset": "재설정"
+  }
+}
