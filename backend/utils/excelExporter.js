@@ -128,6 +128,45 @@ class ExcelExporter {
   }
 
   /**
+   * 导出发票明细
+   * @param {Object} options - 导出选项
+   * @param {string} options.partnerCode - 合作伙伴代号（必填）
+   * @param {string} options.dateFrom - 开始日期
+   * @param {string} options.dateTo - 结束日期
+   * @returns {Promise<Buffer>} Excel文件Buffer
+   */
+  async exportInvoice(options = {}) {
+    try {
+      const { partnerCode, dateFrom, dateTo } = options;
+      
+      if (!partnerCode) {
+        throw new Error('合作伙伴代号是必填项');
+      }
+      
+      const data = await this.queries.getInvoiceData({
+        partnerCode,
+        dateFrom,
+        dateTo
+      });
+      
+      const workbook = XLSX.utils.book_new();
+      
+      if (data && data.length > 0) {
+        const worksheet = this.createWorksheet(data, TEMPLATES.invoice);
+        XLSX.utils.book_append_sheet(workbook, worksheet, TEMPLATES.invoice.sheetName);
+      } else {
+        // 如果没有数据，创建一个空的工作表
+        const worksheet = this.createWorksheet([], TEMPLATES.invoice);
+        XLSX.utils.book_append_sheet(workbook, worksheet, TEMPLATES.invoice.sheetName);
+      }
+      
+      return XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+    } catch (error) {
+      throw new Error(`发票导出失败: ${error.message}`);
+    }
+  }
+
+  /**
    * 创建工作表
    * @param {Array} data - 数据数组
    * @param {Object} template - 模板配置
@@ -187,7 +226,8 @@ class ExcelExporter {
     const typeMap = {
       'base-info': '基础信息导出',
       'inbound-outbound': '入库出库记录导出',
-      'receivable-payable': '应收应付明细导出'
+      'receivable-payable': '应收应付明细导出',
+      'invoice': '发票导出'
     };
     const typeName = typeMap[exportType] || exportType;
     return `${typeName}_${timestamp}.xlsx`;

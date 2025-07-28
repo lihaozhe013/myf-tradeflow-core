@@ -81,6 +81,39 @@ router.post('/receivable-payable', async (req, res) => {
     }
 });
 
+// 导出发票明细
+router.post('/invoice', async (req, res) => {
+    try {
+        const { partnerCode, dateFrom, dateTo } = req.body;
+        
+        if (!partnerCode) {
+            return res.status(400).json({
+                success: false,
+                message: '合作伙伴代号是必填项'
+            });
+        }
+        
+        const exporter = new ExcelExporter();
+        const buffer = await exporter.exportInvoice({
+            partnerCode,
+            dateFrom,
+            dateTo
+        });
+        
+        const filename = exporter.generateFilename('invoice');
+        
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
+        res.send(buffer);
+    } catch (error) {
+        console.error('发票导出失败:', error);
+        res.status(500).json({
+            success: false,
+            message: `导出失败: ${error.message}`
+        });
+    }
+});
+
 // 获取导出状态
 router.get('/status', (req, res) => {
     res.json({
@@ -107,6 +140,14 @@ router.get('/status', (req, res) => {
                 description: '应收应付明细导出',
                 endpoint: '/api/export/receivable-payable',
                 method: 'POST',
+                response_type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            },
+            {
+                name: 'invoice',
+                description: '发票导出（按产品合并数量和金额）',
+                endpoint: '/api/export/invoice',
+                method: 'POST',
+                required_params: ['partnerCode', 'dateFrom', 'dateTo'],
                 response_type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             }
         ],

@@ -7,7 +7,8 @@ import {
   DatePicker,
   Space,
   Form,
-  Input
+  Input,
+  message
 } from 'antd';
 import { DatabaseOutlined, FileExcelOutlined } from '@ant-design/icons';
 
@@ -183,6 +184,53 @@ const ExportPanel = ({
                 导出应收应付明细
               </Button>
             </Space>
+          </Card>
+        </Col>
+        
+        <Col span={24}>
+          <Card title="发票导出" size="small">
+            <Form layout="inline" style={{ marginBottom: 16 }}>
+              <Form.Item label="合作伙伴代号" required>
+                <Input
+                  placeholder="必填"
+                  value={selectedCustomer}
+                  onChange={(e) => setSelectedCustomer(e.target.value)}
+                  style={{ width: 150 }}
+                />
+              </Form.Item>
+              <Form.Item label="日期范围" required>
+                <RangePicker
+                  value={dateRange}
+                  onChange={setDateRange}
+                  format="YYYY-MM-DD"
+                />
+              </Form.Item>
+            </Form>
+            <Space wrap>
+              <Button
+                type="default"
+                className="hover-primary"
+                icon={<FileExcelOutlined />}
+                onClick={() => {
+                  if (!selectedCustomer) {
+                    message.warning('请输入合作伙伴代号');
+                    return;
+                  }
+                  handleExport('invoice', {
+                    partnerCode: selectedCustomer,
+                    dateFrom: dateRange[0].format('YYYY-MM-DD'),
+                    dateTo: dateRange[1].format('YYYY-MM-DD')
+                  });
+                }}
+                loading={loading}
+                disabled={!selectedCustomer}
+              >
+                导出发票明细
+              </Button>
+            </Space>
+            <div style={{ marginTop: 8, fontSize: '12px', color: '#666' }}>
+              说明：按产品型号和单价合并数量和金额，适用于生成发票明细
+            </div>
           </Card>
         </Col>
       </Row>

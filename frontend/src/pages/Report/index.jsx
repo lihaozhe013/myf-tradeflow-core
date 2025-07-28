@@ -34,7 +34,8 @@ const Report = () => {
     const typeMap = {
       'base-info': '基础信息导出',
       'inbound-outbound': '入库出库记录导出',
-      'receivable-payable': '应收应付明细导出'
+      'receivable-payable': '应收应付明细导出',
+      'invoice': '发票导出'
     };
     const typeName = typeMap[exportType] || exportType;
     return `${typeName}_${timestamp}.xlsx`;
