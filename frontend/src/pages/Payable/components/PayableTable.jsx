@@ -21,6 +21,18 @@ const PayableTable = ({
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [supplierDetails, setSupplierDetails] = useState(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
+  
+  // 详情弹窗分页状态
+  const [paymentPagination, setPaymentPagination] = useState({
+    current: 1,
+    pageSize: 5,
+    total: 0
+  });
+  const [inboundPagination, setInboundPagination] = useState({
+    current: 1,
+    pageSize: 5,
+    total: 0
+  });
 
   // 格式化金额显示
   const formatCurrency = (amount) => {
@@ -46,10 +58,45 @@ const PayableTable = ({
       setSelectedSupplier(record);
       setDetailsVisible(true);
       
-      const response = await fetch(`/api/payable/details/${record.supplier_code}`);
+      // 重置分页状态
+      setPaymentPagination({ current: 1, pageSize: 5, total: 0 });
+      setInboundPagination({ current: 1, pageSize: 5, total: 0 });
+      
+      await fetchSupplierDetails(record.supplier_code, 1, 1);
+    } catch (error) {
+      console.error('获取供应商详情失败:', error);
+      message.error('获取供应商详情失败，请检查网络连接');
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
+
+  // 获取供应商详情数据
+  const fetchSupplierDetails = async (supplierCode, paymentPage = 1, inboundPage = 1) => {
+    try {
+      const query = new URLSearchParams({
+        payment_page: paymentPage,
+        payment_limit: 5,
+        inbound_page: inboundPage,
+        inbound_limit: 5
+      });
+      
+      const response = await fetch(`/api/payable/details/${supplierCode}?${query.toString()}`);
       if (response.ok) {
         const result = await response.json();
         setSupplierDetails(result);
+        
+        // 更新分页状态
+        setPaymentPagination({
+          current: result.payment_records.page,
+          pageSize: result.payment_records.limit,
+          total: result.payment_records.total
+        });
+        setInboundPagination({
+          current: result.inbound_records.page,
+          pageSize: result.inbound_records.limit,
+          total: result.inbound_records.total
+        });
       } else {
         const error = await response.json();
         message.error(`获取供应商详情失败: ${error.error || '未知错误'}`);
@@ -57,8 +104,20 @@ const PayableTable = ({
     } catch (error) {
       console.error('获取供应商详情失败:', error);
       message.error('获取供应商详情失败，请检查网络连接');
-    } finally {
-      setDetailsLoading(false);
+    }
+  };
+
+  // 处理付款记录分页变化
+  const handlePaymentPageChange = (page) => {
+    if (selectedSupplier) {
+      fetchSupplierDetails(selectedSupplier.supplier_code, page, inboundPagination.current);
+    }
+  };
+
+  // 处理入库记录分页变化
+  const handleInboundPageChange = (page) => {
+    if (selectedSupplier) {
+      fetchSupplierDetails(selectedSupplier.supplier_code, paymentPagination.current, page);
     }
   };
 
@@ -71,8 +130,12 @@ const PayableTable = ({
   const handleDeletePaymentConfirm = async (paymentId) => {
     await onDeletePayment(paymentId);
     if (detailsVisible && selectedSupplier) {
-      // 如果详情窗口打开，重新获取详情
-      handleViewDetails(selectedSupplier);
+      // 如果详情窗口打开，重新获取当前页详情
+      await fetchSupplierDetails(
+        selectedSupplier.supplier_code, 
+        paymentPagination.current, 
+        inboundPagination.current
+      );
     }
   };
 
@@ -265,9 +328,15 @@ const PayableTable = ({
               </Typography.Title>
               <Table
                 size="small"
-                dataSource={supplierDetails.payment_records || []}
+                dataSource={supplierDetails.payment_records?.data || []}
                 rowKey="id"
-                pagination={false}
+                pagination={{
+                  ...paymentPagination,
+                  showSizeChanger: false,
+                  size: 'small',
+                  onChange: handlePaymentPageChange,
+                  showTotal: (total, range) => `${range[0]}-${range[1]} / ${total}`
+                }}
                 scroll={{ y: 200 }}
                 columns={[
                   { title: '付款金额', dataIndex: 'amount', render: (value) => formatCurrency(value) },
@@ -307,9 +376,15 @@ const PayableTable = ({
               <Typography.Title level={5}>入库记录</Typography.Title>
               <Table
                 size="small"
-                dataSource={supplierDetails.inbound_records || []}
+                dataSource={supplierDetails.inbound_records?.data || []}
                 rowKey="id"
-                pagination={false}
+                pagination={{
+                  ...inboundPagination,
+                  showSizeChanger: false,
+                  size: 'small',
+                  onChange: handleInboundPageChange,
+                  showTotal: (total, range) => `${range[0]}-${range[1]} / ${total}`
+                }}
                 scroll={{ y: 200 }}
                 columns={[
                   { title: '入库日期', dataIndex: 'inbound_date', width: 100 },

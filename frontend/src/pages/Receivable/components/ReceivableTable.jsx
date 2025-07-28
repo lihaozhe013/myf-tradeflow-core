@@ -21,6 +21,18 @@ const ReceivableTable = ({
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [customerDetails, setCustomerDetails] = useState(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
+  
+  // 详情弹窗分页状态
+  const [paymentPagination, setPaymentPagination] = useState({
+    current: 1,
+    pageSize: 5,
+    total: 0
+  });
+  const [outboundPagination, setOutboundPagination] = useState({
+    current: 1,
+    pageSize: 5,
+    total: 0
+  });
 
   // 格式化金额显示
   const formatCurrency = (amount) => {
@@ -46,10 +58,45 @@ const ReceivableTable = ({
       setSelectedCustomer(record);
       setDetailsVisible(true);
       
-      const response = await fetch(`/api/receivable/details/${record.customer_code}`);
+      // 重置分页状态
+      setPaymentPagination({ current: 1, pageSize: 5, total: 0 });
+      setOutboundPagination({ current: 1, pageSize: 5, total: 0 });
+      
+      await fetchCustomerDetails(record.customer_code, 1, 1);
+    } catch (error) {
+      console.error('获取客户详情失败:', error);
+      message.error('获取客户详情失败，请检查网络连接');
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
+
+  // 获取客户详情数据
+  const fetchCustomerDetails = async (customerCode, paymentPage = 1, outboundPage = 1) => {
+    try {
+      const query = new URLSearchParams({
+        payment_page: paymentPage,
+        payment_limit: 5,
+        outbound_page: outboundPage,
+        outbound_limit: 5
+      });
+      
+      const response = await fetch(`/api/receivable/details/${customerCode}?${query.toString()}`);
       if (response.ok) {
         const result = await response.json();
         setCustomerDetails(result);
+        
+        // 更新分页状态
+        setPaymentPagination({
+          current: result.payment_records.page,
+          pageSize: result.payment_records.limit,
+          total: result.payment_records.total
+        });
+        setOutboundPagination({
+          current: result.outbound_records.page,
+          pageSize: result.outbound_records.limit,
+          total: result.outbound_records.total
+        });
       } else {
         const error = await response.json();
         message.error(`获取客户详情失败: ${error.error || '未知错误'}`);
@@ -57,8 +104,20 @@ const ReceivableTable = ({
     } catch (error) {
       console.error('获取客户详情失败:', error);
       message.error('获取客户详情失败，请检查网络连接');
-    } finally {
-      setDetailsLoading(false);
+    }
+  };
+
+  // 处理回款记录分页变化
+  const handlePaymentPageChange = (page) => {
+    if (selectedCustomer) {
+      fetchCustomerDetails(selectedCustomer.customer_code, page, outboundPagination.current);
+    }
+  };
+
+  // 处理出库记录分页变化
+  const handleOutboundPageChange = (page) => {
+    if (selectedCustomer) {
+      fetchCustomerDetails(selectedCustomer.customer_code, paymentPagination.current, page);
     }
   };
 
@@ -71,8 +130,12 @@ const ReceivableTable = ({
   const handleDeletePaymentConfirm = async (paymentId) => {
     await onDeletePayment(paymentId);
     if (detailsVisible && selectedCustomer) {
-      // 如果详情窗口打开，重新获取详情
-      handleViewDetails(selectedCustomer);
+      // 如果详情窗口打开，重新获取当前页详情
+      await fetchCustomerDetails(
+        selectedCustomer.customer_code, 
+        paymentPagination.current, 
+        outboundPagination.current
+      );
     }
   };
 
@@ -265,9 +328,15 @@ const ReceivableTable = ({
               </Typography.Title>
               <Table
                 size="small"
-                dataSource={customerDetails.payment_records || []}
+                dataSource={customerDetails.payment_records?.data || []}
                 rowKey="id"
-                pagination={false}
+                pagination={{
+                  ...paymentPagination,
+                  showSizeChanger: false,
+                  size: 'small',
+                  onChange: handlePaymentPageChange,
+                  showTotal: (total, range) => `${range[0]}-${range[1]} / ${total}`
+                }}
                 scroll={{ y: 200 }}
                 columns={[
                   { title: '回款金额', dataIndex: 'amount', render: (value) => formatCurrency(value) },
@@ -307,9 +376,15 @@ const ReceivableTable = ({
               <Typography.Title level={5}>出库记录</Typography.Title>
               <Table
                 size="small"
-                dataSource={customerDetails.outbound_records || []}
+                dataSource={customerDetails.outbound_records?.data || []}
                 rowKey="id"
-                pagination={false}
+                pagination={{
+                  ...outboundPagination,
+                  showSizeChanger: false,
+                  size: 'small',
+                  onChange: handleOutboundPageChange,
+                  showTotal: (total, range) => `${range[0]}-${range[1]} / ${total}`
+                }}
                 scroll={{ y: 200 }}
                 columns={[
                   { title: '出库日期', dataIndex: 'outbound_date', width: 100 },
