@@ -67,13 +67,7 @@
     "productListFailed": "제품 목록 가져오기 실패",
     "stockChangeFailed": "재고 변동 데이터 가져오기 실패, 먼저 통계를 새로고침하세요",
     "requestFailed": "요청 실패",
-    "dataFetchFailed": "데이터 가져오기 실패, 먼저 통계를 새로고침하세요"
-  },
-  "translation": {
-    "overview": {
-      "overview": "",
-      "totalSales": "",
-      "totalCost": ""
-    }
+    "dataFetchFailed": "데이터 가져오기 실패, 먼저 통계를 새로고침하세요",
+    "totalCost": "총 비용"
   }
 }

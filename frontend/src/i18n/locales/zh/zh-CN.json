@@ -67,13 +67,7 @@
     "productListFailed": "获取产品列表失败",
     "stockChangeFailed": "获取库存变化数据失败，请先刷新统计数据",
     "requestFailed": "请求失败",
-    "dataFetchFailed": "数据获取失败，请先刷新统计数据"
-  },
-  "translation": {
-    "overview": {
-      "overview": "总销售情况",
-      "totalSales": "总销售额",
-      "totalCost": "总采购额"
-    }
+    "dataFetchFailed": "数据获取失败，请先刷新统计数据",
+    "totalCost": "已售成本"
   }
 }

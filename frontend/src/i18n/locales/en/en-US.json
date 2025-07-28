@@ -67,13 +67,7 @@
     "productListFailed": "Failed to get product list",
     "stockChangeFailed": "Failed to get stock change data, please refresh statistics first",
     "requestFailed": "Request failed",
-    "dataFetchFailed": "Data fetch failed, please refresh statistics first"
-  },
-  "translation": {
-    "overview": {
-      "overview": "",
-      "totalSales": "",
-      "totalCost": ""
-    }
+    "dataFetchFailed": "Data fetch failed, please refresh statistics first",
+    "totalCost": "Total Cost"
   }
 }
