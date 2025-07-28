@@ -84,17 +84,36 @@ router.get('/', (req, res) => {
   });
 });
 
-// 获取指定供应商的付款记录
+// 获取指定供应商的付款记录（支持分页）
 router.get('/payments/:supplier_code', (req, res) => {
   const { supplier_code } = req.params;
-  const sql = 'SELECT * FROM payable_payments WHERE supplier_code = ? ORDER BY pay_date DESC';
+  const { page = 1, limit = 10 } = req.query;
   
-  db.all(sql, [supplier_code], (err, rows) => {
+  const offset = (page - 1) * limit;
+  
+  const sql = 'SELECT * FROM payable_payments WHERE supplier_code = ? ORDER BY pay_date DESC LIMIT ? OFFSET ?';
+  
+  db.all(sql, [supplier_code, parseInt(limit), parseInt(offset)], (err, rows) => {
     if (err) {
       res.status(500).json({ error: err.message });
       return;
     }
-    res.json({ data: rows });
+    
+    // 获取总数
+    const countSql = 'SELECT COUNT(*) as total FROM payable_payments WHERE supplier_code = ?';
+    db.get(countSql, [supplier_code], (err, countResult) => {
+      if (err) {
+        res.status(500).json({ error: err.message });
+        return;
+      }
+      
+      res.json({
+        data: rows,
+        total: countResult.total,
+        page: parseInt(page),
+        limit: parseInt(limit)
+      });
+    });
   });
 });
 
@@ -167,9 +186,15 @@ router.delete('/payments/:id', (req, res) => {
   });
 });
 
-// 获取供应商的应付账款详情（只返回最近10条入库和付款记录）
+// 获取供应商的应付账款详情（优化版本，入库和付款记录支持分页）
 router.get('/details/:supplier_code', (req, res) => {
   const { supplier_code } = req.params;
+  const { 
+    inbound_page = 1, 
+    inbound_limit = 10, 
+    payment_page = 1, 
+    payment_limit = 10 
+  } = req.query;
 
   // 获取供应商信息
   const supplierSql = 'SELECT * FROM partners WHERE code = ? AND type = 0';
@@ -185,45 +210,80 @@ router.get('/details/:supplier_code', (req, res) => {
       return;
     }
 
-    // 获取最近10条入库记录
-    const inboundSql = 'SELECT * FROM inbound_records WHERE supplier_code = ? ORDER BY inbound_date DESC LIMIT 10';
-    db.all(inboundSql, [supplier_code], (err, inboundRecords) => {
+    // 获取入库记录（分页）
+    const inboundOffset = (inbound_page - 1) * inbound_limit;
+    const inboundSql = 'SELECT * FROM inbound_records WHERE supplier_code = ? ORDER BY inbound_date DESC LIMIT ? OFFSET ?';
+    
+    db.all(inboundSql, [supplier_code, parseInt(inbound_limit), parseInt(inboundOffset)], (err, inboundRecords) => {
       if (err) {
         res.status(500).json({ error: err.message });
         return;
       }
-      // 获取最近10条付款记录
-      const paymentSql = 'SELECT * FROM payable_payments WHERE supplier_code = ? ORDER BY pay_date DESC LIMIT 10';
-      db.all(paymentSql, [supplier_code], (err, paymentRecords) => {
+
+      // 获取入库记录总数
+      const inboundCountSql = 'SELECT COUNT(*) as total FROM inbound_records WHERE supplier_code = ?';
+      db.get(inboundCountSql, [supplier_code], (err, inboundCountResult) => {
         if (err) {
           res.status(500).json({ error: err.message });
           return;
         }
-        // 计算统计数据（全量统计）
-        const totalPayableSql = 'SELECT SUM(total_price) as total FROM inbound_records WHERE supplier_code = ?';
-        db.get(totalPayableSql, [supplier_code], (err, totalPayableResult) => {
+
+        // 获取付款记录（分页）
+        const paymentOffset = (payment_page - 1) * payment_limit;
+        const paymentSql = 'SELECT * FROM payable_payments WHERE supplier_code = ? ORDER BY pay_date DESC LIMIT ? OFFSET ?';
+        
+        db.all(paymentSql, [supplier_code, parseInt(payment_limit), parseInt(paymentOffset)], (err, paymentRecords) => {
           if (err) {
             res.status(500).json({ error: err.message });
             return;
           }
-          const totalPayable = totalPayableResult.total || 0;
-          const totalPaidSql = 'SELECT SUM(amount) as total FROM payable_payments WHERE supplier_code = ?';
-          db.get(totalPaidSql, [supplier_code], (err, totalPaidResult) => {
+
+          // 获取付款记录总数
+          const paymentCountSql = 'SELECT COUNT(*) as total FROM payable_payments WHERE supplier_code = ?';
+          db.get(paymentCountSql, [supplier_code], (err, paymentCountResult) => {
             if (err) {
               res.status(500).json({ error: err.message });
               return;
             }
-            const totalPaid = totalPaidResult.total || 0;
-            const balance = totalPayable - totalPaid;
-            res.json({
-              supplier,
-              summary: {
-                total_payable: totalPayable,
-                total_paid: totalPaid,
-                balance: balance
-              },
-              inbound_records: inboundRecords,
-              payment_records: paymentRecords
+
+            // 计算统计数据（全量统计）
+            const totalPayableSql = 'SELECT SUM(total_price) as total FROM inbound_records WHERE supplier_code = ?';
+            db.get(totalPayableSql, [supplier_code], (err, totalPayableResult) => {
+              if (err) {
+                res.status(500).json({ error: err.message });
+                return;
+              }
+              const totalPayable = totalPayableResult.total || 0;
+              const totalPaidSql = 'SELECT SUM(amount) as total FROM payable_payments WHERE supplier_code = ?';
+              db.get(totalPaidSql, [supplier_code], (err, totalPaidResult) => {
+                if (err) {
+                  res.status(500).json({ error: err.message });
+                  return;
+                }
+                const totalPaid = totalPaidResult.total || 0;
+                const balance = totalPayable - totalPaid;
+                
+                res.json({
+                  supplier,
+                  summary: {
+                    total_payable: totalPayable,
+                    total_paid: totalPaid,
+                    balance: balance
+                  },
+                  inbound_records: {
+                    data: inboundRecords,
+                    total: inboundCountResult.total,
+                    page: parseInt(inbound_page),
+                    limit: parseInt(inbound_limit)
+                  },
+                  payment_records: {
+                    data: paymentRecords,
+                    total: paymentCountResult.total,
+                    page: parseInt(payment_page),
+                    limit: parseInt(payment_limit)
+                  }
+                });
+              });
             });
           });
         });
