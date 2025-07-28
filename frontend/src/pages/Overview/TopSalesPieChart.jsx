@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Card, Spin, Alert } from 'antd';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { useTranslation } from 'react-i18next';
 
 const TopSalesPieChart = () => {
+  const { t } = useTranslation();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -21,12 +23,12 @@ const TopSalesPieChart = () => {
           })));
           setError(null);
         } else {
-          setError(res.error || '数据获取失败，请先刷新统计数据');
+          setError(res.error || t('overview.dataFetchFailed'));
         }
       })
-      .catch(e => setError('请求失败: ' + e.message))
+      .catch(e => setError(t('overview.requestFailed') + ': ' + e.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [t]);
 
   if (loading) {
     return <Card style={{ minHeight: 280, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Spin /></Card>;
@@ -53,7 +55,7 @@ const TopSalesPieChart = () => {
 
   return (
     <Card
-      title="销售额分布（前10商品）"
+      title={t('overview.topSalesDistribution')}
       style={{ borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)', minHeight: 280 }}
       bodyStyle={{ padding: '8px' }}
     >
@@ -73,13 +75,13 @@ const TopSalesPieChart = () => {
             {data.map((entry, index) => (
               <Cell 
                 key={`cell-${index}`} 
-                fill={entry.name === '其他' ? '#d9d9d9' : COLORS[index % COLORS.length]} 
+                fill={entry.name === t('overview.other') ? '#d9d9d9' : COLORS[index % COLORS.length]} 
               />
             ))}
           </Pie>
           <Tooltip 
-            formatter={(value) => [value, '销售额']}
-            labelFormatter={(label) => `产品: ${label}`}
+            formatter={(value) => [value, t('overview.salesAmount')]}
+            labelFormatter={(label) => `${t('overview.product')}: ${label}`}
           />
           <Legend 
             wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}

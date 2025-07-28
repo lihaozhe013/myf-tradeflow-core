@@ -1,7 +1,7 @@
 {
   "nav": {
     "overview": "系统总览",
-    "inbound": "入库管理", 
+    "inbound": "入库管理",
     "outbound": "出库管理",
     "stock": "库存明细",
     "partners": "客户/供应商管理",
@@ -26,5 +26,54 @@
     "export": "导出",
     "save": "保存",
     "reset": "重置"
+  },
+  "overview": {
+    "title": "系统总览",
+    "subtitle": "系统数据分析中心",
+    "loading": "正在加载系统数据...",
+    "loadFailed": "系统数据加载失败",
+    "refreshFailed": "刷新数据失败",
+    "quickInbound": "快速入库",
+    "quickOutbound": "快速出库",
+    "refreshData": "重新分析数据",
+    "overview": "概览",
+    "totalSales": "总销售额",
+    "soldGoodsCost": "已售成本",
+    "profitMargin": "利润率",
+    "totalPurchase": "总采购额",
+    "stockStatus": "库存状态",
+    "noOutOfStock": "暂无缺货",
+    "partialDisplay": "仅显示部分，更多请点击查看详细",
+    "viewDetails": "查看详细",
+    "monthlyStockChange": "本月库存变化量",
+    "selectProduct": "选择产品",
+    "loadingStock": "正在加载库存数据...",
+    "dataLoadFailed": "数据加载失败",
+    "monthStartStock": "月初库存",
+    "currentStock": "当前库存",
+    "monthlyChange": "本月变化量",
+    "increase": "(增加)",
+    "decrease": "(减少)",
+    "noChange": "(无变化)",
+    "selectProductToView": "请选择产品查看库存变化",
+    "outOfStockDetails": "缺货产品明细",
+    "stockNormal": "库存正常",
+    "topSalesDistribution": "销售额分布（前10商品）",
+    "salesAmount": "销售额",
+    "product": "产品",
+    "dataGenerationFailed": "统计数据未生成，请先刷新",
+    "fetchDataFailed": "获取数据失败",
+    "dataFormatError": "获取产品列表失败：数据格式错误",
+    "productListFailed": "获取产品列表失败",
+    "stockChangeFailed": "获取库存变化数据失败，请先刷新统计数据",
+    "requestFailed": "请求失败",
+    "dataFetchFailed": "数据获取失败，请先刷新统计数据"
+  },
+  "translation": {
+    "overview": {
+      "overview": "总销售情况",
+      "totalSales": "总销售额",
+      "totalCost": "总采购额"
+    }
   }
 }

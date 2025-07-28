@@ -1,7 +1,7 @@
 {
   "nav": {
     "overview": "System Overview",
-    "inbound": "Inbound Management", 
+    "inbound": "Inbound Management",
     "outbound": "Outbound Management",
     "stock": "Stock Details",
     "partners": "Partners Management",
@@ -26,5 +26,54 @@
     "export": "Export",
     "save": "Save",
     "reset": "Reset"
+  },
+  "overview": {
+    "title": "System Overview",
+    "subtitle": "System Data Analysis Center",
+    "loading": "Loading system data...",
+    "loadFailed": "Failed to load system data",
+    "refreshFailed": "Failed to refresh data",
+    "quickInbound": "Quick Inbound",
+    "quickOutbound": "Quick Outbound",
+    "refreshData": "Refresh Analytics",
+    "overview": "Overview",
+    "totalSales": "Total Sales",
+    "soldGoodsCost": "Sold Goods Cost",
+    "profitMargin": "Profit Margin",
+    "totalPurchase": "Total Purchase",
+    "stockStatus": "Stock Status",
+    "noOutOfStock": "No out of stock",
+    "partialDisplay": "Partial display, click for more details",
+    "viewDetails": "View Details",
+    "monthlyStockChange": "Monthly Stock Change",
+    "selectProduct": "Select Product",
+    "loadingStock": "Loading stock data...",
+    "dataLoadFailed": "Data loading failed",
+    "monthStartStock": "Month Start Stock",
+    "currentStock": "Current Stock",
+    "monthlyChange": "Monthly Change",
+    "increase": "(Increase)",
+    "decrease": "(Decrease)",
+    "noChange": "(No Change)",
+    "selectProductToView": "Please select product to view stock change",
+    "outOfStockDetails": "Out of Stock Details",
+    "stockNormal": "Stock Normal",
+    "topSalesDistribution": "Sales Distribution (Top 10 Products)",
+    "salesAmount": "Sales Amount",
+    "product": "Product",
+    "dataGenerationFailed": "Statistics not generated, please refresh first",
+    "fetchDataFailed": "Failed to fetch data",
+    "dataFormatError": "Failed to get product list: data format error",
+    "productListFailed": "Failed to get product list",
+    "stockChangeFailed": "Failed to get stock change data, please refresh statistics first",
+    "requestFailed": "Request failed",
+    "dataFetchFailed": "Data fetch failed, please refresh statistics first"
+  },
+  "translation": {
+    "overview": {
+      "overview": "",
+      "totalSales": "",
+      "totalCost": ""
+    }
   }
 }

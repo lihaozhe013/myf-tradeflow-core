@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   Card, Row, Col, Spin, Alert, Typography, Button, Space, Statistic, List, Avatar
 } from 'antd';
@@ -10,7 +10,7 @@ import {
   ImportOutlined,
   ExportOutlined
 } from '@ant-design/icons';
-
+import { useTranslation } from 'react-i18next';
 
 import MonthlyStockChange from './MonthlyStockChange';
 import OutOfStockModal from './OutOfStockModal';
@@ -19,17 +19,13 @@ import TopSalesPieChart from './TopSalesPieChart';
 const { Title, Text } = Typography;
 
 const OverviewMain = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({});
   const [error, setError] = useState(null);
 
 
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
-  // 获取统计数据（只读缓存）
-  const fetchStats = async (autoCreate = true) => {
+  const fetchStats = useCallback(async (autoCreate = true) => {
     try {
       setLoading(true);
       const response = await fetch('/api/overview/stats');
@@ -38,16 +34,20 @@ const OverviewMain = () => {
         await fetch('/api/overview/stats', { method: 'POST' });
         return await fetchStats(false);
       }
-      if (!response.ok) throw new Error('统计数据未生成，请先刷新');
+      if (!response.ok) throw new Error(t('overview.dataGenerationFailed'));
       const result = await response.json();
       setStats(result);
       setError(null);
     } catch (err) {
-      setError('获取数据失败: ' + err.message);
+      setError(t('overview.fetchDataFailed') + ': ' + err.message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
 
   // 刷新统计数据（POST，刷新后再GET）
   const refreshStats = async () => {
@@ -56,7 +56,7 @@ const OverviewMain = () => {
       await fetch('/api/overview/stats', { method: 'POST' });
       await fetchStats();
     } catch (err) {
-      setError('刷新数据失败: ' + err.message);
+      setError(t('overview.refreshFailed') + ': ' + err.message);
     } finally {
       setLoading(false);
     }
@@ -99,7 +99,7 @@ const OverviewMain = () => {
       }}>
         <Card style={{ textAlign: 'center', borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
           <Spin size="large" />
-          <p style={{ marginTop: '16px', color: '#666' }}>正在加载系统数据...</p>
+          <p style={{ marginTop: '16px', color: '#666' }}>{t('overview.loading')}</p>
         </Card>
       </div>
     );
@@ -115,7 +115,7 @@ const OverviewMain = () => {
         background: 'linear-gradient(135deg, #f8fafc 0%, #e9f5ff 100%)'
       }}>
         <Alert
-          message="系统数据加载失败"
+          message={t('overview.loadFailed')}
           description={error}
           type="error"
           showIcon  
@@ -161,10 +161,10 @@ const OverviewMain = () => {
               letterSpacing: 2,
             }}
           >
-            系统总览
+            {t('overview.title')}
           </Title>
           <Text style={{ color: '#888', fontSize: '16px' }}>
-            系统数据分析中心
+            {t('overview.subtitle')}
           </Text>
         </div>
         <Space>
@@ -182,7 +182,7 @@ const OverviewMain = () => {
               marginRight: '8px',
             }}
           >
-            快速入库
+            {t('overview.quickInbound')}
           </Button>
           <Button
             type="primary"
@@ -198,7 +198,7 @@ const OverviewMain = () => {
               marginRight: '8px',
             }}
           >
-            快速出库
+            {t('overview.quickOutbound')}
           </Button>
           <Button
             type="primary"
@@ -214,7 +214,7 @@ const OverviewMain = () => {
               boxShadow: '0 2px 8px rgba(22,119,255,0.08)',
             }}
           >
-            重新分析数据
+            {t('overview.refreshData')}
           </Button>
         </Space>
       </div>
@@ -238,15 +238,19 @@ const OverviewMain = () => {
           {/* 上半部分：概览卡片，占右侧50%高度 */}
           <div style={{ minHeight: 0 }}>
             <Card
-              title="概览"
+              title={t('overview.overview')}
               variant="outlined"
               style={{ borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)', height: '180px' }}
-              bodyStyle={{ height: '100%' }}
+              styles={{
+                body: {
+                  height: '100%',
+                },
+              }}
             >
               <Row gutter={16} style={{ height: '100%' }}>
                 <Col span={6}>
                   <Statistic
-                    title="总销售额"
+                    title={t('overview.totalSales')}
                     value={overview.total_sales_amount}
                     prefix={<DollarOutlined />}
                     valueStyle={{ color: '#3f8600' }}
@@ -254,7 +258,7 @@ const OverviewMain = () => {
                 </Col>
                 <Col span={6}>
                   <Statistic
-                    title="已售成本"
+                    title={t('overview.totalCost')}
                     value={overview.sold_goods_cost}
                     prefix={<ShoppingCartOutlined />}
                     valueStyle={{ color: '#fa8c16' }}
@@ -262,7 +266,7 @@ const OverviewMain = () => {
                 </Col>
                 <Col span={6}>
                   <Statistic
-                    title="利润率"
+                    title={t('overview.profitMargin')}
                     value={calculateProfitMargin()}
                     suffix="%"
                     prefix={<RiseOutlined />}
@@ -271,7 +275,7 @@ const OverviewMain = () => {
                 </Col>
                 <Col span={6}>
                   <Statistic
-                    title="总采购额"
+                    title={t('overview.totalPurchase')}
                     value={overview.total_purchase_amount}
                     prefix={<ShoppingCartOutlined />}
                     valueStyle={{ color: '#1677ff' }}
@@ -288,7 +292,7 @@ const OverviewMain = () => {
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <Card
-                title={<span style={{ fontWeight: 600 }}>库存状态</span>}
+                title={<span style={{ fontWeight: 600 }}>{t('overview.stockStatus')}</span>}
                 bordered={false}
                 style={{ borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)', height: '370px', width: '100%' }}
                 bodyStyle={{ padding: 16, height: '100%', display: 'flex', flexDirection: 'column' }}
@@ -297,7 +301,7 @@ const OverviewMain = () => {
                   <List
                     size="small"
                     dataSource={outOfStockProducts.slice(0, 5)}
-                    locale={{ emptyText: '暂无缺货' }}
+                    locale={{ emptyText: t('overview.noOutOfStock') }}
                     renderItem={item => (
                       <List.Item style={{ padding: '4px 0', alignItems: 'center' }}>
                         <List.Item.Meta
@@ -310,12 +314,12 @@ const OverviewMain = () => {
                   />
                   {outOfStockCount > 5 && (
                     <div style={{ color: '#999', fontSize: 12, marginBottom: 8 }}>
-                      仅显示部分，更多请点击查看详细
+                      {t('overview.partialDisplay')}
                     </div>
                   )}
                   <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8, width: '100%' }}>
                     <Button type="primary" onClick={() => setModalVisible(true)}>
-                      查看详细
+                      {t('overview.viewDetails')}
                     </Button>
                   </div>
                   <OutOfStockModal
