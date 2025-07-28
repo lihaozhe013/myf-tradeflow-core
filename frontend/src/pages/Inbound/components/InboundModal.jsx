@@ -198,14 +198,13 @@ const InboundModal = ({
               name="unit_price"
               rules={[
                 { required: true, message: '请输入单价' },
-                { type: 'number', min: 0, message: '单价必须大于等于0' },
+                { type: 'number' },
               ]}
             >
               <InputNumber
                 style={{ width: '100%' }}
                 placeholder="请输入单价"
                 precision={4}
-                min={0}
                 addonBefore="¥"
                 onChange={onPriceOrQuantityChange}
                 disabled={!manualPrice}
