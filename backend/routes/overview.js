@@ -6,79 +6,56 @@ const path = require('path');
 const { getAllStockData } = require('../utils/stockCacheService');
 
 /**
- * 计算已售商品的真实成本（FIFO先进先出原则）
+ * 计算已售商品的真实成本（加权平均成本法）
  * @param {Function} callback 回调函数 (err, totalCost)
  */
 function calculateSoldGoodsCost(callback) {
-  // 1. 获取所有出库记录，按日期排序
+  // 1. 计算每个产品的加权平均入库价格
   db.all(`
-    SELECT product_model, quantity, outbound_date, unit_price as selling_price
-    FROM outbound_records 
-    ORDER BY date(outbound_date) ASC, id ASC
-  `, [], (err, outboundRecords) => {
+    SELECT 
+      product_model,
+      SUM(quantity * unit_price) / SUM(quantity) as avg_cost_price,
+      SUM(quantity) as total_inbound_quantity
+    FROM inbound_records 
+    GROUP BY product_model
+  `, [], (err, avgCostData) => {
     if (err) return callback(err);
     
-    if (outboundRecords.length === 0) {
-      return callback(null, 0);
-    }
+    // 转换为Map便于查找
+    const avgCostMap = {};
+    avgCostData.forEach(item => {
+      avgCostMap[item.product_model] = {
+        avg_cost_price: item.avg_cost_price || 0,
+        total_inbound_quantity: item.total_inbound_quantity || 0
+      };
+    });
 
-    // 2. 获取所有入库记录，按日期排序（FIFO）
+    // 2. 获取所有出库记录
     db.all(`
-      SELECT product_model, quantity, unit_price, inbound_date
-      FROM inbound_records 
-      ORDER BY date(inbound_date) ASC, id ASC
-    `, [], (err, inboundRecords) => {
+      SELECT product_model, quantity, unit_price as selling_price
+      FROM outbound_records
+    `, [], (err, outboundRecords) => {
       if (err) return callback(err);
-
-      // 3. 按产品分组计算成本
-      const productInboundMap = {};
-      inboundRecords.forEach(record => {
-        if (!productInboundMap[record.product_model]) {
-          productInboundMap[record.product_model] = [];
-        }
-        productInboundMap[record.product_model].push({
-          quantity: record.quantity,
-          unit_price: record.unit_price,
-          inbound_date: record.inbound_date
-        });
-      });
+      
+      if (outboundRecords.length === 0) {
+        return callback(null, 0);
+      }
 
       let totalSoldGoodsCost = 0;
 
-      // 4. 为每个出库记录分配入库成本（FIFO原则）
+      // 3. 使用平均成本计算每个销售记录的成本
       outboundRecords.forEach(outRecord => {
         const productModel = outRecord.product_model;
         const soldQuantity = outRecord.quantity;
         
-        if (!productInboundMap[productModel]) {
+        if (avgCostMap[productModel]) {
+          // 使用该产品的加权平均入库价格
+          const avgCost = avgCostMap[productModel].avg_cost_price;
+          totalSoldGoodsCost += soldQuantity * avgCost;
+        } else {
           // 如果没有对应的入库记录，使用出库价格作为成本（保守估计）
           totalSoldGoodsCost += soldQuantity * (outRecord.selling_price || 0);
-          return;
         }
-
-        let remainingQuantity = soldQuantity;
-        let productCost = 0;
-
-        // FIFO：从最早的入库记录开始分配成本
-        for (let i = 0; i < productInboundMap[productModel].length && remainingQuantity > 0; i++) {
-          const inRecord = productInboundMap[productModel][i];
-          
-          if (inRecord.quantity <= 0) continue; // 已经用完的入库记录
-
-          const availableQuantity = Math.min(inRecord.quantity, remainingQuantity);
-          productCost += availableQuantity * (inRecord.unit_price || 0);
-          
-          // 更新剩余数量
-          inRecord.quantity -= availableQuantity;
-          remainingQuantity -= availableQuantity;
-        }
-
-        // 如果入库数量不足以覆盖出库数量，剩余部分使用出库价格作为成本
-        if (remainingQuantity > 0) {
-          productCost += remainingQuantity * (outRecord.selling_price || 0);
-        }
-
-        totalSoldGoodsCost += productCost;
       });
 
       callback(null, Math.round(totalSoldGoodsCost * 100) / 100); // 保留两位小数
