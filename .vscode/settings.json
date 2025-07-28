@@ -1,0 +1,46 @@
+{
+  // i18n Ally 插件配置
+  "i18n-ally.localesPaths": [
+    "frontend/src/i18n/locales"
+  ],
+  "i18n-ally.enabledFrameworks": ["react", "i18next"],
+  "i18n-ally.displayLanguage": "zh",
+  "i18n-ally.sourceLanguage": "zh",
+  "i18n-ally.defaultNamespace": "translation",
+  "i18n-ally.keystyle": "nested",
+  "i18n-ally.pathMatcher": "{locale}/{namespace}.json",
+  "i18n-ally.namespace": true,
+  
+  // 支持的语言设置
+  "i18n-ally.supportedLocales": ["zh", "en", "ko"],
+  "i18n-ally.localeCountryMap": {
+    "zh": "CN",
+    "en": "US", 
+    "ko": "KR"
+  },
+  
+  // 翻译服务配置
+  "i18n-ally.translate.engines": ["google", "deepl"],
+  "i18n-ally.translate.fallbackLocale": "zh",
+  
+  // 编辑器增强功能
+  "i18n-ally.editor.preferEditor": true,
+  "i18n-ally.editor.sortKeys": true,
+  "i18n-ally.extract.keygenStyle": "camelCase",
+  "i18n-ally.extract.targetPickingStrategy": "most-similar",
+  
+  // 显示和用户界面
+  "i18n-ally.usage.scanningIgnore": ["node_modules", "dist", "build"],
+  "i18n-ally.annotations.inPlace": true,
+  "i18n-ally.hover.enabled": true,
+  "i18n-ally.review.enabled": true,
+  "i18n-ally.review.gutters": true,
+  
+  // 业务特定配置
+  "i18n-ally.extract.parsers.html.attributes": ["title", "placeholder", "aria-label"],
+  "i18n-ally.extract.parsers.javascript.ignoreKeys": ["console", "error", "warn", "debug"],
+  
+  // 文件监控和自动保存
+  "i18n-ally.editor.autoCompletion": true,
+  "i18n-ally.refactor.enabled": true
+}

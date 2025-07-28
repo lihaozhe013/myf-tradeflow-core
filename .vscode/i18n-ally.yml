@@ -1,0 +1,71 @@
+# i18n Ally 项目专用配置文件
+# 针对 myf-db-systoool 贸易管理系统的多语言配置
+
+# 基础路径配置
+localesPaths:
+  - frontend/src/i18n/locales
+
+# 语言配置
+sourceLanguage: zh
+displayLanguage: zh
+supportedLocales: [zh, en, ko]
+
+# 文件路径匹配模式
+pathMatcher: '{locale}/{namespace}.json'
+namespace: true
+defaultNamespace: translation
+
+# 键值样式
+keystyle: nested
+sortKeys: true
+
+# 翻译功能
+translate:
+  engines: [google, deepl]
+  fallbackLocale: zh
+  
+# 编辑器功能
+editor:
+  preferEditor: true
+  autoCompletion: true
+
+# 提取功能
+extract:
+  keygenStyle: camelCase
+  targetPickingStrategy: most-similar
+  
+# 业务术语映射 (用于翻译建议)
+customTranslations:
+  zh->en:
+    入库: Inbound
+    出库: Outbound  
+    库存: Stock
+    应收账款: Accounts Receivable
+    应付账款: Accounts Payable
+    供应商: Supplier
+    客户: Customer
+    产品型号: Product Model
+    单价: Unit Price
+    总价: Total Price
+    
+  zh->ko:
+    入库: 입고
+    出库: 출고
+    库存: 재고
+    应收账款: 매출채권
+    应付账款: 매입채무
+    供应商: 공급업체
+    客户: 고객
+    产品型号: 제품 모델
+    单价: 단가
+    总价: 총가격
+
+# 忽略扫描的目录
+usage:
+  scanningIgnore:
+    - node_modules
+    - dist
+    - build
+    - .git
+    - backend/python_scripts
+    - data/log

@@ -1,0 +1,42 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "调试后端Node.js",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/backend/server.js",
+      "console": "integratedTerminal",
+      "restart": true,
+      "runtimeExecutable": "node",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
+    {
+      "name": "启动Chrome调试前端",
+      "type": "chrome",
+      "request": "launch", 
+      "url": "http://localhost:5173",
+      "webRoot": "${workspaceFolder}/frontend/src",
+      "sourceMapPathOverrides": {
+        "webpack:///src/*": "${webRoot}/*"
+      },
+      "preLaunchTask": "启动前端开发服务器"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "全栈调试模式",
+      "configurations": [
+        "调试后端Node.js",
+        "启动Chrome调试前端"
+      ],
+      "stopAll": true,
+      "preLaunchTask": "启动完整开发环境"
+    }
+  ]
+}

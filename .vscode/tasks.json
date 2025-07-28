@@ -1,0 +1,70 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "启动前端开发服务器",
+			"type": "shell", 
+			"command": "npm",
+			"args": [
+				"run",
+				"dev"
+			],
+			"group": "build",
+			"isBackground": true,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}/frontend"
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "new",
+				"showReuseMessage": true,
+				"clear": false,
+				"group": "frontend"
+			}
+		},
+		{
+			"label": "启动后端API服务器",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"start"
+			],
+			"group": "build", 
+			"isBackground": true,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}/backend"
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "always", 
+				"focus": false,
+				"panel": "new",
+				"showReuseMessage": true,
+				"clear": false,
+				"group": "backend"
+			}
+		},
+		{
+			"label": "启动完整开发环境",
+			"dependsOrder": "parallel",
+			"dependsOn": [
+				"启动后端API服务器",
+				"启动前端开发服务器"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "new"
+			}
+		}
+	]
+}

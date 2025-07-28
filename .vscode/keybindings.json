@@ -1,0 +1,27 @@
+[
+  {
+    "key": "ctrl+shift+i",
+    "command": "i18n-ally.editor.openInEditor",
+    "when": "editorTextFocus"
+  },
+  {
+    "key": "ctrl+alt+t",
+    "command": "i18n-ally.extract.text",
+    "when": "editorHasSelection"
+  },
+  {
+    "key": "ctrl+alt+r",
+    "command": "i18n-ally.refactor.replaceWithKey",
+    "when": "editorHasSelection"
+  },
+  {
+    "key": "ctrl+shift+t",
+    "command": "i18n-ally.translate.key",
+    "when": "editorTextFocus"
+  },
+  {
+    "key": "f2",
+    "command": "i18n-ally.refactor.renameKey",
+    "when": "editorTextFocus && i18n-ally.hasKey"
+  }
+]
