@@ -7,16 +7,18 @@ const { getAllStockData } = require('../utils/stockCacheService');
 
 /**
  * 计算已售商品的真实成本（加权平均成本法）
+ * 入库负数单价商品作为特殊收入，减少成本
  * @param {Function} callback 回调函数 (err, totalCost)
  */
 function calculateSoldGoodsCost(callback) {
-  // 1. 计算每个产品的加权平均入库价格
+  // 1. 计算每个产品的加权平均入库价格（只计算正数单价的入库记录）
   db.all(`
     SELECT 
       product_model,
       SUM(quantity * unit_price) / SUM(quantity) as avg_cost_price,
       SUM(quantity) as total_inbound_quantity
     FROM inbound_records 
+    WHERE unit_price >= 0
     GROUP BY product_model
   `, [], (err, avgCostData) => {
     if (err) return callback(err);
@@ -30,10 +32,11 @@ function calculateSoldGoodsCost(callback) {
       };
     });
 
-    // 2. 获取所有出库记录
+    // 2. 获取所有出库记录（只计算正数单价的记录用于成本计算）
     db.all(`
       SELECT product_model, quantity, unit_price as selling_price
       FROM outbound_records
+      WHERE unit_price >= 0
     `, [], (err, outboundRecords) => {
       if (err) return callback(err);
       
@@ -43,10 +46,11 @@ function calculateSoldGoodsCost(callback) {
 
       let totalSoldGoodsCost = 0;
 
-      // 3. 使用平均成本计算每个销售记录的成本
+      // 3. 使用平均成本计算每个销售记录的成本（只计算正数单价商品）
       outboundRecords.forEach(outRecord => {
         const productModel = outRecord.product_model;
         const soldQuantity = outRecord.quantity;
+        const sellingPrice = outRecord.selling_price || 0;
         
         if (avgCostMap[productModel]) {
           // 使用该产品的加权平均入库价格
@@ -54,11 +58,23 @@ function calculateSoldGoodsCost(callback) {
           totalSoldGoodsCost += soldQuantity * avgCost;
         } else {
           // 如果没有对应的入库记录，使用出库价格作为成本（保守估计）
-          totalSoldGoodsCost += soldQuantity * (outRecord.selling_price || 0);
+          totalSoldGoodsCost += soldQuantity * sellingPrice;
         }
       });
 
-      callback(null, Math.round(totalSoldGoodsCost * 100) / 100); // 保留两位小数
+      // 4. 计算入库负数单价商品的特殊收入，减少总成本
+      db.get(`
+        SELECT COALESCE(SUM(ABS(quantity * unit_price)), 0) as special_income
+        FROM inbound_records 
+        WHERE unit_price < 0
+      `, [], (err2, specialIncomeRow) => {
+        if (err2) return callback(err2);
+        
+        const specialIncome = specialIncomeRow.special_income || 0;
+        const finalCost = totalSoldGoodsCost - specialIncome;
+        
+        callback(null, Math.round(Math.max(0, finalCost) * 100) / 100); // 保留两位小数，确保不为负数
+      });
     });
   });
 }
@@ -101,32 +117,71 @@ router.post('/stats', (req, res) => {
     {
       key: 'overview',
       customHandler: (callback) => {
-        // 获取基础统计数据
-        db.get(`
-          SELECT 
-            (SELECT COUNT(*) FROM inbound_records) as total_inbound,
-            (SELECT COUNT(*) FROM outbound_records) as total_outbound,
-            (SELECT COUNT(*) FROM partners WHERE type = 0) as suppliers_count,
-            (SELECT COUNT(*) FROM partners WHERE type = 1) as customers_count,
-            (SELECT COUNT(*) FROM products) as products_count,
-            (SELECT SUM(total_price) FROM inbound_records) as total_purchase_amount,
-            (SELECT SUM(total_price) FROM outbound_records) as total_sales_amount
-        `, [], (err, row) => {
-          if (err) return callback(err);
-          
-          // 计算已售商品的真实成本
-          calculateSoldGoodsCost((costErr, soldGoodsCost) => {
-            if (costErr) return callback(costErr);
+        // 分别查询各个统计数据，避免复杂的嵌套查询
+        const queries = {
+          counts: `
+            SELECT 
+              (SELECT COUNT(*) FROM inbound_records) as total_inbound,
+              (SELECT COUNT(*) FROM outbound_records) as total_outbound,
+              (SELECT COUNT(*) FROM partners WHERE type = 0) as suppliers_count,
+              (SELECT COUNT(*) FROM partners WHERE type = 1) as customers_count,
+              (SELECT COUNT(*) FROM products) as products_count
+          `,
+          purchase_amount: `
+            SELECT 
+              COALESCE(SUM(quantity * unit_price), 0) as normal_purchase,
+              COALESCE((SELECT SUM(ABS(quantity * unit_price)) FROM inbound_records WHERE unit_price < 0), 0) as special_income
+            FROM inbound_records 
+            WHERE unit_price >= 0
+          `,
+          sales_amount: `
+            SELECT 
+              COALESCE(SUM(quantity * unit_price), 0) as normal_sales,
+              COALESCE((SELECT SUM(ABS(quantity * unit_price)) FROM outbound_records WHERE unit_price < 0), 0) as special_expense
+            FROM outbound_records 
+            WHERE unit_price >= 0
+          `
+        };
+        
+        const results = {};
+        let queryCompleted = 0;
+        const totalSubQueries = Object.keys(queries).length;
+        
+        Object.entries(queries).forEach(([key, sql]) => {
+          db.get(sql, [], (err, row) => {
+            if (err) {
+              console.error(`Error in ${key} query:`, err);
+              return callback(err);
+            }
             
-            getAllStockData((stockErr, stockData) => {
-              if (stockErr) return callback(stockErr);
-              const result = {
-                ...row,
-                sold_goods_cost: soldGoodsCost, // 新增：已售商品成本
-                stocked_products: Object.keys(stockData).length
+            results[key] = row;
+            queryCompleted++;
+            
+            if (queryCompleted === totalSubQueries) {
+              // 合并结果
+              const finalResult = {
+                ...results.counts,
+                // 总采购金额 = 正常采购 - 特殊收入（入库负数商品）
+                total_purchase_amount: results.purchase_amount.normal_purchase - results.purchase_amount.special_income,
+                // 总销售额 = 正常销售 - 特殊支出（出库负数商品）
+                total_sales_amount: results.sales_amount.normal_sales - results.sales_amount.special_expense
               };
-              callback(null, result);
-            });
+              
+              // 计算已售商品的真实成本
+              calculateSoldGoodsCost((costErr, soldGoodsCost) => {
+                if (costErr) return callback(costErr);
+                
+                getAllStockData((stockErr, stockData) => {
+                  if (stockErr) return callback(stockErr);
+                  const result = {
+                    ...finalResult,
+                    sold_goods_cost: soldGoodsCost,
+                    stocked_products: Object.keys(stockData).length
+                  };
+                  callback(null, result);
+                });
+              });
+            }
           });
         });
       }
@@ -134,10 +189,11 @@ router.post('/stats', (req, res) => {
     {
       key: 'top_sales_products',
       customHandler: (callback) => {
-        // 查询所有商品销售额，按降序排列
+        // 查询所有商品销售额，按降序排列（只计算正数单价的商品）
         const sql = `
-          SELECT product_model, SUM(total_price) as total_sales
+          SELECT product_model, SUM(quantity * unit_price) as total_sales
           FROM outbound_records
+          WHERE unit_price >= 0
           GROUP BY product_model
           ORDER BY total_sales DESC
         `;

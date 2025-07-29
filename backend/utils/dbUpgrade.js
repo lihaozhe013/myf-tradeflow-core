@@ -67,13 +67,14 @@ function checkAndAddMissingColumns(dbInstance) {
     if (pendingChecks === 0) finishUpgrade(dbInstance);
   });
 
-  // 检查并补全 inbound_records 的代号字段
+  // 检查并补全 inbound_records 的代号字段和 total_price 字段
   dbInstance.all("PRAGMA table_info(inbound_records)", (err, columns) => {
     if (err) {
       console.error('❌ 检查 inbound_records 表结构失败:', err.message);
     } else if (columns) {
       const needsSupplierCode = !columns.some(col => col.name === 'supplier_code');
       const needsProductCode = !columns.some(col => col.name === 'product_code');
+      const needsTotalPrice = !columns.some(col => col.name === 'total_price');
       
       if (needsSupplierCode) {
         dbInstance.run("ALTER TABLE inbound_records ADD COLUMN supplier_code TEXT", (err2) => {
@@ -91,6 +92,28 @@ function checkAndAddMissingColumns(dbInstance) {
         });
       }
       
+      if (needsTotalPrice) {
+        dbInstance.run("ALTER TABLE inbound_records ADD COLUMN total_price REAL", (err4) => {
+          if (err4) {
+            console.error('❌ 添加 inbound_records.total_price 字段失败:', err4.message);
+          } else {
+            console.log('✅ 添加 inbound_records.total_price 字段成功');
+            // 计算现有记录的 total_price
+            dbInstance.run(`
+              UPDATE inbound_records 
+              SET total_price = ROUND((quantity * unit_price) * 100) / 100 
+              WHERE total_price IS NULL
+            `, (updateErr) => {
+              if (updateErr) {
+                console.error('❌ 更新 inbound_records.total_price 值失败:', updateErr.message);
+              } else {
+                console.log('✅ 更新 inbound_records.total_price 值成功');
+              }
+            });
+          }
+        });
+      }
+      
       if (needsSupplierCode && needsProductCode) {
         console.log('❌ inbound_records 代号字段未存在');
       }
@@ -100,13 +123,14 @@ function checkAndAddMissingColumns(dbInstance) {
     if (pendingChecks === 0) finishUpgrade(dbInstance);
   });
 
-  // 检查并补全 outbound_records 的代号字段
+  // 检查并补全 outbound_records 的代号字段和 total_price 字段
   dbInstance.all("PRAGMA table_info(outbound_records)", (err, columns) => {
     if (err) {
       console.error('❌ 检查 outbound_records 表结构失败:', err.message);
     } else if (columns) {
       const needsCustomerCode = !columns.some(col => col.name === 'customer_code');
       const needsProductCode = !columns.some(col => col.name === 'product_code');
+      const needsTotalPrice = !columns.some(col => col.name === 'total_price');
       
       if (needsCustomerCode) {
         dbInstance.run("ALTER TABLE outbound_records ADD COLUMN customer_code TEXT", (err2) => {
@@ -120,6 +144,28 @@ function checkAndAddMissingColumns(dbInstance) {
         dbInstance.run("ALTER TABLE outbound_records ADD COLUMN product_code TEXT", (err3) => {
           if (err3) {
             console.error('❌ 添加 outbound_records.product_code 字段失败:', err3.message);
+          }
+        });
+      }
+      
+      if (needsTotalPrice) {
+        dbInstance.run("ALTER TABLE outbound_records ADD COLUMN total_price REAL", (err4) => {
+          if (err4) {
+            console.error('❌ 添加 outbound_records.total_price 字段失败:', err4.message);
+          } else {
+            console.log('✅ 添加 outbound_records.total_price 字段成功');
+            // 计算现有记录的 total_price
+            dbInstance.run(`
+              UPDATE outbound_records 
+              SET total_price = ROUND((quantity * unit_price) * 100) / 100 
+              WHERE total_price IS NULL
+            `, (updateErr) => {
+              if (updateErr) {
+                console.error('❌ 更新 outbound_records.total_price 值失败:', updateErr.message);
+              } else {
+                console.log('✅ 更新 outbound_records.total_price 值成功');
+              }
+            });
           }
         });
       }
