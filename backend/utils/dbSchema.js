@@ -37,13 +37,6 @@ CREATE TABLE IF NOT EXISTS outbound_records (
   remark TEXT
 );
 
-CREATE TABLE IF NOT EXISTS stock (
-  record_id INTEGER,
-  product_model TEXT,
-  stock_quantity INTEGER,
-  update_time TEXT
-);
-
 CREATE TABLE IF NOT EXISTS partners (
   code TEXT UNIQUE,
   short_name TEXT PRIMARY KEY,
@@ -67,10 +60,6 @@ CREATE TABLE IF NOT EXISTS product_prices (
   product_model TEXT,
   effective_date TEXT,
   unit_price REAL
-);
-
-CREATE TABLE IF NOT EXISTS product_categories (
-  name TEXT PRIMARY KEY
 );
 
 CREATE TABLE IF NOT EXISTS receivable_payments (
