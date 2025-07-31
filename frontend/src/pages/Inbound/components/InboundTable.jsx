@@ -1,7 +1,7 @@
 import React from 'react';
 import { Table, Button, Space, Popconfirm, Tag } from 'antd';
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
-
+import { useTranslation } from 'react-i18next';
 const InboundTable = ({ 
   inboundRecords, 
   loading, 
@@ -14,21 +14,22 @@ const InboundTable = ({
   onTableChange,
   pagination 
 }) => {
+  const { t } = useTranslation();
   const columns = [
     {
-      title: 'ID',
+      title: t('inbound.id'),
       dataIndex: 'id',
       key: 'id',
       width: 80,
     },
     {
-      title: '供应商代号',
+      title: t('inbound.supplierCode'),
       dataIndex: 'supplier_code',
       key: 'supplier_code',
       width: 100,
     },
     {
-      title: '供应商简称',
+      title: t('inbound.supplierShortName'),
       dataIndex: 'supplier_short_name',
       key: 'supplier_short_name',
       width: 120,
@@ -36,13 +37,13 @@ const InboundTable = ({
       onFilter: (value, record) => record.supplier_short_name === value,
     },
     {
-      title: '产品代号',
+      title: t('inbound.productCode'),
       dataIndex: 'product_code',
       key: 'product_code',
       width: 100,
     },
     {
-      title: '产品型号',
+      title: t('inbound.productModel'),
       dataIndex: 'product_model',
       key: 'product_model',
       width: 150,
@@ -50,13 +51,13 @@ const InboundTable = ({
       onFilter: (value, record) => record.product_model === value,
     },
     {
-      title: '数量',
+      title: t('inbound.quantity'),
       dataIndex: 'quantity',
       key: 'quantity',
       width: 80,
     },
     {
-      title: '单价',
+      title: t('inbound.unitPrice'),
       dataIndex: 'unit_price',
       key: 'unit_price',
       width: 100,
@@ -64,7 +65,7 @@ const InboundTable = ({
       sorter: true,
     },
     {
-      title: '总价',
+      title: t('inbound.totalPrice'),
       dataIndex: 'total_price',
       key: 'total_price',
       width: 100,
@@ -72,14 +73,14 @@ const InboundTable = ({
       sorter: true,
     },
     {
-      title: '入库日期',
+      title: t('inbound.inboundDate'),
       dataIndex: 'inbound_date',
       key: 'inbound_date',
       width: 120,
       sorter: true,
     },
     {
-      title: '发票链接',
+      title: t('inbound.invoiceLink'),
       key: 'invoice_link',
       width: 120,
       render: (_, record) => {
@@ -91,15 +92,15 @@ const InboundTable = ({
               onClick={() => window.open(record.invoice_image_url, '_blank')}
               style={{ padding: 0 }}
             >
-              点击查看
+              {t('inbound.viewInvoice')}
             </Button>
           );
         }
-        return <span style={{ color: '#999' }}>暂无发票链接</span>;
+        return <span style={{ color: '#999' }}>{t('inbound.noInvoice')}</span>;
       },
     },
     {
-      title: '操作',
+      title: t('inbound.actions'),
       key: 'actions',
       width: 120,
       render: (_, record) => (
@@ -110,13 +111,13 @@ const InboundTable = ({
             onClick={() => onEdit(record)}
             size="small"
           >
-            编辑
+            {t('common.edit')}
           </Button>
           <Popconfirm
-            title="确定要删除这条入库记录吗？"
+            title={t('inbound.deleteConfirm')}
             onConfirm={() => onDelete(record.id)}
-            okText="确定"
-            cancelText="取消"
+            okText={t('common.confirm')}
+            cancelText={t('common.cancel')}
           >
             <Button
               type="link"
@@ -124,7 +125,7 @@ const InboundTable = ({
               icon={<DeleteOutlined />}
               size="small"
             >
-              删除
+              {t('common.delete')}
             </Button>
           </Popconfirm>
         </Space>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button, Form, message, Card, Typography, Row, Col, Divider } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -9,6 +10,7 @@ import InboundModal from './components/InboundModal';
 const { Title } = Typography;
 
 const Inbound = () => {
+  const { t } = useTranslation();
   const [inboundRecords, setInboundRecords] = useState([]);
   const [partners, setPartners] = useState([]);
   const [products, setProducts] = useState([]);
@@ -329,7 +331,7 @@ const Inbound = () => {
       <Card>
         <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
           <Col>
-            <Title level={3} style={{ margin: 0 }}>入库管理</Title>
+            <Title level={3} style={{ margin: 0 }}>{t('nav.inbound')}</Title>
           </Col>
           <Col>
             <Button
@@ -337,7 +339,7 @@ const Inbound = () => {
               icon={<PlusOutlined />}
               onClick={handleAdd}
             >
-              新增入库记录
+              {t('inbound.addInboundRecord')}
             </Button>
           </Col>
         </Row>
