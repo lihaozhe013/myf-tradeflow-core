@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Table,
   Button,
@@ -29,6 +30,7 @@ const Products = () => {
   const [form] = Form.useForm();
   // 新增：用于联动输入的下拉数据
   const [productOptions, setProductOptions] = useState([]);
+  const { t } = useTranslation();
 
   // 获取产品列表
   const fetchProducts = async () => {
@@ -79,13 +81,13 @@ const Products = () => {
         method: 'DELETE',
       });
       if (response.ok) {
-        message.success('删除成功');
+        message.success(t('products.deleteSuccess'));
         fetchProducts();
       } else {
-        message.error('删除失败');
+        message.error(t('products.deleteFailed'));
       }
     } catch {
-      message.error('删除失败');
+      message.error(t('products.deleteFailed'));
     }
   };
 
@@ -105,46 +107,46 @@ const Products = () => {
         body: JSON.stringify(body),
       });
       if (response.ok) {
-        message.success(editingProduct ? '修改成功' : '新增成功');
+        message.success(editingProduct ? t('products.editSuccess') : t('products.addSuccess'));
         setModalVisible(false);
         fetchProducts();
       } else {
         const errorData = await response.json();
-        message.error(errorData.error || '保存失败');
+        message.error(errorData.error || t('products.saveFailed'));
       }
     } catch {
-      message.error('保存失败');
+      message.error(t('products.saveFailed'));
     }
   };
 
   // 表格列定义
   const columns = [
     {
-      title: '代号',
+      title: t('products.code'),
       dataIndex: 'code',
       key: 'code',
       width: 120,
     },
     {
-      title: '产品型号',
+      title: t('products.productModel'),
       dataIndex: 'product_model',
       key: 'product_model',
       width: 200,
     },
     {
-      title: '产品分类',
+      title: t('products.category'),
       dataIndex: 'category',
       key: 'category',
       width: 150,
     },
     {
-      title: '产品描述',
+      title: t('products.remark'),
       dataIndex: 'remark',
       key: 'remark',
       width: 300,
     },
     {
-      title: '操作',
+      title: t('products.actions'),
       key: 'actions',
       width: 120,
       render: (_, record) => (
@@ -155,13 +157,13 @@ const Products = () => {
             onClick={() => handleEdit(record)}
             size="small"
           >
-            编辑
+            {t('common.edit')}
           </Button>
           <Popconfirm
-            title="确定要删除这个产品吗？"
+            title={t('products.deleteConfirm')}
             onConfirm={() => handleDelete(record.code)}
-            okText="确定"
-            cancelText="取消"
+            okText={t('common.confirm')}
+            cancelText={t('common.cancel')}
           >
             <Button
               type="link"
@@ -169,7 +171,7 @@ const Products = () => {
               icon={<DeleteOutlined />}
               size="small"
             >
-              删除
+              {t('common.delete')}
             </Button>
           </Popconfirm>
         </Space>
@@ -197,7 +199,7 @@ const Products = () => {
       <Card>
         <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
           <Col>
-            <Title level={3} style={{ margin: 0 }}>产品管理</Title>
+            <Title level={3} style={{ margin: 0 }}>{t('products.title')}</Title>
           </Col>
           <Col>
             <Button
@@ -205,7 +207,7 @@ const Products = () => {
               icon={<PlusOutlined />}
               onClick={handleAdd}
             >
-              新增产品
+              {t('products.addProduct')}
             </Button>
           </Col>
         </Row>
@@ -222,7 +224,7 @@ const Products = () => {
               pageSize: 10,
               showQuickJumper: true,
               showTotal: (total, range) =>
-                `第 ${range[0]}-${range[1]} 条/共 ${total} 条`,
+                t('products.paginationTotal', { start: range[0], end: range[1], total }),
             }}
             scroll={{ x: 900 }}
           />
@@ -230,7 +232,7 @@ const Products = () => {
       </Card>
 
       <Modal
-        title={editingProduct ? '编辑产品' : '新增产品'}
+        title={editingProduct ? t('products.editProduct') : t('products.addProduct')}
         open={modalVisible}
         onCancel={() => setModalVisible(false)}
         footer={null}
@@ -243,39 +245,39 @@ const Products = () => {
           onValuesChange={handleProductFieldChange}
         >
           <Form.Item
-            label="代号"
+            label={t('products.code')}
             name="code"
             rules={[
-              { required: true, message: '请输入代号' },
-              { max: 50, message: '代号不能超过50个字符' },
+              { required: true, message: t('products.inputCode') },
+              { max: 50, message: t('products.codeMax') },
             ]}
           >
-            <Input placeholder="请输入代号" disabled={!!editingProduct} />
+            <Input placeholder={t('products.inputCode')} disabled={!!editingProduct} />
           </Form.Item>
 
           <Form.Item
-            label="产品型号"
+            label={t('products.productModel')}
             name="product_model"
             rules={[
-              { required: true, message: '请输入产品型号' },
-              { max: 100, message: '产品型号不能超过100个字符' },
+              { required: true, message: t('products.inputProductModel') },
+              { max: 100, message: t('products.productModelMax') },
             ]}
           >
-            <Input placeholder="请输入产品型号" disabled={!!editingProduct} />
+            <Input placeholder={t('products.inputProductModel')} disabled={!!editingProduct} />
           </Form.Item>
 
           <Form.Item
-            label="产品分类"
+            label={t('products.category')}
             name="category"
             rules={[
-              { required: true, message: '请选择产品分类' },
-              { max: 100, message: '产品分类不能超过100个字符' },
+              { required: true, message: t('products.selectCategory') },
+              { max: 100, message: t('products.categoryMax') },
             ]}
           >
             <Select
               showSearch
               allowClear
-              placeholder="请选择产品分类"
+              placeholder={t('products.selectCategory')}
               options={PRODUCT_CATEGORIES.map(name => ({ value: name, label: name }))}
               filterOption={(input, option) =>
                 (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
@@ -284,22 +286,22 @@ const Products = () => {
           </Form.Item>
 
           <Form.Item
-            label="产品描述"
+            label={t('products.remark')}
             name="remark"
-            rules={[{ max: 500, message: '产品描述不能超过500个字符' }]}
+            rules={[{ max: 500, message: t('products.remarkMax') }]}
           >
             <Input.TextArea
-              placeholder="请输入产品描述"
+              placeholder={t('products.inputRemark')}
               rows={4}
             />
           </Form.Item>
 
           <div className="form-actions">
             <Button onClick={() => setModalVisible(false)}>
-              取消
+              {t('common.cancel')}
             </Button>
             <Button type="primary" htmlType="submit">
-              {editingProduct ? '保存' : '新增'}
+              {editingProduct ? t('common.save') : t('common.add')}
             </Button>
           </div>
         </Form>
