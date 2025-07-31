@@ -1,15 +1,15 @@
 {
   "nav": {
-    "overview": "System Overview",
-    "inbound": "Inbound Management",
-    "outbound": "Outbound Management",
-    "stock": "Stock Details",
-    "partners": "Partners Management",
-    "products": "Products Management",
-    "productPrices": "Product Prices Management",
-    "receivable": "Receivable Management",
-    "payable": "Payable Management",
-    "report": "Report Export"
+    "overview": "Overview",
+    "inbound": "Inbound",
+    "outbound": "Outbound",
+    "stock": "Stock",
+    "partners": "Partners",
+    "products": "Products",
+    "productPrices": "Product Prices",
+    "receivable": "Receivable",
+    "payable": "Payable",
+    "report": "Export"
   },
   "common": {
     "language": "Language",
@@ -28,8 +28,8 @@
     "reset": "Reset"
   },
   "overview": {
-    "title": "System Overview",
-    "subtitle": "System Data Analysis Center",
+    "title": "Overview",
+    "subtitle": "Data Analysis Center",
     "loading": "Loading system data...",
     "loadFailed": "Failed to load system data",
     "refreshFailed": "Failed to refresh data",
@@ -48,7 +48,14 @@
     "monthlyStockChange": "Monthly Stock Change",
     "selectProduct": "Select Product",
     "loadingStock": "Loading stock data...",
-    "dataLoadFailed": "Data loading failed"
+    "dataLoadFailed": "Data loading failed",
+    "topSalesDistribution": "Top Sales Distribution",
+    "totalCost": "Total Cost",
+    "monthStartStock": "Month Start Stock",
+    "currentStock": "Current Stock",
+    "monthlyChange": "Monthly Change",
+    "increase": "(Increase)",
+    "salesAmount": "Sales Amount"
   },
   "inbound": {
     "id": "ID",

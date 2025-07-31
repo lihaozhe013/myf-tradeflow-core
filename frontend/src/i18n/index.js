@@ -29,9 +29,8 @@ i18n
   // 详见：https://www.i18next.com/overview/configuration-options
   .init({
     resources, // 导入的翻译资源
-    fallbackLng: 'zh', // 当当前语言没有翻译时，使用的备用语言，改为中文
+    fallbackLng: 'en', // 当当前语言没有翻译时，使用的备用语言，改为中文
     debug: false, // 生产环境关闭调试信息
-    lng: 'zh', // 默认语言设为中文
     interpolation: {
       escapeValue: false, // React 默认会转义，所以不需要 i18next 再次转义
     },

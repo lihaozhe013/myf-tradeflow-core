@@ -1,15 +1,15 @@
 {
   "nav": {
     "overview": "시스템 개요",
-    "inbound": "입고 관리",
-    "outbound": "출고 관리",
-    "stock": "재고 세부정보",
-    "partners": "파트너 관리",
-    "products": "제품 관리",
-    "productPrices": "제품 가격 관리",
-    "receivable": "매출채권 관리",
-    "payable": "매입채무 관리",
-    "report": "보고서 내보내기"
+    "inbound": "입고",
+    "outbound": "출고",
+    "stock": "재고",
+    "partners": "파트너",
+    "products": "제품",
+    "productPrices": "가격",
+    "receivable": "매출채권",
+    "payable": "매입채무",
+    "report": "보고서"
   },
   "common": {
     "language": "언어",
@@ -39,14 +39,21 @@
     "overview": "개요",
     "totalSales": "총 매출액",
     "soldGoodsCost": "판매된 상품 비용",
-    "profitMargin": "이익률",
+    "profitMargin": "총 이익률",
     "totalPurchase": "총 구매액",
     "stockStatus": "재고 상태",
     "noOutOfStock": "품절 없음",
     "partialDisplay": "일부만 표시, 자세한 내용은 클릭하세요",
     "viewDetails": "세부 정보 보기",
     "monthlyStockChange": "월별 재고 변동량",
-    "selectProduct": "제품 선택"
+    "selectProduct": "제품 선택",
+    "topSalesDistribution": "판매액 분포",
+    "totalCost": "총 비용",
+    "monthStartStock": "월초 재고",
+    "currentStock": "현재 재고",
+    "monthlyChange": "월별 변동량",
+    "increase": "(증가)",
+    "salesAmount": "판매 금액"
   },
   "inbound": {
     "id": "ID",
