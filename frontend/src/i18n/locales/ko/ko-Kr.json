@@ -295,7 +295,7 @@
     "networkError": "네트워크 연결 실패, 서버 상태를 확인하세요."
   },
   "payable": {
-    "title": "매입채무 관리",
+    "title": "매입채무",
     "refresh": "새로고침",
     "supplierCode": "공급업체 코드",
     "supplierShortName": "공급업체 약칭",
@@ -348,7 +348,7 @@
     "deleteFailed": "삭제 실패, 네트워크 연결을 확인하세요"
   },
   "receivable": {
-    "title": "외상매출금 관리",
+    "title": "외상매출금",
     "refresh": "새로고침",
     "customerCode": "고객 코드",
     "customerShortName": "고객명",

@@ -318,7 +318,7 @@
     "networkError": "网络连接失败，请检查服务器状态"
   },
   "payable": {
-    "title": "应付账款管理",
+    "title": "应付账款",
     "refresh": "刷新",
     "supplierCode": "供应商代号",
     "supplierShortName": "供应商简称",
@@ -371,7 +371,7 @@
     "deleteFailed": "删除失败，请检查网络连接"
   },
   "receivable": {
-    "title": "应收账款管理",
+    "title": "应收账款",
     "refresh": "刷新",
     "customerCode": "客户代号",
     "customerShortName": "客户简称",

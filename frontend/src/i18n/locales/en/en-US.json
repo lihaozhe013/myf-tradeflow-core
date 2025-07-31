@@ -294,7 +294,7 @@
     "networkError": "Network connection failed, please check server status."
   },
   "payable": {
-    "title": "Payable Management",
+    "title": "Payable",
     "refresh": "Refresh",
     "supplierCode": "Supplier Code",
     "supplierShortName": "Supplier Short Name",
@@ -347,7 +347,7 @@
     "deleteFailed": "Delete failed, please check network connection"
   },
   "receivable": {
-    "title": "Accounts Receivable Management",
+    "title": "Receivable",
     "refresh": "Refresh",
     "customerCode": "Customer Code",
     "customerShortName": "Customer Name",
