@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button, Form, message, Card, Typography, Row, Col, Divider } from 'antd';
 import { PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -8,6 +9,7 @@ import ReceivableModal from './components/ReceivableModal';
 const { Title } = Typography;
 
 const Receivable = () => {
+  const { t } = useTranslation();
   const [receivableRecords, setReceivableRecords] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -57,12 +59,12 @@ const Receivable = () => {
         }));
       } else {
         const error = await response.json();
-        message.error(`获取应收账款数据失败: ${error.error || '未知错误'}`);
+        message.error(t('receivable.fetchFailed', { msg: error.error || t('common.unknownError') }));
         setReceivableRecords([]);
       }
     } catch (error) {
       console.error('获取应收账款数据失败:', error);
-      message.error('获取应收账款数据失败，请检查网络连接');
+      message.error(t('receivable.fetchFailedNetwork'));
       setReceivableRecords([]);
     } finally {
       setLoading(false);
@@ -78,7 +80,7 @@ const Receivable = () => {
         setCustomers(Array.isArray(result.data) ? result.data : []);
       }
     } catch (error) {
-      console.error('获取客户列表失败:', error);
+      console.error(t('receivable.fetchFailed', { msg: error?.message || '' }), error);
     }
   };
 
@@ -168,16 +170,16 @@ const Receivable = () => {
       });
 
       if (response.ok) {
-        message.success(`回款记录${editingPayment ? '更新' : '创建'}成功`);
+      message.success(t('receivable.saveSuccess', { action: editingPayment ? t('common.edit') : t('common.add') }));
         setModalVisible(false);
         fetchReceivableRecords(); // 刷新数据
       } else {
         const error = await response.json();
-        message.error(`操作失败: ${error.error || '未知错误'}`);
+        message.error(t('receivable.saveFailed'));
       }
     } catch (error) {
-      console.error('保存回款记录失败:', error);
-      message.error('保存失败，请检查网络连接');
+      console.error(t('receivable.saveFailed'), error);
+      message.error(t('receivable.saveFailed'));
     }
   };
 
@@ -189,22 +191,22 @@ const Receivable = () => {
       });
 
       if (response.ok) {
-        message.success('回款记录删除成功');
+        message.success(t('receivable.deleteSuccess'));
         fetchReceivableRecords(); // 刷新数据
       } else {
         const error = await response.json();
-        message.error(`删除失败: ${error.error || '未知错误'}`);
+        message.error(t('receivable.deleteFailed'));
       }
     } catch (error) {
-      console.error('删除回款记录失败:', error);
-      message.error('删除失败，请检查网络连接');
+      console.error(t('receivable.deleteFailed'), error);
+      message.error(t('receivable.deleteFailed'));
     }
   };
 
   // 刷新数据
   const handleRefresh = () => {
     fetchReceivableRecords();
-    message.success('数据已刷新');
+    message.success(t('receivable.dataRefreshed'));
   };
 
   return (
@@ -212,7 +214,7 @@ const Receivable = () => {
       <Card>
         <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
           <Col>
-            <Title level={2} style={{ margin: 0 }}>应收账款管理</Title>
+            <Title level={2} style={{ margin: 0 }}>{t('receivable.title')}</Title>
           </Col>
           <Col>
             <Button
@@ -221,7 +223,7 @@ const Receivable = () => {
               onClick={handleRefresh}
               style={{ marginRight: 8 }}
             >
-              刷新
+              {t('receivable.refresh')}
             </Button>
           </Col>
         </Row>
