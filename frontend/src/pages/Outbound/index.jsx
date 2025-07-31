@@ -5,7 +5,7 @@ import dayjs from 'dayjs';
 import OutboundFilter from './components/OutboundFilter';
 import OutboundTable from './components/OutboundTable';
 import OutboundModal from './components/OutboundModal';
-
+import { useTranslation } from 'react-i18next';
 const { Title } = Typography;
 
 const Outbound = () => {
@@ -22,6 +22,7 @@ const Outbound = () => {
     product_model: undefined,
     dateRange: [],
   });
+  const { t } = useTranslation();
   const [sorter, setSorter] = useState({
     field: undefined,
     order: undefined,
@@ -77,11 +78,11 @@ const Outbound = () => {
         const partnersArray = Array.isArray(result.data) ? result.data : [];
         setPartners(partnersArray.filter(partner => partner.type === 1)); // 只获取客户
       } else {
-        console.error('获取客户列表失败');
+        console.error(t('outbound.fetchPartnersFailed'));
         setPartners([]);
       }
     } catch (error) {
-      console.error('获取客户列表失败:', error);
+      console.error(t('outbound.fetchPartnersFailed'), error);
       setPartners([]);
     }
   };
@@ -94,11 +95,11 @@ const Outbound = () => {
         const result = await response.json();
         setProducts(Array.isArray(result.data) ? result.data : []);
       } else {
-        console.error('获取产品列表失败');
+        console.error(t('outbound.fetchProductsFailed'));
         setProducts([]);
       }
     } catch (error) {
-      console.error('获取产品列表失败:', error);
+      console.error(t('outbound.fetchProductsFailed'), error);
       setProducts([]);
     }
   };
@@ -142,13 +143,13 @@ const Outbound = () => {
         method: 'DELETE',
       });
       if (response.ok) {
-        message.success('删除成功');
+        message.success(t('outbound.deleteSuccess'));
         fetchOutboundRecords();
       } else {
-        message.error('删除失败');
+        message.error(t('outbound.deleteFailed'));
       }
     } catch {
-      message.error('删除失败');
+      message.error(t('outbound.deleteFailed'));
     }
   };
 
@@ -163,7 +164,7 @@ const Outbound = () => {
       if (customerCode && customerShortName) {
         const customer = partners.find(p => p.code === customerCode);
         if (!customer || customer.short_name !== customerShortName) {
-          message.error('客户代号与简称不匹配，请重新选择');
+          message.error(t('outbound.customerCodeShortNameMismatch'));
           return;
         }
       }
@@ -171,7 +172,7 @@ const Outbound = () => {
       if (productCode && productModel) {
         const product = products.find(p => p.code === productCode);
         if (!product || product.product_model !== productModel) {
-          message.error('产品代号与型号不匹配，请重新选择');
+          message.error(t('outbound.productCodeModelMismatch'));
           return;
         }
       }
@@ -196,15 +197,15 @@ const Outbound = () => {
         body: JSON.stringify(formattedValues),
       });
       if (response.ok) {
-        message.success(editingRecord ? '修改成功' : '新增成功');
+        message.success(editingRecord ? t('outbound.editSuccess') : t('outbound.addSuccess'));
         setModalVisible(false);
         fetchOutboundRecords();
       } else {
         const errorData = await response.json();
-        message.error(errorData.error || '保存失败');
+        message.error(errorData.error || t('outbound.saveFailed'));
       }
     } catch {
-      message.error('保存失败');
+      message.error(t('outbound.saveFailed'));
     }
   };
 
@@ -270,6 +271,7 @@ const Outbound = () => {
           handlePriceOrQuantityChange();
         } else {
           form.setFieldsValue({ unit_price: 0 });
+          message.warning(t('outbound.autoPriceFailed'));
         }
       }
     }
@@ -328,7 +330,7 @@ const Outbound = () => {
       <Card>
         <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
           <Col>
-            <Title level={3} style={{ margin: 0 }}>出库管理</Title>
+            <Title level={3} style={{ margin: 0 }}>{t('outbound.title')}</Title>
           </Col>
           <Col>
             <Button
@@ -336,7 +338,7 @@ const Outbound = () => {
               icon={<PlusOutlined />}
               onClick={handleAdd}
             >
-              新增出库记录
+              {t('outbound.addOutboundRecord')}
             </Button>
           </Col>
         </Row>
@@ -366,10 +368,10 @@ const Outbound = () => {
             pageSize: pagination.pageSize,
             total: pagination.total,
             showQuickJumper: true,
-            showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条/共 ${total} 条`,
+            showTotal: (total, range) => t('outbound.paginationTotal', { start: range[0], end: range[1], total }),
           }}
         />
-        {console.log('[Outbound] render: records.length', outboundRecords.length, 'pagination', pagination)}
+        {console.log(t('outbound.consoleRender'), outboundRecords.length, pagination)}
       </Card>
 
       <OutboundModal
@@ -392,5 +394,4 @@ const Outbound = () => {
     </div>
   );
 };
-
 export default Outbound;

@@ -1,6 +1,7 @@
 import React from 'react';
-import { Table, Button, Space, Popconfirm, Tag } from 'antd';
+import { Table, Button, Space, Popconfirm } from 'antd';
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 
 const OutboundTable = ({ 
   outboundRecords, 
@@ -14,21 +15,22 @@ const OutboundTable = ({
   onTableChange,
   pagination 
 }) => {
+  const { t } = useTranslation();
   const columns = [
     {
-      title: 'ID',
+      title: t('outbound.id'),
       dataIndex: 'id',
       key: 'id',
       width: 80,
     },
     {
-      title: '客户代号',
+      title: t('outbound.customerCode'),
       dataIndex: 'customer_code',
       key: 'customer_code',
       width: 100,
     },
     {
-      title: '客户简称',
+      title: t('outbound.customerShortName'),
       dataIndex: 'customer_short_name',
       key: 'customer_short_name',
       width: 120,
@@ -36,13 +38,13 @@ const OutboundTable = ({
       onFilter: (value, record) => record.customer_short_name === value,
     },
     {
-      title: '产品代号',
+      title: t('outbound.productCode'),
       dataIndex: 'product_code',
       key: 'product_code',
       width: 100,
     },
     {
-      title: '产品型号',
+      title: t('outbound.productModel'),
       dataIndex: 'product_model',
       key: 'product_model',
       width: 150,
@@ -50,13 +52,13 @@ const OutboundTable = ({
       onFilter: (value, record) => record.product_model === value,
     },
     {
-      title: '数量',
+      title: t('outbound.quantity'),
       dataIndex: 'quantity',
       key: 'quantity',
       width: 80,
     },
     {
-      title: '单价',
+      title: t('outbound.unitPrice'),
       dataIndex: 'unit_price',
       key: 'unit_price',
       width: 100,
@@ -64,7 +66,7 @@ const OutboundTable = ({
       sorter: true,
     },
     {
-      title: '总价',
+      title: t('outbound.totalPrice'),
       dataIndex: 'total_price',
       key: 'total_price',
       width: 100,
@@ -72,14 +74,14 @@ const OutboundTable = ({
       sorter: true,
     },
     {
-      title: '出库日期',
+      title: t('outbound.outboundDate'),
       dataIndex: 'outbound_date',
       key: 'outbound_date',
       width: 120,
       sorter: true,
     },
     {
-      title: '发票链接',
+      title: t('outbound.invoiceLink'),
       key: 'invoice_link',
       width: 120,
       render: (_, record) => {
@@ -91,15 +93,15 @@ const OutboundTable = ({
               onClick={() => window.open(record.invoice_image_url, '_blank')}
               style={{ padding: 0 }}
             >
-              点击查看
+              {t('outbound.viewInvoice')}
             </Button>
           );
         }
-        return <span style={{ color: '#999' }}>暂无发票链接</span>;
+        return <span style={{ color: '#999' }}>{t('outbound.noInvoice')}</span>;
       },
     },
     {
-      title: '操作',
+      title: t('outbound.actions'),
       key: 'actions',
       width: 120,
       render: (_, record) => (
@@ -110,13 +112,13 @@ const OutboundTable = ({
             onClick={() => onEdit(record)}
             size="small"
           >
-            编辑
+            {t('common.edit')}
           </Button>
           <Popconfirm
-            title="确定要删除这条出库记录吗？"
+            title={t('outbound.deleteConfirm')}
             onConfirm={() => onDelete(record.id)}
-            okText="确定"
-            cancelText="取消"
+            okText={t('common.confirm')}
+            cancelText={t('common.cancel')}
           >
             <Button
               type="link"
@@ -124,7 +126,7 @@ const OutboundTable = ({
               icon={<DeleteOutlined />}
               size="small"
             >
-              删除
+              {t('common.delete')}
             </Button>
           </Popconfirm>
         </Space>

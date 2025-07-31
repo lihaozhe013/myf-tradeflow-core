@@ -369,7 +369,7 @@ const Inbound = () => {
             pageSize: pagination.pageSize,
             total: pagination.total,
             showQuickJumper: true,
-            showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条/共 ${total} 条`,
+            showTotal: (total, range) => t('outbound.paginationTotal', { start: range[0], end: range[1], total }),
           }}
         />
         {console.log('[Inbound] render: records.length', inboundRecords.length, 'pagination', pagination)}
