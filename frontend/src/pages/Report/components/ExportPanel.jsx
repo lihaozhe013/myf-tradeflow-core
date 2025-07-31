@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Card,
   Row,
@@ -26,11 +27,12 @@ const ExportPanel = ({
   selectedCustomer,
   setSelectedCustomer
 }) => {
+  const { t } = useTranslation();
   return (
     <div>
       <Row gutter={[16, 16]}>
         <Col span={24}>
-          <Card title="基础信息导出" size="small">
+          <Card title={t('export.baseInfo')} size="small">
             <Space wrap>
               <Button
                 type="default"
@@ -39,7 +41,7 @@ const ExportPanel = ({
                 onClick={() => handleExport('base-info', { tables: '123' })}
                 loading={loading}
               >
-                导出全部基础信息
+                {t('export.exportAllBase')}
               </Button>
               <Button
                 type="default"
@@ -48,7 +50,7 @@ const ExportPanel = ({
                 onClick={() => handleExport('base-info', { tables: '1' })}
                 loading={loading}
               >
-                仅导出客户/供应商
+                {t('export.exportPartners')}
               </Button>
               <Button
                 type="default"
@@ -57,7 +59,7 @@ const ExportPanel = ({
                 onClick={() => handleExport('base-info', { tables: '2' })}
                 loading={loading}
               >
-                仅导出产品
+                {t('export.exportProducts')}
               </Button>
               <Button
                 type="default"
@@ -66,33 +68,33 @@ const ExportPanel = ({
                 onClick={() => handleExport('base-info', { tables: '3' })}
                 loading={loading}
               >
-                仅导出产品价格
+                {t('export.exportProductPrices')}
               </Button>
             </Space>
           </Card>
         </Col>
         
         <Col span={24}>
-          <Card title="入库出库记录导出" size="small">
+          <Card title={t('export.inboundOutbound')} size="small">
             <Form layout="inline" style={{ marginBottom: 16 }}>
-              <Form.Item label="日期范围">
+              <Form.Item label={t('export.dateRange')}>
                 <RangePicker
                   value={dateRange}
                   onChange={setDateRange}
                   format="YYYY-MM-DD"
                 />
               </Form.Item>
-              <Form.Item label="产品代号">
+              <Form.Item label={t('export.productCode')}>
                 <Input
-                  placeholder="可选"
+                  placeholder={t('export.optional')}
                   value={selectedProduct}
                   onChange={(e) => setSelectedProduct(e.target.value)}
                   style={{ width: 120 }}
                 />
               </Form.Item>
-              <Form.Item label="合作伙伴代号">
+              <Form.Item label={t('export.partnerCode')}>
                 <Input
-                  placeholder="可选"
+                  placeholder={t('export.optional')}
                   value={selectedCustomer}
                   onChange={(e) => setSelectedCustomer(e.target.value)}
                   style={{ width: 120 }}
@@ -113,7 +115,7 @@ const ExportPanel = ({
                 })}
                 loading={loading}
               >
-                导出入库出库记录
+                {t('export.exportInboundOutbound')}
               </Button>
               <Button
                 type="default"
@@ -128,7 +130,7 @@ const ExportPanel = ({
                 })}
                 loading={loading}
               >
-                仅导出入库记录
+                {t('export.exportInbound')}
               </Button>
               <Button
                 type="default"
@@ -143,28 +145,28 @@ const ExportPanel = ({
                 })}
                 loading={loading}
               >
-                仅导出出库记录
+                {t('export.exportOutbound')}
               </Button>
             </Space>
           </Card>
         </Col>
         
         <Col span={24}>
-          <Card title="应收应付明细导出" size="small">
+          <Card title={t('export.receivablePayable')} size="small">
             <Form layout="inline" style={{ marginBottom: 16 }}>
-              <Form.Item label="出入库日期">
+              <Form.Item label={t('export.inoutDate')}>
                 <RangePicker
                   value={dateRange}
                   onChange={setDateRange}
                   format="YYYY-MM-DD"
                 />
               </Form.Item>
-              <Form.Item label="回付款日期">
+              <Form.Item label={t('export.paymentDate')}>
                 <RangePicker
                   value={paymentDateRange}
                   onChange={setPaymentDateRange}
                   format="YYYY-MM-DD"
-                  placeholder={['回付款开始日期', '回付款结束日期']}
+                  placeholder={[t('export.paymentStart'), t('export.paymentEnd')]}
                 />
               </Form.Item>
             </Form>
@@ -181,24 +183,24 @@ const ExportPanel = ({
                 })}
                 loading={loading}
               >
-                导出应收应付明细
+                {t('export.exportReceivablePayable')}
               </Button>
             </Space>
           </Card>
         </Col>
         
         <Col span={24}>
-          <Card title="发票导出" size="small">
+          <Card title={t('export.invoice')} size="small">
             <Form layout="inline" style={{ marginBottom: 16 }}>
-              <Form.Item label="合作伙伴代号" required>
+              <Form.Item label={t('export.partnerCode')} required>
                 <Input
-                  placeholder="必填"
+                  placeholder={t('export.required')}
                   value={selectedCustomer}
                   onChange={(e) => setSelectedCustomer(e.target.value)}
                   style={{ width: 150 }}
                 />
               </Form.Item>
-              <Form.Item label="日期范围" required>
+              <Form.Item label={t('export.dateRange')} required>
                 <RangePicker
                   value={dateRange}
                   onChange={setDateRange}
@@ -213,7 +215,7 @@ const ExportPanel = ({
                 icon={<FileExcelOutlined />}
                 onClick={() => {
                   if (!selectedCustomer) {
-                    message.warning('请输入合作伙伴代号');
+                    message.warning(t('export.inputPartnerCode'));
                     return;
                   }
                   handleExport('invoice', {
@@ -225,11 +227,11 @@ const ExportPanel = ({
                 loading={loading}
                 disabled={!selectedCustomer}
               >
-                导出发票明细
+                {t('export.exportInvoice')}
               </Button>
             </Space>
             <div style={{ marginTop: 8, fontSize: '12px', color: '#666' }}>
-              说明：按产品型号和单价合并数量和金额，适用于生成发票明细
+              {t('export.invoiceTip')}
             </div>
           </Card>
         </Col>
