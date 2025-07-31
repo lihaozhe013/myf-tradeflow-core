@@ -1,6 +1,6 @@
 {
   "nav": {
-    "overview": "시스템 개요",
+    "overview": "개요",
     "inbound": "입고",
     "outbound": "출고",
     "stock": "재고",
@@ -28,8 +28,8 @@
     "reset": "재설정"
   },
   "overview": {
-    "title": "시스템 개요",
-    "subtitle": "시스템 데이터 분석 센터",
+    "title": "개요",
+    "subtitle": "데이터 분석 센터",
     "loading": "시스템 데이터 로딩 중...",
     "loadFailed": "시스템 데이터 로드 실패",
     "refreshFailed": "데이터 새로고침 실패",
@@ -159,5 +159,53 @@
     "selectSupplier": "공급업체 선택",
     "paginationTotal": "{{total}}개 중 {{start}}-{{end}}번째 결과",
     "title": "출고"
+  },
+  "partners": {
+    "title": "고객/공급업체 관리",
+    "addPartner": "파트너 추가",
+    "editPartner": "파트너 편집",
+    "code": "코드",
+    "shortName": "약칭",
+    "fullName": "전체명",
+    "type": "유형",
+    "supplier": "공급업체",
+    "customer": "고객",
+    "address": "주소",
+    "contactPerson": "담당자",
+    "contactPhone": "연락처",
+    "actions": "작업",
+    "deleteConfirm": "이 파트너를 삭제하시겠습니까?",
+    "editSuccess": "수정 성공",
+    "addSuccess": "추가 성공",
+    "saveFailed": "저장 실패",
+    "deleteSuccess": "삭제 성공",
+    "deleteFailed": "삭제 실패",
+    "paginationTotal": "총 {{total}}개 중 {{start}}-{{end}}개 표시",
+    "codeMax": "코드는 50자를 초과할 수 없습니다",
+    "inputCode": "코드를 입력하세요",
+    "inputShortName": "약칭을 입력하세요",
+    "shortNameMax": "약칭은 50자를 초과할 수 없습니다",
+    "inputFullName": "전체명을 입력하세요",
+    "fullNameMax": "전체명은 200자를 초과할 수 없습니다",
+    "selectType": "유형을 선택하세요",
+    "addressMax": "주소는 500자를 초과할 수 없습니다",
+    "inputAddress": "주소를 입력하세요",
+    "contactPersonMax": "담당자는 100자를 초과할 수 없습니다",
+    "inputContactPerson": "담당자를 입력하세요",
+    "contactPhoneMax": "연락처는 50자를 초과할 수 없습니다",
+    "inputContactPhone": "연락처를 입력하세요"
+  },
+  "stock": {
+    "title": "재고",
+    "recalculate": "재고 재계산",
+    "productModel": "제품 모델",
+    "lastUpdate": "마지막 업데이트",
+    "currentStock": "현재 재고",
+    "status": "상태",
+    "outOfStock": "품절",
+    "lowStock": "재고 부족",
+    "normal": "정상",
+    "searchProductModel": "제품 모델 검색",
+    "paginationTotal": "{{total}}개 중 {{start}}-{{end}}번째 결과"
   }
 }
