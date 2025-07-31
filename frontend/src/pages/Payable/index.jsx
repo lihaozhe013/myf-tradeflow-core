@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Form, message, Card, Typography, Row, Col, Divider } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import PayableTable from './components/PayableTable';
@@ -9,6 +10,7 @@ const { Title } = Typography;
 
 const Payable = () => {
   const [payableRecords, setPayableRecords] = useState([]);
+  const { t } = useTranslation();
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -57,12 +59,12 @@ const Payable = () => {
         }));
       } else {
         const error = await response.json();
-        message.error(`获取应付账款数据失败: ${error.error || '未知错误'}`);
+        message.error(t('payable.fetchFailed', { msg: error.error || t('payable.unknownError') }));
         setPayableRecords([]);
       }
     } catch (error) {
       console.error('获取应付账款数据失败:', error);
-      message.error('获取应付账款数据失败，请检查网络连接');
+      message.error(t('payable.fetchFailedNetwork'));
       setPayableRecords([]);
     } finally {
       setLoading(false);
@@ -168,16 +170,16 @@ const Payable = () => {
       });
 
       if (response.ok) {
-        message.success(`付款记录${editingPayment ? '更新' : '创建'}成功`);
+        message.success(t('payable.saveSuccess', { action: editingPayment ? t('payable.editPayment') : t('payable.addPayment') }));
         setModalVisible(false);
         fetchPayableRecords(); // 刷新数据
       } else {
         const error = await response.json();
-        message.error(`操作失败: ${error.error || '未知错误'}`);
+        message.error(t('payable.fetchFailed', { msg: error.error || t('payable.unknownError') }));
       }
     } catch (error) {
       console.error('保存付款记录失败:', error);
-      message.error('保存失败，请检查网络连接');
+      message.error(t('payable.saveFailed'));
     }
   };
 
@@ -189,22 +191,22 @@ const Payable = () => {
       });
 
       if (response.ok) {
-        message.success('付款记录删除成功');
+        message.success(t('payable.deleteSuccess'));
         fetchPayableRecords(); // 刷新数据
       } else {
         const error = await response.json();
-        message.error(`删除失败: ${error.error || '未知错误'}`);
+        message.error(t('payable.fetchFailed', { msg: error.error || t('payable.unknownError') }));
       }
     } catch (error) {
       console.error('删除付款记录失败:', error);
-      message.error('删除失败，请检查网络连接');
+      message.error(t('payable.deleteFailed'));
     }
   };
 
   // 刷新数据
   const handleRefresh = () => {
     fetchPayableRecords();
-    message.success('数据已刷新');
+    message.success(t('payable.dataRefreshed'));
   };
 
   return (
@@ -212,7 +214,7 @@ const Payable = () => {
       <Card>
         <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
           <Col>
-            <Title level={2} style={{ margin: 0 }}>应付账款管理</Title>
+            <Title level={2} style={{ margin: 0 }}>{t('payable.title')}</Title>
           </Col>
           <Col>
             <Button
@@ -221,7 +223,7 @@ const Payable = () => {
               onClick={handleRefresh}
               style={{ marginRight: 8 }}
             >
-              刷新
+              {t('payable.refresh')}
             </Button>
           </Col>
         </Row>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal, Form, Input, InputNumber, DatePicker, Select } from 'antd';
 import { PAYMENT_METHODS, DEFAULT_PAYMENT_METHOD } from '../../../config';
 
@@ -14,6 +15,7 @@ const PayableModal = ({
   onSave,
   onCancel
 }) => {
+  const { t } = useTranslation();
   // 处理表单提交
   const handleSubmit = async () => {
     try {
@@ -33,7 +35,7 @@ const PayableModal = ({
 
   return (
     <Modal
-      title={editingPayment ? '编辑付款记录' : '新增付款记录'}
+      title={editingPayment ? t('payable.modalTitleEdit') : t('payable.modalTitleAdd')}
       open={visible}
       onOk={handleSubmit}
       onCancel={handleCancel}
@@ -49,11 +51,11 @@ const PayableModal = ({
       >
         <Form.Item
           name="supplier_code"
-          label="供应商代号"
-          rules={[{ required: true, message: '请选择供应商' }]}
+          label={t('payable.supplierCode')}
+          rules={[{ required: true, message: t('payable.selectSupplier') }]}
         >
           <Select
-            placeholder="请选择供应商"
+            placeholder={t('payable.selectSupplier')}
             showSearch
             filterOption={(input, option) =>
               option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
@@ -70,14 +72,14 @@ const PayableModal = ({
 
         <Form.Item
           name="amount"
-          label="付款金额"
+          label={t('payable.paymentAmount')}
           rules={[
-            { required: true, message: '请输入付款金额' },
-            { type: 'number', message: '请输入有效的数字' }
+            { required: true, message: t('payable.inputAmount') },
+            { type: 'number', message: t('payable.inputAmountValid') }
           ]}
         >
           <InputNumber
-            placeholder="请输入付款金额（支持负数调整）"
+            placeholder={t('payable.inputAmount')}
             style={{ width: '100%' }}
             precision={2}
             formatter={(value) => `¥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
@@ -87,11 +89,11 @@ const PayableModal = ({
 
         <Form.Item
           name="pay_date"
-          label="付款日期"
-          rules={[{ required: true, message: '请选择付款日期' }]}
+          label={t('payable.paymentDate')}
+          rules={[{ required: true, message: t('payable.inputDate') }]}
         >
           <DatePicker
-            placeholder="请选择付款日期"
+            placeholder={t('payable.inputDate')}
             style={{ width: '100%' }}
             format="YYYY-MM-DD"
           />
@@ -99,10 +101,10 @@ const PayableModal = ({
 
         <Form.Item
           name="pay_method"
-          label="付款方式"
-          rules={[{ required: true, message: '请选择付款方式' }]}
+          label={t('payable.paymentMethod')}
+          rules={[{ required: true, message: t('payable.selectMethod') }]}
         >
-          <Select placeholder="请选择付款方式">
+          <Select placeholder={t('payable.selectMethod')}>
             {PAYMENT_METHODS.map(method => (
               <Option key={method} value={method}>
                 {method}
@@ -113,10 +115,10 @@ const PayableModal = ({
 
         <Form.Item
           name="remark"
-          label="备注"
+          label={t('payable.remark')}
         >
           <TextArea
-            placeholder="请输入备注信息（可选）"
+            placeholder={t('payable.inputRemark')}
             rows={3}
             maxLength={500}
             showCount
