@@ -30,3 +30,5 @@ backend/../data/data.db
 backend/python_scripts/exported-files
 frontend/src/config/appConfig.json
 backend/data.db
+
+.vscode/
