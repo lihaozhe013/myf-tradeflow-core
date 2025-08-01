@@ -4,12 +4,12 @@
     "inbound": "入库",
     "outbound": "出库",
     "stock": "库存",
-    "partners": "合作伙伴管理",
-    "products": "产品管理",
-    "productPrices": "价格管理",
+    "partners": "合作伙伴",
+    "products": "产品",
+    "productPrices": "价格",
     "receivable": "应收账款",
     "payable": "应付账款",
-    "report": "报表导出"
+    "report": "导出"
   },
   "common": {
     "language": "语言",
@@ -38,7 +38,6 @@
     "refreshData": "重新分析数据",
     "overview": "概览",
     "totalSales": "总销售额",
-    "soldGoodsCost": "已售成本",
     "profitMargin": "利润率",
     "totalPurchase": "总采购额",
     "stockStatus": "库存状态",
@@ -68,7 +67,7 @@
     "stockChangeFailed": "获取库存变化数据失败，请先刷新统计数据",
     "requestFailed": "请求失败",
     "dataFetchFailed": "数据获取失败，请先刷新统计数据",
-    "totalCost": "已售成本"
+    "totalCost": "总成本"
   },
   "inbound": {
     "id": "ID",
@@ -119,7 +118,7 @@
     "filter": "筛选"
   },
   "productPrices": {
-    "title": "产品价格管理",
+    "title": "价格列表",
     "addPrice": "新增价格",
     "editPrice": "编辑产品价格",
     "partnerCode": "合作伙伴代号",
@@ -148,7 +147,7 @@
     "fetchProductsFailed": "获取产品列表失败"
   },
   "products": {
-    "title": "产品管理",
+    "title": "产品列表",
     "addProduct": "新增产品",
     "editProduct": "编辑产品",
     "code": "代号",
@@ -173,7 +172,7 @@
     "inputRemark": "请输入产品描述"
   },
   "partners": {
-    "title": "客户/供应商管理",
+    "title": "客户/供应商列表",
     "addPartner": "新增合作伙伴",
     "editPartner": "编辑合作伙伴",
     "code": "代号",
@@ -271,7 +270,7 @@
     "endDate": "结束日期",
     "filter": "筛选",
     "selectSupplier": "选择供应商",
-    "title": "出库管理",
+    "title": "出库",
     "fetchPartnersFailed": "获取客户列表失败",
     "fetchProductsFailed": "获取产品列表失败",
     "customerCodeShortNameMismatch": "客户代号与简称不匹配，请重新选择",
@@ -286,12 +285,12 @@
     "consoleRender": "[出库] 渲染: 记录数/分页"
   },
   "export": {
-    "baseInfo": "基础信息导出",
+    "baseInfo": "基础信息",
     "exportAllBase": "导出全部基础信息",
     "exportPartners": "仅导出客户/供应商",
     "exportProducts": "仅导出产品",
     "exportProductPrices": "仅导出产品价格",
-    "inboundOutbound": "入库出库记录导出",
+    "inboundOutbound": "出入库记录",
     "dateRange": "日期范围",
     "productCode": "产品代号",
     "partnerCode": "合作伙伴代号",
@@ -299,13 +298,13 @@
     "exportInboundOutbound": "导出入库出库记录",
     "exportInbound": "仅导出入库记录",
     "exportOutbound": "仅导出出库记录",
-    "receivablePayable": "应收应付明细导出",
+    "receivablePayable": "应收应付明细",
     "inoutDate": "出入库日期",
     "paymentDate": "回付款日期",
     "paymentStart": "回付款开始日期",
     "paymentEnd": "回付款结束日期",
     "exportReceivablePayable": "导出应收应付明细",
-    "invoice": "发票导出",
+    "invoice": "发票",
     "required": "必填",
     "exportInvoice": "导出发票明细",
     "inputPartnerCode": "请输入合作伙伴代号",
@@ -368,7 +367,8 @@
     "saveSuccess": "付款记录{{action}}成功",
     "saveFailed": "保存失败，请检查网络连接",
     "deleteSuccess": "付款记录删除成功",
-    "deleteFailed": "删除失败，请检查网络连接"
+    "deleteFailed": "删除失败，请检查网络连接",
+    "paginationTotal": "第 {{start}}-{{end}} 条/共 {{total}} 条"
   },
   "receivable": {
     "title": "应收账款",
@@ -421,6 +421,7 @@
     "saveSuccess": "回款记录{{action}}成功",
     "saveFailed": "保存失败，请检查网络连接",
     "deleteSuccess": "回款记录删除成功",
-    "deleteFailed": "删除失败，请检查网络连接"
+    "deleteFailed": "删除失败，请检查网络连接",
+    "paginationTotal": "第 {{start}}-{{end}} 条/共 {{total}} 条"
   }
 }

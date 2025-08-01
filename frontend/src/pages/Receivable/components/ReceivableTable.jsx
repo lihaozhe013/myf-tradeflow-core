@@ -270,7 +270,7 @@ const ReceivableTable = ({
         pagination={{
           ...pagination,
           showQuickJumper: true,
-          showTotal: (total, range) => t('common.paginationTotal', { start: range[0], end: range[1], total }),
+          showTotal: (total, range) => t('receivable.paginationTotal', { start: range[0], end: range[1], total }),
         }}
         onChange={onTableChange}
         scroll={{ x: 1200 }}

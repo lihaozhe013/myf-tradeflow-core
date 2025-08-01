@@ -38,7 +38,6 @@
     "refreshData": "데이터 재분석",
     "overview": "개요",
     "totalSales": "총 매출액",
-    "soldGoodsCost": "판매된 상품 비용",
     "profitMargin": "총 이익률",
     "totalPurchase": "총 구매액",
     "stockStatus": "재고 상태",
@@ -161,7 +160,7 @@
     "title": "출고"
   },
   "productPrices": {
-    "title": "제품 가격 관리",
+    "title": "제품 가격 목록",
     "addPrice": "가격 추가",
     "editPrice": "제품 가격 편집",
     "partnerCode": "파트너 코드",
@@ -190,7 +189,7 @@
     "fetchProductsFailed": "제품 목록 가져오기 실패"
   },
   "products": {
-    "title": "제품 관리",
+    "title": "제품 목록",
     "addProduct": "제품 추가",
     "editProduct": "제품 편집",
     "code": "코드",
@@ -215,7 +214,7 @@
     "inputRemark": "설명을 입력하세요"
   },
   "partners": {
-    "title": "고객/공급업체 관리",
+    "title": "고객/공급업체 목록",
     "addPartner": "파트너 추가",
     "editPartner": "파트너 편집",
     "code": "코드",
@@ -263,12 +262,12 @@
     "paginationTotal": "{{total}}개 중 {{start}}-{{end}}번째 결과"
   },
   "export": {
-    "baseInfo": "기초 정보 내보내기",
+    "baseInfo": "기초 정보",
     "exportAllBase": "모든 기초 정보 내보내기",
     "exportPartners": "파트너만 내보내기",
     "exportProducts": "제품만 내보내기",
     "exportProductPrices": "제품 가격만 내보내기",
-    "inboundOutbound": "입출고 기록 내보내기",
+    "inboundOutbound": "입출고 기록",
     "dateRange": "날짜 범위",
     "productCode": "제품 코드",
     "partnerCode": "파트너 코드",
@@ -276,13 +275,13 @@
     "exportInboundOutbound": "입출고 기록 내보내기",
     "exportInbound": "입고 기록만 내보내기",
     "exportOutbound": "출고 기록만 내보내기",
-    "receivablePayable": "채권/채무 내역 내보내기",
+    "receivablePayable": "채권/채무 내역",
     "inoutDate": "입출고일",
     "paymentDate": "결제일",
     "paymentStart": "결제 시작일",
     "paymentEnd": "결제 종료일",
     "exportReceivablePayable": "채권/채무 내역 내보내기",
-    "invoice": "세금계산서 내보내기",
+    "invoice": "세금계산서",
     "required": "필수",
     "exportInvoice": "세금계산서 내역 내보내기",
     "inputPartnerCode": "파트너 코드를 입력하세요",
@@ -345,7 +344,8 @@
     "saveSuccess": "지급 기록 {{action}} 성공",
     "saveFailed": "저장 실패, 네트워크 연결을 확인하세요",
     "deleteSuccess": "지급 기록이 성공적으로 삭제되었습니다",
-    "deleteFailed": "삭제 실패, 네트워크 연결을 확인하세요"
+    "deleteFailed": "삭제 실패, 네트워크 연결을 확인하세요",
+    "paginationTotal": "{{total}}개 중 {{start}}-{{end}}번째 결과"
   },
   "receivable": {
     "title": "외상매출금",
@@ -398,6 +398,7 @@
     "saveSuccess": "입금 기록 {{action}} 완료",
     "saveFailed": "저장에 실패했습니다. 네트워크 연결을 확인하세요",
     "deleteSuccess": "입금 기록이 성공적으로 삭제되었습니다",
-    "deleteFailed": "삭제에 실패했습니다. 네트워크 연결을 확인하세요"
+    "deleteFailed": "삭제에 실패했습니다. 네트워크 연결을 확인하세요",
+    "paginationTotal": "{{total}}개 중 {{start}}-{{end}}번째 결과"
   }
 }

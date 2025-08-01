@@ -270,7 +270,7 @@ const PayableTable = ({
         pagination={{
           ...pagination,
           showQuickJumper: true,
-          showTotal: (total, range) => `${range[0]}-${range[1]} / ${total}`,
+          showTotal: (total, range) => t('payable.paginationTotal', { start: range[0], end: range[1], total }),
         }}
         onChange={onTableChange}
         scroll={{ x: 1200 }}
