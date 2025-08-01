@@ -52,7 +52,8 @@
     "currentStock": "현재 재고",
     "monthlyChange": "월별 변동량",
     "increase": "(증가)",
-    "salesAmount": "판매 금액"
+    "salesAmount": "판매 금액",
+    "noChange": "변동 없음"
   },
   "inbound": {
     "id": "ID",

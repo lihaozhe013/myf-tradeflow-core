@@ -54,7 +54,8 @@
     "currentStock": "Current Stock",
     "monthlyChange": "Monthly Change",
     "increase": "(Increase)",
-    "salesAmount": "Sales Amount"
+    "salesAmount": "Sales Amount",
+    "noChange": "No Change"
   },
   "inbound": {
     "id": "ID",
