@@ -222,7 +222,7 @@ const OutboundModal = ({
               <InputNumber
                 style={{ width: '100%' }}
                 placeholder={t('outbound.autoCalc')}
-                precision={2}
+                precision={3}
                 disabled
                 addonBefore="¥"
               />
