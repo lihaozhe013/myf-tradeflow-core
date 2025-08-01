@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { logger } = require('../utils/logger');
+const decimalCalc = require('../utils/decimalCalculator');
 
 // 获取入库记录列表
 router.get('/', (req, res) => {
@@ -93,8 +94,8 @@ router.post('/', (req, res) => {
     remark
   } = req.body;
   
-  // 计算总价并处理浮点数精度问题
-  const total_price = Math.round((quantity * unit_price) * 100) / 100;
+  // 使用 decimal.js 精确计算总价
+  const total_price = decimalCalc.calculateTotalPrice(quantity, unit_price);
   
   const sql = `
     INSERT INTO inbound_records 
@@ -132,8 +133,8 @@ router.put('/:id', (req, res) => {
     remark
   } = req.body;
   
-  // 计算总价并处理浮点数精度问题
-  const total_price = Math.round((quantity * unit_price) * 100) / 100;
+  // 使用 decimal.js 精确计算总价
+  const total_price = decimalCalc.calculateTotalPrice(quantity, unit_price);
   
   const sql = `
     UPDATE inbound_records SET

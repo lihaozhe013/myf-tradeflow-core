@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const decimalCalc = require('../utils/decimalCalculator');
 
 // 获取应收账款列表（实时计算）
 router.get('/', (req, res) => {
@@ -59,6 +60,20 @@ router.get('/', (req, res) => {
       return;
     }
 
+    // 使用 decimal.js 重新计算精确的余额
+    const processedRows = rows.map(row => {
+      const totalReceivable = decimalCalc.fromSqlResult(row.total_receivable, 0);
+      const totalPaid = decimalCalc.fromSqlResult(row.total_paid, 0);
+      const balance = decimalCalc.calculateBalance(totalReceivable, totalPaid);
+      
+      return {
+        ...row,
+        total_receivable: totalReceivable,
+        total_paid: totalPaid,
+        balance: balance
+      };
+    });
+
     // 获取总数
     const countSql = `
       SELECT COUNT(DISTINCT p.code) as total
@@ -75,7 +90,7 @@ router.get('/', (req, res) => {
       }
       
       res.json({
-        data: rows,
+        data: processedRows,
         total: countResult.total,
         page: parseInt(page),
         limit: parseInt(limit)
@@ -251,15 +266,15 @@ router.get('/details/:customer_code', (req, res) => {
                 res.status(500).json({ error: err.message });
                 return;
               }
-              const totalReceivable = totalReceivableResult.total || 0;
+              const totalReceivable = decimalCalc.fromSqlResult(totalReceivableResult.total, 0);
               const totalPaidSql = 'SELECT SUM(amount) as total FROM receivable_payments WHERE customer_code = ?';
               db.get(totalPaidSql, [customer_code], (err, totalPaidResult) => {
                 if (err) {
                   res.status(500).json({ error: err.message });
                   return;
                 }
-                const totalPaid = totalPaidResult.total || 0;
-                const balance = totalReceivable - totalPaid;
+                const totalPaid = decimalCalc.fromSqlResult(totalPaidResult.total, 0);
+                const balance = decimalCalc.calculateBalance(totalReceivable, totalPaid);
                 
                 res.json({
                   customer,

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const decimalCalc = require('../utils/decimalCalculator');
 
 // 获取应付账款列表（实时计算）
 router.get('/', (req, res) => {
@@ -59,6 +60,20 @@ router.get('/', (req, res) => {
       return;
     }
 
+    // 使用 decimal.js 重新计算精确的余额
+    const processedRows = rows.map(row => {
+      const totalPayable = decimalCalc.fromSqlResult(row.total_payable, 0);
+      const totalPaid = decimalCalc.fromSqlResult(row.total_paid, 0);
+      const balance = decimalCalc.calculateBalance(totalPayable, totalPaid);
+      
+      return {
+        ...row,
+        total_payable: totalPayable,
+        total_paid: totalPaid,
+        balance: balance
+      };
+    });
+
     // 获取总数
     const countSql = `
       SELECT COUNT(DISTINCT p.code) as total
@@ -75,7 +90,7 @@ router.get('/', (req, res) => {
       }
       
       res.json({
-        data: rows,
+        data: processedRows,
         total: countResult.total,
         page: parseInt(page),
         limit: parseInt(limit)
@@ -253,15 +268,15 @@ router.get('/details/:supplier_code', (req, res) => {
                 res.status(500).json({ error: err.message });
                 return;
               }
-              const totalPayable = totalPayableResult.total || 0;
+              const totalPayable = decimalCalc.fromSqlResult(totalPayableResult.total, 0);
               const totalPaidSql = 'SELECT SUM(amount) as total FROM payable_payments WHERE supplier_code = ?';
               db.get(totalPaidSql, [supplier_code], (err, totalPaidResult) => {
                 if (err) {
                   res.status(500).json({ error: err.message });
                   return;
                 }
-                const totalPaid = totalPaidResult.total || 0;
-                const balance = totalPayable - totalPaid;
+                const totalPaid = decimalCalc.fromSqlResult(totalPaidResult.total, 0);
+                const balance = decimalCalc.calculateBalance(totalPayable, totalPaid);
                 
                 res.json({
                   supplier,

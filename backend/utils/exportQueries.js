@@ -1,5 +1,6 @@
 // 导出数据查询模块
 const db = require('../db');
+const decimalCalc = require('./decimalCalculator');
 
 class ExportQueries {
   /**
@@ -250,8 +251,24 @@ class ExportQueries {
       sql += ' ORDER BY balance DESC';
       
       db.all(sql, params, (err, rows) => {
-        if (err) reject(err);
-        else resolve(rows || []);
+        if (err) {
+          reject(err);
+        } else {
+          // 使用 decimal.js 重新计算精确的余额
+          const processedRows = (rows || []).map(row => {
+            const totalSales = decimalCalc.fromSqlResult(row.total_sales, 0);
+            const totalPayments = decimalCalc.fromSqlResult(row.total_payments, 0);
+            const balance = decimalCalc.calculateBalance(totalSales, totalPayments);
+            
+            return {
+              ...row,
+              total_sales: totalSales,
+              total_payments: totalPayments,
+              balance: balance
+            };
+          });
+          resolve(processedRows);
+        }
       });
     });
   }
@@ -359,8 +376,24 @@ class ExportQueries {
       sql += ' ORDER BY balance DESC';
       
       db.all(sql, params, (err, rows) => {
-        if (err) reject(err);
-        else resolve(rows || []);
+        if (err) {
+          reject(err);
+        } else {
+          // 使用 decimal.js 重新计算精确的余额
+          const processedRows = (rows || []).map(row => {
+            const totalPurchases = decimalCalc.fromSqlResult(row.total_purchases, 0);
+            const totalPayments = decimalCalc.fromSqlResult(row.total_payments, 0);
+            const balance = decimalCalc.calculateBalance(totalPurchases, totalPayments);
+            
+            return {
+              ...row,
+              total_purchases: totalPurchases,
+              total_payments: totalPayments,
+              balance: balance
+            };
+          });
+          resolve(processedRows);
+        }
       });
     });
   }

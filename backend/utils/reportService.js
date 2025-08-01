@@ -1,4 +1,5 @@
 const db = require('../db');
+const decimalCalc = require('./decimalCalculator');
 
 // 库存明细报表
 function getStockReport(callback) {
@@ -161,11 +162,11 @@ function getFinanceReport(startDate, endDate, groupBy = 'month', callback) {
         }
       });
       
-      // 计算利润
+      // 计算利润 - 使用 decimal.js 精确计算
       const result = Object.values(financeData).map(item => ({
         ...item,
-        profit: item.total_sales - item.total_purchase,
-        net_cash_flow: item.total_collection - item.total_payment
+        profit: decimalCalc.calculateProfit(item.total_sales, item.total_purchase),
+        net_cash_flow: decimalCalc.calculateBalance(item.total_collection, item.total_payment)
       }));
       
       result.sort((a, b) => a.period.localeCompare(b.period));

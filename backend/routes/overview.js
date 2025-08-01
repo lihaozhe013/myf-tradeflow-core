@@ -4,6 +4,7 @@ const db = require('../db');
 const fs = require('fs');
 const path = require('path');
 const { getAllStockData } = require('../utils/stockCacheService');
+const decimalCalc = require('../utils/decimalCalculator');
 
 /**
  * 计算已售商品的真实成本（加权平均成本法）
@@ -23,12 +24,12 @@ function calculateSoldGoodsCost(callback) {
   `, [], (err, avgCostData) => {
     if (err) return callback(err);
     
-    // 转换为Map便于查找
+    // 转换为Map便于查找，使用 decimal.js 处理数据
     const avgCostMap = {};
     avgCostData.forEach(item => {
       avgCostMap[item.product_model] = {
-        avg_cost_price: item.avg_cost_price || 0,
-        total_inbound_quantity: item.total_inbound_quantity || 0
+        avg_cost_price: decimalCalc.fromSqlResult(item.avg_cost_price, 0, 4),
+        total_inbound_quantity: decimalCalc.fromSqlResult(item.total_inbound_quantity, 0, 0)
       };
     });
 
@@ -44,21 +45,23 @@ function calculateSoldGoodsCost(callback) {
         return callback(null, 0);
       }
 
-      let totalSoldGoodsCost = 0;
-
+      let totalSoldGoodsCost = decimalCalc.decimal(0);
+      
       // 3. 使用平均成本计算每个销售记录的成本（只计算正数单价商品）
       outboundRecords.forEach(outRecord => {
         const productModel = outRecord.product_model;
-        const soldQuantity = outRecord.quantity;
-        const sellingPrice = outRecord.selling_price || 0;
+        const soldQuantity = decimalCalc.decimal(outRecord.quantity);
+        const sellingPrice = decimalCalc.fromSqlResult(outRecord.selling_price, 0, 4);
         
         if (avgCostMap[productModel]) {
           // 使用该产品的加权平均入库价格
-          const avgCost = avgCostMap[productModel].avg_cost_price;
-          totalSoldGoodsCost += soldQuantity * avgCost;
+          const avgCost = decimalCalc.decimal(avgCostMap[productModel].avg_cost_price);
+          const cost = decimalCalc.multiply(soldQuantity, avgCost);
+          totalSoldGoodsCost = totalSoldGoodsCost.add(cost);
         } else {
           // 如果没有对应的入库记录，使用出库价格作为成本（保守估计）
-          totalSoldGoodsCost += soldQuantity * sellingPrice;
+          const cost = decimalCalc.multiply(soldQuantity, sellingPrice);
+          totalSoldGoodsCost = totalSoldGoodsCost.add(cost);
         }
       });
 
@@ -70,16 +73,16 @@ function calculateSoldGoodsCost(callback) {
       `, [], (err2, specialIncomeRow) => {
         if (err2) return callback(err2);
         
-        const specialIncome = specialIncomeRow.special_income || 0;
-        const finalCost = totalSoldGoodsCost - specialIncome;
+        const specialIncome = decimalCalc.fromSqlResult(specialIncomeRow.special_income, 0, 2);
+        const finalCost = decimalCalc.subtract(totalSoldGoodsCost, specialIncome);
         
-        callback(null, Math.round(Math.max(0, finalCost) * 100) / 100); // 保留两位小数，确保不为负数
+        // 确保成本不为负数并保留两位小数
+        const result = decimalCalc.toDbNumber(decimalCalc.decimal(Math.max(0, finalCost.toNumber())), 2);
+        callback(null, result);
       });
     });
   });
-}
-
-// 获取系统统计数据
+}// 获取系统统计数据
 // GET 只读缓存
 router.get('/stats', (req, res) => {
   const statsFile = path.resolve(__dirname, '../../data/overview-stats.json');
@@ -158,13 +161,18 @@ router.post('/stats', (req, res) => {
             queryCompleted++;
             
             if (queryCompleted === totalSubQueries) {
-              // 合并结果
+              // 合并结果，使用 decimal.js 精确计算
+              const normalPurchase = decimalCalc.fromSqlResult(results.purchase_amount.normal_purchase, 0);
+              const specialIncome = decimalCalc.fromSqlResult(results.purchase_amount.special_income, 0);
+              const normalSales = decimalCalc.fromSqlResult(results.sales_amount.normal_sales, 0);
+              const specialExpense = decimalCalc.fromSqlResult(results.sales_amount.special_expense, 0);
+              
               const finalResult = {
                 ...results.counts,
                 // 总采购金额 = 正常采购 - 特殊收入（入库负数商品）
-                total_purchase_amount: results.purchase_amount.normal_purchase - results.purchase_amount.special_income,
+                total_purchase_amount: decimalCalc.toDbNumber(decimalCalc.subtract(normalPurchase, specialIncome)),
                 // 总销售额 = 正常销售 - 特殊支出（出库负数商品）
-                total_sales_amount: results.sales_amount.normal_sales - results.sales_amount.special_expense
+                total_sales_amount: decimalCalc.toDbNumber(decimalCalc.subtract(normalSales, specialExpense))
               };
               
               // 计算已售商品的真实成本
@@ -175,7 +183,7 @@ router.post('/stats', (req, res) => {
                   if (stockErr) return callback(stockErr);
                   const result = {
                     ...finalResult,
-                    sold_goods_cost: soldGoodsCost,
+                    sold_goods_cost: decimalCalc.toDbNumber(soldGoodsCost),
                     stocked_products: Object.keys(stockData).length
                   };
                   callback(null, result);
@@ -200,11 +208,24 @@ router.post('/stats', (req, res) => {
         const dbLimit = 100;
         db.all(sql + ` LIMIT ${dbLimit}`, [], (err, rows) => {
           if (err) return callback(err);
+          
+          // 使用 decimal.js 处理销售额数据，确保精度
+          const processedRows = rows.map(row => ({
+            product_model: row.product_model,
+            total_sales: decimalCalc.fromSqlResult(row.total_sales, 0, 2)
+          }));
+          
           const topN = 10;
-          const top = rows.slice(0, topN);
-          const others = rows.slice(topN);
-          const otherTotal = others.reduce((sum, r) => sum + (r.total_sales || 0), 0);
-          const result = top.map(r => ({ product_model: r.product_model, total_sales: r.total_sales }));
+          const top = processedRows.slice(0, topN);
+          const others = processedRows.slice(topN);
+          
+          // 使用 decimal.js 计算"其他"类别的总和
+          const otherTotalDecimal = others.reduce((sum, r) => {
+            return decimalCalc.add(sum, r.total_sales);
+          }, 0);
+          const otherTotal = decimalCalc.toDbNumber(otherTotalDecimal, 2);
+          
+          const result = [...top];
           if (otherTotal > 0) {
             result.push({ product_model: '其他', total_sales: otherTotal });
           }
@@ -277,10 +298,15 @@ router.post('/stats', (req, res) => {
                 
                 queryCompleted++;
                 if (queryCompleted === totalSubQueries) {
-                  // 计算该产品的本月库存变化
-                  const monthStartStock = results.before_month_inbound - results.before_month_outbound;
-                  const currentStock = monthStartStock + results.total_inbound - results.total_outbound;
-                  const monthlyChange = results.total_inbound - results.total_outbound;
+                  // 使用 decimal.js 计算该产品的本月库存变化，确保精度
+                  const beforeMonthInbound = decimalCalc.fromSqlResult(results.before_month_inbound, 0, 0);
+                  const beforeMonthOutbound = decimalCalc.fromSqlResult(results.before_month_outbound, 0, 0);
+                  const totalInbound = decimalCalc.fromSqlResult(results.total_inbound, 0, 0);
+                  const totalOutbound = decimalCalc.fromSqlResult(results.total_outbound, 0, 0);
+                  
+                  const monthStartStock = decimalCalc.toDbNumber(decimalCalc.subtract(beforeMonthInbound, beforeMonthOutbound), 0);
+                  const monthlyChange = decimalCalc.toDbNumber(decimalCalc.subtract(totalInbound, totalOutbound), 0);
+                  const currentStock = decimalCalc.toDbNumber(decimalCalc.add(monthStartStock, monthlyChange), 0);
                   
                   monthlyChanges[product_model] = {
                     product_model,

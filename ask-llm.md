@@ -17,6 +17,7 @@
     - `excelExporter.js`：Excel导出核心类（Node.js + xlsx实现）
     - `exportTemplates.js`：Excel导出模板定义
     - `exportQueries.js`：导出数据查询模块
+    - `decimalCalculator.js`：**decimal.js 精确计算工具类**（解决浮点数精度问题，用于所有金额、价格、余额计算）
     - `logger.js`：Winston日志配置文件
     - `loggerMiddleware.js`：日志中间件（请求日志、错误日志）
 - **frontend/**
@@ -284,6 +285,7 @@
 - **数据唯一性**：客户/供应商、产品的"代号-简称-全称"三项强绑定，任意一项变更自动同步，后端API校验唯一性。
 - **自动计算**：总价自动计算，进出库自动更新库存。
 - **智能输入**：入库/出库界面支持代号或简称/型号输入，自动补全匹配项，强绑定校验，使用AutoComplete组件提供流畅的输入体验。
+- **精确计算**：**全面使用 decimal.js 进行浮点数精确计算**，解决 JavaScript 原生浮点数精度问题，确保所有金额、价格、余额计算的准确性。
 
 ---
 
@@ -489,4 +491,158 @@ npm run clean:logs
 
 ---
 
+## 九、精确计算架构（decimal.js）
+
+### 浮点数精度问题解决方案
+
+**问题背景**：
+- JavaScript 原生浮点数运算存在精度问题（如 `0.1 + 0.2 = 0.30000000000000004`）
+- 财务系统对计算精度要求极高，浮点数误差会导致账务不平衡
+- 原项目使用 `Math.round((quantity * unit_price) * 100) / 100` 方法仍存在精度隐患
+
+**解决方案**：
+- **全面集成 decimal.js**：高精度小数运算库，避免浮点数精度问题
+- **统一计算接口**：创建 `decimalCalculator.js` 工具类，封装所有数值计算逻辑
+- **后端全覆盖**：所有涉及金额、价格、余额的计算均使用 decimal.js
+
+### decimal.js 工具类核心功能
+
+**文件位置**：`backend/utils/decimalCalculator.js`
+
+**精度升级**：
+- **升级时间**：2025年8月（最新）
+- **精度等级**：从 2-4 位小数升级到 5 位小数（0.00001 级别）
+- **升级原因**：支持更高精度的商品单价和复杂计算场景
+- **兼容性**：向前兼容，现有数据无需迁移
+
+**主要方法**：
+```javascript
+// 基础运算
+decimalCalc.add(a, b)           // 加法
+decimalCalc.subtract(a, b)      // 减法  
+decimalCalc.multiply(a, b)      // 乘法
+decimalCalc.divide(a, b)        // 除法
+
+// 业务计算
+decimalCalc.calculateTotalPrice(quantity, unitPrice)    // 总价计算
+decimalCalc.calculateBalance(totalAmount, paidAmount)   // 余额计算  
+decimalCalc.calculateProfit(sales, cost)               // 利润计算
+decimalCalc.calculateWeightedAverage(items)            // 加权平均
+
+// 数据转换
+decimalCalc.fromSqlResult(sqlResult, defaultValue, decimalPlaces)  // SQL结果处理
+decimalCalc.toDbNumber(value, decimalPlaces)                       // 数据库存储格式
+decimalCalc.batchCalculateTotalPrice(records)                      // 批量计算
+```
+
+### 升级覆盖范围
+
+**1. 入库/出库记录**
+- `routes/inbound.js`：总价计算 `quantity × unit_price`
+- `routes/outbound.js`：总价计算 `quantity × unit_price`
+- 替换：`Math.round((quantity * unit_price) * 100) / 100` → `decimalCalc.calculateTotalPrice(quantity, unit_price)`
+
+**2. 应收/应付账款**
+- `routes/receivable.js`：余额计算 `total_receivable - total_paid`
+- `routes/payable.js`：余额计算 `total_payable - total_paid`
+- 应用层重新计算，确保精度
+
+**3. 概览统计计算**
+- `routes/overview.js`：
+  - 已售商品成本计算（加权平均成本法）
+  - 销售额/采购额聚合计算
+  - 利润率计算
+  - 销售额前10商品统计及"其他"合计
+  - 本月库存变化量计算
+
+**4. 导出查询模块**
+- `utils/exportQueries.js`：应收/应付汇总余额计算
+- `utils/reportService.js`：财务报表利润和现金流计算
+
+**5. 数据库升级工具**
+- `utils/dbUpgrade.js`：历史数据迁移时的计算修正
+
+### 精度配置
+
+**decimal.js 配置**：
+```javascript
+Decimal.config({
+  precision: 20,                    // 20位有效数字
+  rounding: Decimal.ROUND_HALF_UP,  // 四舍五入
+  toExpNeg: -9,                     // 负指数阈值
+  toExpPos: 21,                     // 正指数阈值
+  modulo: Decimal.ROUND_DOWN,
+  crypto: false
+});
+```
+
+**数据精度标准**：
+- **金额/价格**：保留 5 位小数（如：1234.56789）- 支持 0.00001 级别精度
+- **单价**：保留 5 位小数（如：0.12345）- 高精度单价支持
+- **数量**：保留 0 位小数（整数）
+- **百分比**：保留 1 位小数（如：12.3%）
+- **加权平均**：保留 5 位小数 - 确保价格计算精确性
+
+### 测试验证
+
+**测试文件**：
+- `backend/test-decimal.js`：基础计算功能测试
+- `backend/test-precision-5digits.js`：高精度计算测试（0.00001级别精度验证）
+- `backend/test-sales-precision.js`：销售额精度测试
+
+**测试覆盖**：
+- 基础四则运算精度验证
+- 总价计算对比（原生 JS vs decimal.js）
+- 余额计算精度测试（5位小数）
+- 加权平均价格计算（高精度）
+- SQL结果处理和批量计算
+- 浮点数精度问题修复验证
+- 0.00001 级别的边界精度测试
+- 高精度单价和总价计算验证
+
+### 性能影响
+
+**性能考虑**：
+- decimal.js 相比原生运算略有性能开销
+- 通过合理的缓存和批量处理优化性能
+- 对于财务系统，精度比性能更重要
+- 实际使用中性能影响可忽略不计
+
+**优化策略**：
+- 在数据库存储前转换为原生数字类型
+- 批量计算时复用 Decimal 实例
+- 避免频繁的字符串/数字转换
+
+### 开发建议
+
+**新增计算逻辑**：
+```javascript
+// ❌ 避免使用原生运算
+const result = price * quantity + tax;
+
+// ✅ 使用 decimal.js 工具
+const result = decimalCalc.add(
+  decimalCalc.multiply(price, quantity), 
+  tax
+);
+```
+
+**数据库操作**：
+```javascript
+// 存储前转换
+const dbValue = decimalCalc.toDbNumber(calculatedValue, 2);
+
+// 读取后处理
+const safeValue = decimalCalc.fromSqlResult(row.amount, 0, 2);
+```
+
+**API 返回**：
+- 所有金额字段都经过 decimal.js 处理
+- 确保前端接收到的数据精度正确
+- 避免在前端进行精度敏感的计算
+
+---
+
 > 本文件为LLM/AI开发辅助文档，便于理解项目结构、API和业务规则，适合自动化代码生成和智能对话。
+> 
+> **重要更新**：项目已全面完成 decimal.js 精确计算升级（2025年8月），解决了所有浮点数精度问题，确保财务数据的准确性。所有金额、价格、余额相关计算均使用高精度算法。

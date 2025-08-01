@@ -6,6 +6,7 @@
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 const { initSql } = require('./dbSchema');
+const decimalCalc = require('./decimalCalculator');
 
 /**
  * 启动时检查所有表和列是否存在，不存在则自动创建
