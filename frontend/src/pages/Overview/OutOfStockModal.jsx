@@ -1,12 +1,15 @@
 import React from 'react';
 import { Modal, List, Typography } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 const { Text } = Typography;
 
 const OutOfStockModal = ({ visible, onClose, products }) => {
+  const { t } = useTranslation();
+
   return (
     <Modal
-      title="缺货产品明细"
+      title={t('overview.outOfStockDetails')}
       open={visible}
       onCancel={onClose}
       footer={null}
@@ -23,7 +26,7 @@ const OutOfStockModal = ({ visible, onClose, products }) => {
         />
       ) : (
         <div style={{ textAlign: 'center', color: '#52c41a', fontSize: 18, padding: '32px 0' }}>
-          库存正常
+          {t('overview.stockNormal')}
         </div>
       )}
     </Modal>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Modal, Form, Input, InputNumber, DatePicker, Select } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { PAYMENT_METHODS, DEFAULT_PAYMENT_METHOD } from '../../../config';
 
 const { TextArea } = Input;
@@ -14,6 +15,7 @@ const ReceivableModal = ({
   onSave,
   onCancel
 }) => {
+  const { t } = useTranslation();
   // 处理表单提交
   const handleSubmit = async () => {
     try {
@@ -33,7 +35,7 @@ const ReceivableModal = ({
 
   return (
     <Modal
-      title={editingPayment ? '编辑回款记录' : '新增回款记录'}
+      title={editingPayment ? t('receivable.modalTitleEdit') : t('receivable.modalTitleAdd')}
       open={visible}
       onOk={handleSubmit}
       onCancel={handleCancel}
@@ -49,11 +51,11 @@ const ReceivableModal = ({
       >
         <Form.Item
           name="customer_code"
-          label="客户代号"
-          rules={[{ required: true, message: '请选择客户' }]}
+          label={t('receivable.customerCode')}
+          rules={[{ required: true, message: t('receivable.selectCustomer') }]}
         >
           <Select
-            placeholder="请选择客户"
+            placeholder={t('receivable.selectCustomer')}
             showSearch
             filterOption={(input, option) =>
               option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
@@ -70,14 +72,14 @@ const ReceivableModal = ({
 
         <Form.Item
           name="amount"
-          label="回款金额"
+          label={t('receivable.paymentAmount')}
           rules={[
-            { required: true, message: '请输入回款金额' },
-            { type: 'number', message: '请输入有效的数字' }
+            { required: true, message: t('receivable.inputAmount') },
+            { type: 'number', message: t('receivable.inputAmountValid') }
           ]}
         >
           <InputNumber
-            placeholder="请输入回款金额（支持负数调整）"
+            placeholder={t('receivable.inputAmount') + '（支持负数调整）'}
             style={{ width: '100%' }}
             precision={2}
             formatter={(value) => `¥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
@@ -87,11 +89,11 @@ const ReceivableModal = ({
 
         <Form.Item
           name="pay_date"
-          label="回款日期"
-          rules={[{ required: true, message: '请选择回款日期' }]}
+          label={t('receivable.paymentDate')}
+          rules={[{ required: true, message: t('receivable.inputDate') }]}
         >
           <DatePicker
-            placeholder="请选择回款日期"
+            placeholder={t('receivable.inputDate')}
             style={{ width: '100%' }}
             format="YYYY-MM-DD"
           />
@@ -99,10 +101,10 @@ const ReceivableModal = ({
 
         <Form.Item
           name="pay_method"
-          label="回款方式"
-          rules={[{ required: true, message: '请选择回款方式' }]}
+          label={t('receivable.paymentMethod')}
+          rules={[{ required: true, message: t('receivable.selectMethod') }]}
         >
-          <Select placeholder="请选择回款方式">
+          <Select placeholder={t('receivable.selectMethod')}>
             {PAYMENT_METHODS.map(method => (
               <Option key={method} value={method}>
                 {method}
@@ -113,10 +115,10 @@ const ReceivableModal = ({
 
         <Form.Item
           name="remark"
-          label="备注"
+          label={t('receivable.remark')}
         >
           <TextArea
-            placeholder="请输入备注信息（可选）"
+            placeholder={t('receivable.inputRemark')}
             rows={3}
             maxLength={500}
             showCount

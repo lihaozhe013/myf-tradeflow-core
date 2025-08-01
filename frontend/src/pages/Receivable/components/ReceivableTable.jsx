@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Table, Button, Popconfirm, Tag, message, Modal, Input, Space, Typography, Row, Col } from 'antd';
 import { PlusOutlined, EyeOutlined, DeleteOutlined } from '@ant-design/icons';
 
@@ -17,6 +18,7 @@ const ReceivableTable = ({
   onEditPayment,
   onDeletePayment
 }) => {
+  const { t } = useTranslation();
   const [detailsVisible, setDetailsVisible] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [customerDetails, setCustomerDetails] = useState(null);
@@ -43,11 +45,11 @@ const ReceivableTable = ({
   // 获取余额状态标签
   const getBalanceTag = (balance) => {
     if (balance > 0) {
-      return <Tag color="volcano">未收: {formatCurrency(balance)}</Tag>;
+      return <Tag color="volcano">{t('receivable.unpaid', { amount: formatCurrency(balance) })}</Tag>;
     } else if (balance < 0) {
-      return <Tag color="green">超收: {formatCurrency(Math.abs(balance))}</Tag>;
+      return <Tag color="green">{t('receivable.overpaid', { amount: formatCurrency(Math.abs(balance)) })}</Tag>;
     } else {
-      return <Tag color="blue">已结清</Tag>;
+      return <Tag color="blue">{t('receivable.paid')}</Tag>;
     }
   };
 
@@ -65,7 +67,7 @@ const ReceivableTable = ({
       await fetchCustomerDetails(record.customer_code, 1, 1);
     } catch (error) {
       console.error('获取客户详情失败:', error);
-      message.error('获取客户详情失败，请检查网络连接');
+      message.error(t('receivable.fetchFailedNetwork'));
     } finally {
       setDetailsLoading(false);
     }
@@ -99,11 +101,11 @@ const ReceivableTable = ({
         });
       } else {
         const error = await response.json();
-        message.error(`获取客户详情失败: ${error.error || '未知错误'}`);
+        message.error(t('receivable.fetchFailed', { msg: error.error || t('common.unknownError') }));
       }
     } catch (error) {
       console.error('获取客户详情失败:', error);
-      message.error('获取客户详情失败，请检查网络连接');
+      message.error(t('receivable.fetchFailedNetwork'));
     }
   };
 
@@ -141,7 +143,7 @@ const ReceivableTable = ({
 
   const columns = [
     {
-      title: '客户代号',
+      title: t('receivable.customerCode'),
       dataIndex: 'customer_code',
       key: 'customer_code',
       width: 120,
@@ -149,7 +151,7 @@ const ReceivableTable = ({
       sortOrder: sorter.field === 'customer_code' ? sorter.order : null,
     },
     {
-      title: '客户简称',
+      title: t('receivable.customerShortName'),
       dataIndex: 'customer_short_name',
       key: 'customer_short_name',
       width: 150,
@@ -157,14 +159,14 @@ const ReceivableTable = ({
       sortOrder: sorter.field === 'customer_short_name' ? sorter.order : null,
     },
     {
-      title: '客户全称',
+      title: t('receivable.customerFullName'),
       dataIndex: 'customer_full_name',
       key: 'customer_full_name',
       width: 200,
       ellipsis: true,
     },
     {
-      title: '应收金额',
+      title: t('receivable.totalReceivable'),
       dataIndex: 'total_receivable',
       key: 'total_receivable',
       width: 120,
@@ -174,7 +176,7 @@ const ReceivableTable = ({
       render: (value) => formatCurrency(value),
     },
     {
-      title: '已收金额',
+      title: t('receivable.totalPaid'),
       dataIndex: 'total_paid',
       key: 'total_paid',
       width: 120,
@@ -184,7 +186,7 @@ const ReceivableTable = ({
       render: (value) => formatCurrency(value),
     },
     {
-      title: '应收余额',
+      title: t('receivable.balance'),
       dataIndex: 'balance',
       key: 'balance',
       width: 130,
@@ -194,7 +196,7 @@ const ReceivableTable = ({
       render: (value) => getBalanceTag(value),
     },
     {
-      title: '最近回款',
+      title: t('receivable.lastPaymentDate'),
       dataIndex: 'last_payment_date',
       key: 'last_payment_date',
       width: 120,
@@ -203,14 +205,14 @@ const ReceivableTable = ({
       render: (value) => value || '-',
     },
     {
-      title: '回款方式',
+      title: t('receivable.lastPaymentMethod'),
       dataIndex: 'last_payment_method',
       key: 'last_payment_method',
       width: 100,
       render: (value) => value || '-',
     },
     {
-      title: '操作',
+      title: t('receivable.action'),
       key: 'action',
       width: 200,
       fixed: 'right',
@@ -222,7 +224,7 @@ const ReceivableTable = ({
             icon={<EyeOutlined />}
             onClick={() => handleViewDetails(record)}
           >
-            详情
+            {t('receivable.details')}
           </Button>
           <Button
             type="primary"
@@ -230,7 +232,7 @@ const ReceivableTable = ({
             icon={<PlusOutlined />}
             onClick={() => onAddPayment(record)}
           >
-            新增回款
+            {t('receivable.addPayment')}
           </Button>
         </Space>
       ),
@@ -242,7 +244,7 @@ const ReceivableTable = ({
       <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
         <Col>
           <Search
-            placeholder="搜索客户简称"
+            placeholder={t('receivable.searchCustomer')}
             allowClear
             onSearch={handleSearch}
             style={{ width: 250 }}
@@ -251,12 +253,11 @@ const ReceivableTable = ({
         </Col>
         <Col>
           <Text type="secondary">
-            共 {pagination.total} 个客户，应收总额: {formatCurrency(
-              data.reduce((sum, item) => sum + (item.total_receivable || 0), 0)
-            )}，
-            未收总额: {formatCurrency(
-              data.reduce((sum, item) => sum + Math.max(item.balance || 0, 0), 0)
-            )}
+            {t('receivable.totalCustomers', {
+              count: pagination.total,
+              totalReceivable: formatCurrency(data.reduce((sum, item) => sum + (item.total_receivable || 0), 0)),
+              totalUnpaid: formatCurrency(data.reduce((sum, item) => sum + Math.max(item.balance || 0, 0), 0))
+            })}
           </Text>
         </Col>
       </Row>
@@ -269,7 +270,7 @@ const ReceivableTable = ({
         pagination={{
           ...pagination,
           showQuickJumper: true,
-          showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`,
+          showTotal: (total, range) => t('receivable.paginationTotal', { start: range[0], end: range[1], total }),
         }}
         onChange={onTableChange}
         scroll={{ x: 1200 }}
@@ -278,7 +279,7 @@ const ReceivableTable = ({
 
       {/* 客户详情弹窗 */}
       <Modal
-        title={`客户详情 - ${selectedCustomer?.customer_short_name || ''}`}
+        title={t('receivable.details') + ' - ' + (selectedCustomer?.customer_short_name || '')}
         open={detailsVisible}
         onCancel={() => setDetailsVisible(false)}
         footer={null}
@@ -286,33 +287,33 @@ const ReceivableTable = ({
         style={{ top: 20 }}
       >
         {detailsLoading ? (
-          <div style={{ textAlign: 'center', padding: 50 }}>加载中...</div>
+          <div style={{ textAlign: 'center', padding: 50 }}>{t('receivable.loading')}</div>
         ) : customerDetails ? (
           <div>
             {/* 客户基本信息 */}
             <div style={{ marginBottom: 24 }}>
-              <Typography.Title level={5}>客户信息</Typography.Title>
+              <Typography.Title level={5}>{t('receivable.customerInfo')}</Typography.Title>
               <Row gutter={16}>
-                <Col span={8}>客户代号: {customerDetails.customer?.code}</Col>
-                <Col span={8}>客户简称: {customerDetails.customer?.short_name}</Col>
-                <Col span={8}>客户全称: {customerDetails.customer?.full_name}</Col>
+                <Col span={8}>{t('receivable.customerCode')}: {customerDetails.customer?.code}</Col>
+                <Col span={8}>{t('receivable.customerShortName')}: {customerDetails.customer?.short_name}</Col>
+                <Col span={8}>{t('receivable.customerFullName')}: {customerDetails.customer?.full_name}</Col>
               </Row>
             </div>
 
             {/* 账款汇总 */}
             <div style={{ marginBottom: 24 }}>
-              <Typography.Title level={5}>账款汇总</Typography.Title>
+              <Typography.Title level={5}>{t('receivable.summary')}</Typography.Title>
               <Row gutter={16}>
-                <Col span={8}>应收金额: {formatCurrency(customerDetails.summary?.total_receivable)}</Col>
-                <Col span={8}>已收金额: {formatCurrency(customerDetails.summary?.total_paid)}</Col>
-                <Col span={8}>应收余额: {getBalanceTag(customerDetails.summary?.balance)}</Col>
+                <Col span={8}>{t('receivable.totalReceivable')}: {formatCurrency(customerDetails.summary?.total_receivable)}</Col>
+                <Col span={8}>{t('receivable.totalPaid')}: {formatCurrency(customerDetails.summary?.total_paid)}</Col>
+                <Col span={8}>{t('receivable.balance')}: {getBalanceTag(customerDetails.summary?.balance)}</Col>
               </Row>
             </div>
 
             {/* 回款记录 */}
             <div style={{ marginBottom: 24 }}>
               <Typography.Title level={5}>
-                回款记录
+                {t('receivable.paymentRecords')}
                 <Button
                   type="primary"
                   size="small"
@@ -323,7 +324,7 @@ const ReceivableTable = ({
                     onAddPayment(selectedCustomer);
                   }}
                 >
-                  新增回款
+                  {t('receivable.addPayment')}
                 </Button>
               </Typography.Title>
               <Table
@@ -339,10 +340,10 @@ const ReceivableTable = ({
                 }}
                 scroll={{ y: 200 }}
                 columns={[
-                  { title: '回款金额', dataIndex: 'amount', render: (value) => formatCurrency(value) },
-                  { title: '回款日期', dataIndex: 'pay_date' },
-                  { title: '回款方式', dataIndex: 'pay_method' },
-                  { title: '备注', dataIndex: 'remark', ellipsis: true },
+                  { title: t('receivable.paymentAmount'), dataIndex: 'amount', render: (value) => formatCurrency(value) },
+                  { title: t('receivable.paymentDate'), dataIndex: 'pay_date' },
+                  { title: t('receivable.paymentMethod'), dataIndex: 'pay_method' },
+                  { title: t('receivable.remark'), dataIndex: 'remark', ellipsis: true },
                   {
                     title: '操作',
                     width: 100,
@@ -356,10 +357,10 @@ const ReceivableTable = ({
                             onEditPayment(record, selectedCustomer);
                           }}
                         >
-                          编辑
+                          {t('receivable.editPayment')}
                         </Button>
                         <Popconfirm
-                          title="确定删除这条回款记录吗？"
+                          title={t('receivable.deletePaymentConfirm')}
                           onConfirm={() => handleDeletePaymentConfirm(record.id)}
                         >
                           <Button type="link" size="small" danger icon={<DeleteOutlined />} />
@@ -373,7 +374,7 @@ const ReceivableTable = ({
 
             {/* 出库记录 */}
             <div>
-              <Typography.Title level={5}>出库记录</Typography.Title>
+              <Typography.Title level={5}>{t('receivable.outboundRecords')}</Typography.Title>
               <Table
                 size="small"
                 dataSource={customerDetails.outbound_records?.data || []}
@@ -387,13 +388,13 @@ const ReceivableTable = ({
                 }}
                 scroll={{ y: 200 }}
                 columns={[
-                  { title: '出库日期', dataIndex: 'outbound_date', width: 100 },
-                  { title: '产品型号', dataIndex: 'product_model', width: 120 },
-                  { title: '数量', dataIndex: 'quantity', width: 80, align: 'right' },
-                  { title: '单价', dataIndex: 'unit_price', width: 100, align: 'right', render: (value) => formatCurrency(value) },
-                  { title: '总价', dataIndex: 'total_price', width: 100, align: 'right', render: (value) => formatCurrency(value) },
-                  { title: '订单号', dataIndex: 'order_number', width: 120, ellipsis: true },
-                  { title: '备注', dataIndex: 'remark', ellipsis: true },
+                  { title: t('receivable.outboundDate'), dataIndex: 'outbound_date', width: 100 },
+                  { title: t('receivable.productModel'), dataIndex: 'product_model', width: 120 },
+                  { title: t('receivable.quantity'), dataIndex: 'quantity', width: 80, align: 'right' },
+                  { title: t('receivable.unitPrice'), dataIndex: 'unit_price', width: 100, align: 'right', render: (value) => formatCurrency(value) },
+                  { title: t('receivable.totalPrice'), dataIndex: 'total_price', width: 100, align: 'right', render: (value) => formatCurrency(value) },
+                  { title: t('receivable.orderNumber'), dataIndex: 'order_number', width: 120, ellipsis: true },
+                  { title: t('receivable.remark'), dataIndex: 'remark', ellipsis: true },
                 ]}
               />
             </div>

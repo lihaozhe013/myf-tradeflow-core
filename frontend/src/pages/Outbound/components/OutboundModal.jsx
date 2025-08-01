@@ -12,8 +12,7 @@ import {
   AutoComplete,
   Radio
 } from 'antd';
-
-const { Option } = Select;
+import { useTranslation } from 'react-i18next';
 
 const OutboundModal = ({ 
   modalVisible, 
@@ -32,9 +31,10 @@ const OutboundModal = ({
   onPartnerOrProductChange,
   onPriceOrQuantityChange
 }) => {
+  const { t } = useTranslation();
   return (
     <Modal
-      title={editingRecord ? '编辑出库记录' : '新增出库记录'}
+      title={editingRecord ? t('outbound.editOutboundRecord') : t('outbound.addOutboundRecord')}
       open={modalVisible}
       onCancel={() => setModalVisible(false)}
       footer={null}
@@ -48,12 +48,12 @@ const OutboundModal = ({
         <Row gutter={16}>
           <Col span={8}>
             <Form.Item
-              label="客户代号"
+              label={t('outbound.customerCode')}
               name="customer_code"
-              rules={[{ required: true, message: '请输入客户代号' }]}
+              rules={[{ required: true, message: t('outbound.inputCustomerCode') }]}
             >
               <AutoComplete
-                placeholder="请输入客户代号"
+                placeholder={t('outbound.inputCustomerCode')}
                 onChange={onCustomerCodeChange}
                 options={partners.map(partner => ({
                   value: partner.code,
@@ -68,12 +68,12 @@ const OutboundModal = ({
           </Col>
           <Col span={8}>
             <Form.Item
-              label="客户简称"
+              label={t('outbound.customerShortName')}
               name="customer_short_name"
-              rules={[{ required: true, message: '请输入客户简称' }]}
+              rules={[{ required: true, message: t('outbound.inputCustomerShortName') }]}
             >
               <AutoComplete
-                placeholder="请输入客户简称"
+                placeholder={t('outbound.inputCustomerShortName')}
                 onChange={onCustomerShortNameChange}
                 options={partners.map(partner => ({
                   value: partner.short_name,
@@ -88,10 +88,10 @@ const OutboundModal = ({
           </Col>
           <Col span={8}>
             <Form.Item
-              label="客户全称"
+              label={t('outbound.customerFullName')}
               name="customer_full_name"
             >
-              <Input placeholder="自动填充" disabled />
+              <Input placeholder={t('outbound.autoFill')} disabled />
             </Form.Item>
           </Col>
         </Row>
@@ -99,12 +99,12 @@ const OutboundModal = ({
         <Row gutter={16}>
           <Col span={8}>
             <Form.Item
-              label="产品代号"
+              label={t('outbound.productCode')}
               name="product_code"
-              rules={[{ required: true, message: '请输入产品代号' }]}
+              rules={[{ required: true, message: t('outbound.inputProductCode') }]}
             >
               <AutoComplete
-                placeholder="请输入产品代号"
+                placeholder={t('outbound.inputProductCode')}
                 onChange={onProductCodeChange}
                 options={products.map(product => ({
                   value: product.code,
@@ -119,12 +119,12 @@ const OutboundModal = ({
           </Col>
           <Col span={8}>
             <Form.Item
-              label="产品型号"
+              label={t('outbound.productModel')}
               name="product_model"
-              rules={[{ required: true, message: '请输入产品型号' }]}
+              rules={[{ required: true, message: t('outbound.inputProductModel') }]}
             >
               <AutoComplete
-                placeholder="请输入产品型号"
+                placeholder={t('outbound.inputProductModel')}
                 onChange={onProductModelChange}
                 options={products.map(product => ({
                   value: product.product_model,
@@ -139,13 +139,13 @@ const OutboundModal = ({
           </Col>
           <Col span={8}>
             <Form.Item
-              label="出库日期"
+              label={t('outbound.outboundDate')}
               name="outbound_date"
-              rules={[{ required: true, message: '请选择出库日期' }]}
+              rules={[{ required: true, message: t('outbound.selectOutboundDate') }]}
             >
               <DatePicker
                 style={{ width: '100%' }}
-                placeholder="请选择出库日期"
+                placeholder={t('outbound.selectOutboundDate')}
                 format="YYYY-MM-DD"
                 onChange={onPartnerOrProductChange}
               />
@@ -156,16 +156,16 @@ const OutboundModal = ({
         <Row gutter={16}>
           <Col span={8}>
             <Form.Item
-              label="数量"
+              label={t('outbound.quantity')}
               name="quantity"
               rules={[
-                { required: true, message: '请输入数量' },
-                { type: 'number', min: 1, message: '数量必须大于0' },
+                { required: true, message: t('outbound.inputQuantity') },
+                { type: 'number', min: 1, message: t('outbound.quantityGreaterThanZero') },
               ]}
             >
               <InputNumber
                 style={{ width: '100%' }}
-                placeholder="请输入数量"
+                placeholder={t('outbound.inputQuantity')}
                 min={1}
                 onChange={onPriceOrQuantityChange}
               />
@@ -173,14 +173,14 @@ const OutboundModal = ({
           </Col>
           <Col span={8}>
             <Form.Item
-              label="单价输入方式"
+              label={t('outbound.unitPriceInputType')}
               name="manual_price"
               initialValue={false}
             >
               <Radio.Group
                 options={[
-                  { label: '自动获取', value: false },
-                  { label: '手动输入', value: true },
+                  { label: t('outbound.autoFetch'), value: false },
+                  { label: t('outbound.manualInput'), value: true },
                 ]}
                 onChange={e => {
                   setManualPrice(e.target.value);
@@ -194,16 +194,16 @@ const OutboundModal = ({
           </Col>
           <Col span={8}>
             <Form.Item
-              label="单价"
+              label={t('outbound.unitPrice')}
               name="unit_price"
               rules={[
-                { required: true, message: '请输入单价' },
+                { required: true, message: t('outbound.inputUnitPrice') },
                 { type: 'number' },
               ]}
             >
               <InputNumber
                 style={{ width: '100%' }}
-                placeholder="请输入单价"
+                placeholder={t('outbound.inputUnitPrice')}
                 precision={4}
                 addonBefore="¥"
                 onChange={onPriceOrQuantityChange}
@@ -216,12 +216,12 @@ const OutboundModal = ({
         <Row gutter={16}>
           <Col span={8}>
             <Form.Item
-              label="总价"
+              label={t('outbound.totalPrice')}
               name="total_price"
             >
               <InputNumber
                 style={{ width: '100%' }}
-                placeholder="自动计算"
+                placeholder={t('outbound.autoCalc')}
                 precision={2}
                 disabled
                 addonBefore="¥"
@@ -230,22 +230,22 @@ const OutboundModal = ({
           </Col>
           <Col span={8}>
             <Form.Item
-              label="发票日期"
+              label={t('outbound.invoiceDate')}
               name="invoice_date"
             >
               <DatePicker
                 style={{ width: '100%' }}
-                placeholder="请选择发票日期"
+                placeholder={t('outbound.selectInvoiceDate')}
                 format="YYYY-MM-DD"
               />
             </Form.Item>
           </Col>
           <Col span={8}>
             <Form.Item
-              label="发票号码"
+              label={t('outbound.invoiceNumber')}
               name="invoice_number"
             >
-              <Input placeholder="请输入发票号码" />
+              <Input placeholder={t('outbound.inputInvoiceNumber')} />
             </Form.Item>
           </Col>
         </Row>
@@ -253,38 +253,38 @@ const OutboundModal = ({
         <Row gutter={16}>
           <Col span={8}>
             <Form.Item
-              label="订单号"
+              label={t('outbound.orderNumber')}
               name="order_number"
             >
-              <Input placeholder="请输入订单号" />
+              <Input placeholder={t('outbound.inputOrderNumber')} />
             </Form.Item>
           </Col>
           <Col span={8}>
             <Form.Item
-              label="发票图片链接"
+              label={t('outbound.invoiceImageUrl')}
               name="invoice_image_url"
             >
-              <Input placeholder="请输入发票图片链接" />
+              <Input placeholder={t('outbound.inputInvoiceImageUrl')} />
             </Form.Item>
           </Col>
         </Row>
 
         <Form.Item
-          label="备注"
+          label={t('outbound.remark')}
           name="remark"
         >
           <Input.TextArea
-            placeholder="请输入备注"
+            placeholder={t('outbound.inputRemark')}
             rows={3}
           />
         </Form.Item>
 
         <div className="form-actions">
           <Button onClick={() => setModalVisible(false)}>
-            取消
+            {t('common.cancel')}
           </Button>
           <Button type="primary" htmlType="submit">
-            {editingRecord ? '保存' : '新增'}
+            {editingRecord ? t('common.save') : t('common.add')}
           </Button>
         </div>
       </Form>

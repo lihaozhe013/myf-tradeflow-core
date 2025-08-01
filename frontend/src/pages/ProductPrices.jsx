@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Table,
   Button,
@@ -32,6 +33,7 @@ const ProductPrices = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingPrice, setEditingPrice] = useState(null);
   const [form] = Form.useForm();
+  const { t } = useTranslation();
 
   // 获取产品价格列表
   const fetchProductPrices = async () => {
@@ -43,11 +45,11 @@ const ProductPrices = () => {
         // API返回格式为 {data: [...]}
         setProductPrices(Array.isArray(result.data) ? result.data : []);
       } else {
-        console.error('获取产品价格列表失败');
+        console.error(t('productPrices.fetchFailed'));
         setProductPrices([]);
       }
     } catch (error) {
-      console.error('获取产品价格列表失败:', error);
+      console.error(t('productPrices.fetchFailed'), error);
       setProductPrices([]);
     } finally {
       setLoading(false);
@@ -63,11 +65,11 @@ const ProductPrices = () => {
         // API返回格式为 {data: [...]}
         setPartners(Array.isArray(result.data) ? result.data : []);
       } else {
-        console.error('获取合作伙伴列表失败');
+        console.error(t('productPrices.fetchPartnersFailed'));
         setPartners([]);
       }
     } catch (error) {
-      console.error('获取合作伙伴列表失败:', error);
+      console.error(t('productPrices.fetchPartnersFailed'), error);
       setPartners([]);
     }
   };
@@ -81,11 +83,11 @@ const ProductPrices = () => {
         // API返回格式为 {data: [...]}
         setProducts(Array.isArray(result.data) ? result.data : []);
       } else {
-        console.error('获取产品列表失败');
+        console.error(t('productPrices.fetchProductsFailed'));
         setProducts([]);
       }
     } catch (error) {
-      console.error('获取产品列表失败:', error);
+      console.error(t('productPrices.fetchProductsFailed'), error);
       setProducts([]);
     }
   };
@@ -124,13 +126,13 @@ const ProductPrices = () => {
         method: 'DELETE',
       });
       if (response.ok) {
-        message.success('删除成功');
+        message.success(t('productPrices.deleteSuccess'));
         fetchProductPrices();
       } else {
-        message.error('删除失败');
+        message.error(t('productPrices.deleteFailed'));
       }
     } catch (error) {
-      message.error('删除失败');
+      message.error(t('productPrices.deleteFailed'));
     }
   };
 
@@ -156,15 +158,15 @@ const ProductPrices = () => {
       });
 
       if (response.ok) {
-        message.success(editingPrice ? '修改成功' : '新增成功');
+        message.success(editingPrice ? t('productPrices.editSuccess') : t('productPrices.addSuccess'));
         setModalVisible(false);
         fetchProductPrices();
       } else {
         const errorData = await response.json();
-        message.error(errorData.error || '保存失败');
+        message.error(errorData.error || t('productPrices.saveFailed'));
       }
     } catch (error) {
-      message.error('保存失败');
+      message.error(t('productPrices.saveFailed'));
     }
   };
 
@@ -177,32 +179,32 @@ const ProductPrices = () => {
       width: 80,
     },
     {
-      title: '合作伙伴',
+      title: t('productPrices.partnerShortName'),
       dataIndex: 'partner_short_name',
       key: 'partner_short_name',
       width: 120,
     },
     {
-      title: '产品型号',
+      title: t('productPrices.productModel'),
       dataIndex: 'product_model',
       key: 'product_model',
       width: 150,
     },
     {
-      title: '单价',
+      title: t('productPrices.unitPrice'),
       dataIndex: 'unit_price',
       key: 'unit_price',
       width: 120,
       render: (price) => `¥${price}`,
     },
     {
-      title: '生效日期',
+      title: t('productPrices.effectiveDate'),
       dataIndex: 'effective_date',
       key: 'effective_date',
       width: 120,
     },
     {
-      title: '操作',
+      title: t('productPrices.actions'),
       key: 'actions',
       width: 120,
       render: (_, record) => (
@@ -213,13 +215,13 @@ const ProductPrices = () => {
             onClick={() => handleEdit(record)}
             size="small"
           >
-            编辑
+            {t('common.edit')}
           </Button>
           <Popconfirm
-            title="确定要删除这个价格记录吗？"
+            title={t('productPrices.deleteConfirm')}
             onConfirm={() => handleDelete(record.id)}
-            okText="确定"
-            cancelText="取消"
+            okText={t('common.confirm')}
+            cancelText={t('common.cancel')}
           >
             <Button
               type="link"
@@ -227,7 +229,7 @@ const ProductPrices = () => {
               icon={<DeleteOutlined />}
               size="small"
             >
-              删除
+              {t('common.delete')}
             </Button>
           </Popconfirm>
         </Space>
@@ -292,7 +294,7 @@ const ProductPrices = () => {
       <Card>
         <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
           <Col>
-            <Title level={3} style={{ margin: 0 }}>产品价格管理</Title>
+            <Title level={3} style={{ margin: 0 }}>{t('productPrices.title')}</Title>
           </Col>
           <Col>
             <Button
@@ -300,7 +302,7 @@ const ProductPrices = () => {
               icon={<PlusOutlined />}
               onClick={handleAdd}
             >
-              新增价格
+              {t('productPrices.addPrice')}
             </Button>
           </Col>
         </Row>
@@ -317,7 +319,7 @@ const ProductPrices = () => {
               pageSize: 10,
               showQuickJumper: true,
               showTotal: (total, range) =>
-                `第 ${range[0]}-${range[1]} 条/共 ${total} 条`,
+                t('productPrices.paginationTotal', { start: range[0], end: range[1], total }),
             }}
             scroll={{ x: 800 }}
           />
@@ -325,7 +327,7 @@ const ProductPrices = () => {
       </Card>
 
       <Modal
-        title={editingPrice ? '编辑产品价格' : '新增产品价格'}
+        title={editingPrice ? t('productPrices.editPrice') : t('productPrices.addPrice')}
         open={modalVisible}
         onCancel={() => setModalVisible(false)}
         footer={null}
@@ -338,10 +340,10 @@ const ProductPrices = () => {
         >
           <Row gutter={8}>
             <Col span={12}>
-              <Form.Item label="合作伙伴代号" name="partner_code">
+              <Form.Item label={t('productPrices.partnerCode')} name="partner_code">
                 <AutoComplete
                   options={partnerCodeOptions}
-                  placeholder="请输入合作伙伴代号"
+                  placeholder={t('productPrices.inputPartnerCode')}
                   onChange={handlePartnerCodeChange}
                   filterOption={(inputValue, option) =>
                     option.value.toLowerCase().includes(inputValue.toLowerCase())
@@ -351,12 +353,12 @@ const ProductPrices = () => {
             </Col>
             <Col span={12}>
               <Form.Item
-                label="合作伙伴简称"
+                label={t('productPrices.partnerShortName')}
                 name="partner_short_name"
-                rules={[{ required: true, message: '请选择合作伙伴' }]}
+                rules={[{ required: true, message: t('productPrices.selectPartner') }]}
               >
                 <Select
-                  placeholder="请选择合作伙伴"
+                  placeholder={t('productPrices.selectPartner')}
                   showSearch
                   options={partnerShortNameOptions}
                   onChange={handlePartnerShortNameChange}
@@ -369,10 +371,10 @@ const ProductPrices = () => {
           </Row>
           <Row gutter={8}>
             <Col span={12}>
-              <Form.Item label="产品代号" name="product_code">
+              <Form.Item label={t('productPrices.productCode')} name="product_code">
                 <AutoComplete
                   options={productCodeOptions}
-                  placeholder="请输入产品代号"
+                  placeholder={t('productPrices.inputProductCode')}
                   onChange={handleProductCodeChange}
                   filterOption={(inputValue, option) =>
                     option.value.toLowerCase().includes(inputValue.toLowerCase())
@@ -382,12 +384,12 @@ const ProductPrices = () => {
             </Col>
             <Col span={12}>
               <Form.Item
-                label="产品型号"
+                label={t('productPrices.productModel')}
                 name="product_model"
-                rules={[{ required: true, message: '请选择产品型号' }]}
+                rules={[{ required: true, message: t('productPrices.selectProductModel') }]}
               >
                 <Select
-                  placeholder="请选择产品型号"
+                  placeholder={t('productPrices.selectProductModel')}
                   showSearch
                   options={productModelOptions}
                   onChange={handleProductModelChange}
@@ -400,16 +402,16 @@ const ProductPrices = () => {
           </Row>
 
           <Form.Item
-            label="单价"
+            label={t('productPrices.unitPrice')}
             name="unit_price"
             rules={[
-              { required: true, message: '请输入单价' },
-              { type: 'number', min: 0, message: '单价必须大于等于0' },
+              { required: true, message: t('productPrices.inputUnitPrice') },
+              { type: 'number', min: 0, message: t('productPrices.unitPriceMin') },
             ]}
           >
             <InputNumber
               style={{ width: '100%' }}
-              placeholder="请输入单价"
+              placeholder={t('productPrices.inputUnitPrice')}
               precision={4}
               min={0}
               addonBefore="¥"
@@ -417,23 +419,23 @@ const ProductPrices = () => {
           </Form.Item>
 
           <Form.Item
-            label="生效日期"
+            label={t('productPrices.effectiveDate')}
             name="effective_date"
-            rules={[{ required: true, message: '请选择生效日期' }]}
+            rules={[{ required: true, message: t('productPrices.selectEffectiveDate') }]}
           >
             <DatePicker
               style={{ width: '100%' }}
-              placeholder="请选择生效日期"
+              placeholder={t('productPrices.selectEffectiveDate')}
               format="YYYY-MM-DD"
             />
           </Form.Item>
 
           <div className="form-actions">
             <Button onClick={() => setModalVisible(false)}>
-              取消
+              {t('common.cancel')}
             </Button>
             <Button type="primary" htmlType="submit">
-              {editingPrice ? '保存' : '新增'}
+              {editingPrice ? t('common.save') : t('common.add')}
             </Button>
           </div>
         </Form>

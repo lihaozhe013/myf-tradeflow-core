@@ -1,6 +1,8 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Table, Card, Typography, Row, Col, Input, Button, message, Space, Tag, Divider } from 'antd';
 import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 
 const { Title } = Typography;
 
@@ -15,6 +17,7 @@ const Stock = () => {
     total: 0,
     pages: 0
   });
+  const { t } = useTranslation();
 
   // 获取库存数据
   const fetchStockData = useCallback(async (page = 1, productModelFilter = productFilter) => {
@@ -33,11 +36,11 @@ const Stock = () => {
         setStockData(result.data);
         setPagination(result.pagination);
       } else {
-        message.error(result.error || '获取库存数据失败');
+        message.error(result.error || t('stock.fetchFailed'));
       }
     } catch (error) {
       console.error('获取库存数据失败:', error);
-      message.error('获取库存数据失败');
+      message.error(t('stock.fetchFailed'));
     } finally {
       setLoading(false);
     }
@@ -61,14 +64,14 @@ const Stock = () => {
       });
       const result = await response.json();
       if (response.ok) {
-        message.success('库存已重新计算');
+        message.success(t('stock.recalculated'));
         fetchStockData(1);
       } else {
-        message.error('库存重新计算失败');
+        message.error(t('stock.recalculateFailed'));
       }
     } catch (error) {
       console.error('库存缓存刷新失败:', error);
-      message.error('库存缓存刷新失败');
+      message.error(t('stock.refreshCacheFailed'));
     } finally {
       setRefreshing(false);
     }
@@ -84,14 +87,14 @@ const Stock = () => {
   // 库存明细表格列定义
   const stockColumns = [
     {
-      title: '产品型号',
+      title: t('stock.productModel'),
       dataIndex: 'product_model',
       key: 'product_model',
       width: 200,
       sorter: (a, b) => (a.product_model || '').localeCompare(b.product_model || ''),
     },
     {
-      title: '当前库存',
+      title: t('stock.currentStock'),
       dataIndex: 'current_stock',
       key: 'current_stock',
       width: 120,
@@ -104,18 +107,18 @@ const Stock = () => {
       },
     },
     {
-      title: '库存状态',
+      title: t('stock.status'),
       key: 'stock_status',
       width: 100,
       render: (_, record) => {
         const quantity = record.current_stock || 0;
-        if (quantity === 0) return <Tag color="red">缺货</Tag>;
-        if (quantity < 10) return <Tag color="orange">库存不足</Tag>;
-        return <Tag color="green">正常</Tag>;
+        if (quantity === 0) return <Tag color="red">{t('stock.outOfStock')}</Tag>;
+        if (quantity < 10) return <Tag color="orange">{t('stock.lowStock')}</Tag>;
+        return <Tag color="green">{t('stock.normal')}</Tag>;
       },
     },
     {
-      title: '最后更新时间',
+      title: t('stock.lastUpdate'),
       dataIndex: 'last_update',
       key: 'last_update',
       width: 180,
@@ -128,12 +131,12 @@ const Stock = () => {
       <Card>
         <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
           <Col>
-            <Title level={3} style={{ margin: 0 }}>库存明细</Title>
+            <Title level={3} style={{ margin: 0 }}>{t('stock.title')}</Title>
           </Col>
           <Col>
             <Space>
               <Input
-                placeholder="搜索产品型号"
+                placeholder={t('stock.searchProductModel')}
                 prefix={<SearchOutlined />}
                 value={productFilter}
                 onChange={(e) => handleProductFilterChange(e.target.value)}
@@ -146,7 +149,7 @@ const Stock = () => {
                 onClick={handleRefreshCache}
                 loading={refreshing}
               >
-                重新计算库存
+                {t('stock.recalculate')}
               </Button>
             </Space>
           </Col>
@@ -164,7 +167,7 @@ const Stock = () => {
               total: pagination.total,
               showQuickJumper: true,
               showTotal: (total, range) =>
-                `第 ${range[0]}-${range[1]} 条/共 ${total} 条`,
+                t('stock.paginationTotal', { start: range[0], end: range[1], total }),
               onChange: (page) => {
                 setPagination(prev => ({ ...prev, page }));
                 fetchStockData(page);

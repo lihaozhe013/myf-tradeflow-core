@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   Card, Select, Statistic, Row, Col, Spin, Alert, Typography 
 } from 'antd';
@@ -8,6 +8,7 @@ import {
   InboxOutlined,
   StockOutlined
 } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -17,18 +18,14 @@ const { Option } = Select;
  * 用户可以选择产品，查看该产品本月的库存变化信息
  */
 const MonthlyStockChange = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [stockData, setStockData] = useState(null);
   const [error, setError] = useState(null);
 
-  // 获取产品列表
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       const response = await fetch('/api/products');
       const result = await response.json();
@@ -41,22 +38,20 @@ const MonthlyStockChange = () => {
         }
       } else {
         console.error('API返回数据格式不正确:', result);
-        setError('获取产品列表失败：数据格式错误');
+        setError(t('overview.dataFormatError'));
       }
     } catch (err) {
-      console.error('获取产品列表失败:', err);
-      setError('获取产品列表失败');
+      console.error(t('overview.productListFailed'), err);
+      setError(t('overview.productListFailed'));
     }
-  };
+  }, [t]);
 
-  // 获取选中产品的本月库存变化数据
+  // 获取产品列表
   useEffect(() => {
-    if (selectedProduct) {
-      fetchMonthlyStockChange(selectedProduct);
-    }
-  }, [selectedProduct]);
+    fetchProducts();
+  }, [fetchProducts]);
 
-  const fetchMonthlyStockChange = async (productModel) => {
+  const fetchMonthlyStockChange = useCallback(async (productModel) => {
     try {
       setLoading(true);
       setError(null);
@@ -67,15 +62,22 @@ const MonthlyStockChange = () => {
       if (result.success) {
         setStockData(result.data);
       } else {
-        setError(result.message || result.error || '获取库存变化数据失败，请先刷新统计数据');
+        setError(result.message || result.error || t('overview.stockChangeFailed'));
       }
     } catch (err) {
-      console.error('获取库存变化数据失败:', err);
-      setError('获取库存变化数据失败');
+      console.error(t('overview.stockChangeFailed'), err);
+      setError(t('overview.stockChangeFailed'));
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
+
+  // 获取选中产品的本月库存变化数据
+  useEffect(() => {
+    if (selectedProduct) {
+      fetchMonthlyStockChange(selectedProduct);
+    }
+  }, [selectedProduct, fetchMonthlyStockChange]);
 
   const handleProductChange = (value) => {
     setSelectedProduct(value);
@@ -99,7 +101,7 @@ const MonthlyStockChange = () => {
 
   return (
     <Card
-      title="本月库存变化量"
+      title={t('overview.monthlyStockChange')}
       variant="outlined"
       style={{ borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)', height: 370 }}
       extra={
@@ -107,7 +109,7 @@ const MonthlyStockChange = () => {
           value={selectedProduct}
           onChange={handleProductChange}
           style={{ width: 200 }}
-          placeholder="选择产品"
+          placeholder={t('overview.selectProduct')}
           showSearch
           filterOption={(input, option) =>
             option.children.toLowerCase().includes(input.toLowerCase())
@@ -125,12 +127,12 @@ const MonthlyStockChange = () => {
         <div style={{ textAlign: 'center', padding: '20px 0' }}>
           <Spin size="large" />
           <div style={{ marginTop: '8px' }}>
-            <Text type="secondary">正在加载库存数据...</Text>
+            <Text type="secondary">{t('overview.loadingStock')}</Text>
           </div>
         </div>
       ) : error ? (
         <Alert
-          message="数据加载失败"
+          message={t('overview.dataLoadFailed')}
           description={error}
           type="error"
           showIcon
@@ -140,7 +142,7 @@ const MonthlyStockChange = () => {
         <Row gutter={[8, 8]}>
           <Col span={24}>
             <Statistic
-              title="月初库存"
+              title={t('overview.monthStartStock')}
               value={stockData.month_start_stock || 0}
               prefix={<InboxOutlined />}
               valueStyle={{ color: '#1677ff', fontSize: '16px' }}
@@ -148,7 +150,7 @@ const MonthlyStockChange = () => {
           </Col>
           <Col span={24}>
             <Statistic
-              title="当前库存"
+              title={t('overview.currentStock')}
               value={stockData.current_stock || 0}
               prefix={<StockOutlined />}
               valueStyle={{ color: '#722ed1', fontSize: '16px' }}
@@ -156,17 +158,17 @@ const MonthlyStockChange = () => {
           </Col>
           <Col span={24}>
             <Statistic
-              title="本月变化量"
+              title={t('overview.monthlyChange')}
               value={Math.abs(stockData.monthly_change || 0)}
               prefix={getTrendIcon(stockData.monthly_change)}
-              suffix={stockData.monthly_change > 0 ? '(增加)' : stockData.monthly_change < 0 ? '(减少)' : '(无变化)'}
+              suffix={stockData.monthly_change > 0 ? t('overview.increase') : stockData.monthly_change < 0 ? t('overview.decrease') : t('overview.noChange')}
               valueStyle={{ color: getTrendColor(stockData.monthly_change), fontSize: '16px' }}
             />
           </Col>
         </Row>
       ) : (
         <div style={{ textAlign: 'center', padding: '20px 0' }}>
-          <Text type="secondary">请选择产品查看库存变化</Text>
+          <Text type="secondary">{t('overview.selectProductToView')}</Text>
         </div>
       )}
     </Card>

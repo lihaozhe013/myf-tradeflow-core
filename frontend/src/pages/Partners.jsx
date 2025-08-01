@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Table,
   Button,
@@ -28,6 +29,7 @@ const Partners = () => {
   const [form] = Form.useForm();
   // 新增：用于联动输入的下拉数据
   const [partnerOptions, setPartnerOptions] = useState([]);
+  const { t } = useTranslation();
 
   // 获取合作伙伴列表
   const fetchPartners = async () => {
@@ -75,13 +77,13 @@ const Partners = () => {
         method: 'DELETE',
       });
       if (response.ok) {
-        message.success('删除成功');
+        message.success(t('partners.deleteSuccess'));
         fetchPartners();
       } else {
-        message.error('删除失败');
+        message.error(t('partners.deleteFailed'));
       }
     } catch (error) {
-      message.error('删除失败');
+      message.error(t('partners.deleteFailed'));
     }
   };
 
@@ -102,65 +104,65 @@ const Partners = () => {
       });
 
       if (response.ok) {
-        message.success(editingPartner ? '修改成功' : '新增成功');
+        message.success(editingPartner ? t('partners.editSuccess') : t('partners.addSuccess'));
         setModalVisible(false);
         fetchPartners();
       } else {
         const errorData = await response.json();
-        message.error(errorData.error || '保存失败');
+        message.error(errorData.error || t('partners.saveFailed'));
       }
     } catch (error) {
-      message.error('保存失败');
+      message.error(t('partners.saveFailed'));
     }
   };
 
   // 表格列定义
   const columns = [
     {
-      title: '代号',
+      title: t('partners.code'),
       dataIndex: 'code',
       key: 'code',
       width: 80,
     },
     {
-      title: '简称',
+      title: t('partners.shortName'),
       dataIndex: 'short_name',
       key: 'short_name',
       width: 100,
     },
     {
-      title: '全称',
+      title: t('partners.fullName'),
       dataIndex: 'full_name',
       key: 'full_name',
       width: 200,
     },
     {
-      title: '类型',
+      title: t('partners.type'),
       dataIndex: 'type',
       key: 'type',
       width: 80,
-      render: (type) => type === 0 ? '供应商' : '客户',
+      render: (type) => type === 0 ? t('partners.supplier') : t('partners.customer'),
     },
     {
-      title: '地址',
+      title: t('partners.address'),
       dataIndex: 'address',
       key: 'address',
       width: 200,
     },
     {
-      title: '联系人',
+      title: t('partners.contactPerson'),
       dataIndex: 'contact_person',
       key: 'contact_person',
       width: 100,
     },
     {
-      title: '联系电话',
+      title: t('partners.contactPhone'),
       dataIndex: 'contact_phone',
       key: 'contact_phone',
       width: 120,
     },
     {
-      title: '操作',
+      title: t('partners.actions'),
       key: 'actions',
       width: 120,
       render: (_, record) => (
@@ -171,13 +173,13 @@ const Partners = () => {
             onClick={() => handleEdit(record)}
             size="small"
           >
-            编辑
+            {t('common.edit')}
           </Button>
           <Popconfirm
-            title="确定要删除这个合作伙伴吗？"
+            title={t('partners.deleteConfirm')}
             onConfirm={() => handleDelete(record.short_name)}
-            okText="确定"
-            cancelText="取消"
+            okText={t('common.confirm')}
+            cancelText={t('common.cancel')}
           >
             <Button
               type="link"
@@ -185,7 +187,7 @@ const Partners = () => {
               icon={<DeleteOutlined />}
               size="small"
             >
-              删除
+              {t('common.delete')}
             </Button>
           </Popconfirm>
         </Space>
@@ -229,7 +231,7 @@ const Partners = () => {
       <Card>
         <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
           <Col>
-            <Title level={3} style={{ margin: 0 }}>客户/供应商管理</Title>
+            <Title level={3} style={{ margin: 0 }}>{t('partners.title')}</Title>
           </Col>
           <Col>
             <Button
@@ -237,7 +239,7 @@ const Partners = () => {
               icon={<PlusOutlined />}
               onClick={handleAdd}
             >
-              新增合作伙伴
+              {t('partners.addPartner')}
             </Button>
           </Col>
         </Row>
@@ -254,7 +256,7 @@ const Partners = () => {
               pageSize: 10,
               showQuickJumper: true,
               showTotal: (total, range) =>
-                `第 ${range[0]}-${range[1]} 条/共 ${total} 条`,
+                t('partners.paginationTotal', { start: range[0], end: range[1], total }),
             }}
             scroll={{ x: 900 }}
           />
@@ -262,7 +264,7 @@ const Partners = () => {
       </Card>
 
       <Modal
-        title={editingPartner ? '编辑合作伙伴' : '新增合作伙伴'}
+        title={editingPartner ? t('partners.editPartner') : t('partners.addPartner')}
         open={modalVisible}
         onCancel={() => setModalVisible(false)}
         footer={null}
@@ -275,81 +277,81 @@ const Partners = () => {
           onValuesChange={handlePartnerFieldChange}
         >
           <Form.Item
-            label="代号"
+            label={t('partners.code')}
             name="code"
             rules={[
-              { max: 50, message: '代号不能超过50个字符' },
+              { max: 50, message: t('partners.codeMax') },
             ]}
           >
-            <Input placeholder="请输入代号" disabled={!!editingPartner} />
+            <Input placeholder={t('partners.inputCode')} disabled={!!editingPartner} />
           </Form.Item>
 
           <Form.Item
-            label="简称"
+            label={t('partners.shortName')}
             name="short_name"
             rules={[
-              { required: true, message: '请输入简称' },
-              { max: 50, message: '简称不能超过50个字符' },
+              { required: true, message: t('partners.inputShortName') },
+              { max: 50, message: t('partners.shortNameMax') },
             ]}
           >
-            <Input placeholder="请输入简称" disabled={!!editingPartner} />
+            <Input placeholder={t('partners.inputShortName')} disabled={!!editingPartner} />
           </Form.Item>
 
           <Form.Item
-            label="全称"
+            label={t('partners.fullName')}
             name="full_name"
             rules={[
-              { required: true, message: '请输入全称' },
-              { max: 200, message: '全称不能超过200个字符' },
+              { required: true, message: t('partners.inputFullName') },
+              { max: 200, message: t('partners.fullNameMax') },
             ]}
           >
-            <Input placeholder="请输入全称" />
+            <Input placeholder={t('partners.inputFullName')} />
           </Form.Item>
 
           <Form.Item
-            label="类型"
+            label={t('partners.type')}
             name="type"
-            rules={[{ required: true, message: '请选择类型' }]}
+            rules={[{ required: true, message: t('partners.selectType') }]}
           >
-            <Select placeholder="请选择类型">
-              <Option value={0}>供应商</Option>
-              <Option value={1}>客户</Option>
+            <Select placeholder={t('partners.selectType')}>
+              <Option value={0}>{t('partners.supplier')}</Option>
+              <Option value={1}>{t('partners.customer')}</Option>
             </Select>
           </Form.Item>
 
           <Form.Item
-            label="地址"
+            label={t('partners.address')}
             name="address"
-            rules={[{ max: 500, message: '地址不能超过500个字符' }]}
+            rules={[{ max: 500, message: t('partners.addressMax') }]}
           >
             <Input.TextArea
-              placeholder="请输入地址"
+              placeholder={t('partners.inputAddress')}
               rows={3}
             />
           </Form.Item>
 
           <Form.Item
-            label="联系人"
+            label={t('partners.contactPerson')}
             name="contact_person"
-            rules={[{ max: 100, message: '联系人不能超过100个字符' }]}
+            rules={[{ max: 100, message: t('partners.contactPersonMax') }]}
           >
-            <Input placeholder="请输入联系人" />
+            <Input placeholder={t('partners.inputContactPerson')} />
           </Form.Item>
 
           <Form.Item
-            label="联系电话"
+            label={t('partners.contactPhone')}
             name="contact_phone"
-            rules={[{ max: 50, message: '联系电话不能超过50个字符' }]}
+            rules={[{ max: 50, message: t('partners.contactPhoneMax') }]}
           >
-            <Input placeholder="请输入联系电话" />
+            <Input placeholder={t('partners.inputContactPhone')} />
           </Form.Item>
 
           <div className="form-actions">
             <Button onClick={() => setModalVisible(false)}>
-              取消
+              {t('common.cancel')}
             </Button>
             <Button type="primary" htmlType="submit">
-              {editingPartner ? '保存' : '新增'}
+              {editingPartner ? t('common.save') : t('common.add')}
             </Button>
           </div>
         </Form>

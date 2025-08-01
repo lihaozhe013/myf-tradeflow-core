@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Table, Button, Popconfirm, Tag, message, Modal, Input, Space, Typography, Row, Col } from 'antd';
 import { PlusOutlined, EyeOutlined, DeleteOutlined } from '@ant-design/icons';
 
@@ -34,6 +35,7 @@ const PayableTable = ({
     total: 0
   });
 
+  const { t } = useTranslation();
   // 格式化金额显示
   const formatCurrency = (amount) => {
     if (amount === null || amount === undefined) return '¥0.00';
@@ -43,11 +45,11 @@ const PayableTable = ({
   // 获取余额状态标签
   const getBalanceTag = (balance) => {
     if (balance > 0) {
-      return <Tag color="volcano">未付: {formatCurrency(balance)}</Tag>;
+      return <Tag color="volcano">{t('payable.unpaid', { amount: formatCurrency(balance) })}</Tag>;
     } else if (balance < 0) {
-      return <Tag color="green">超付: {formatCurrency(Math.abs(balance))}</Tag>;
+      return <Tag color="green">{t('payable.overpaid', { amount: formatCurrency(Math.abs(balance)) })}</Tag>;
     } else {
-      return <Tag color="blue">已结清</Tag>;
+      return <Tag color="blue">{t('payable.paid')}</Tag>;
     }
   };
 
@@ -65,7 +67,7 @@ const PayableTable = ({
       await fetchSupplierDetails(record.supplier_code, 1, 1);
     } catch (error) {
       console.error('获取供应商详情失败:', error);
-      message.error('获取供应商详情失败，请检查网络连接');
+      message.error(t('payable.fetchFailedNetwork'));
     } finally {
       setDetailsLoading(false);
     }
@@ -99,11 +101,11 @@ const PayableTable = ({
         });
       } else {
         const error = await response.json();
-        message.error(`获取供应商详情失败: ${error.error || '未知错误'}`);
+        message.error(t('payable.fetchFailed', { msg: error.error || t('payable.unknownError') }));
       }
     } catch (error) {
       console.error('获取供应商详情失败:', error);
-      message.error('获取供应商详情失败，请检查网络连接');
+      message.error(t('payable.fetchFailedNetwork'));
     }
   };
 
@@ -141,7 +143,7 @@ const PayableTable = ({
 
   const columns = [
     {
-      title: '供应商代号',
+      title: t('payable.supplierCode'),
       dataIndex: 'supplier_code',
       key: 'supplier_code',
       width: 120,
@@ -149,7 +151,7 @@ const PayableTable = ({
       sortOrder: sorter.field === 'supplier_code' ? sorter.order : null,
     },
     {
-      title: '供应商简称',
+      title: t('payable.supplierShortName'),
       dataIndex: 'supplier_short_name',
       key: 'supplier_short_name',
       width: 150,
@@ -157,14 +159,14 @@ const PayableTable = ({
       sortOrder: sorter.field === 'supplier_short_name' ? sorter.order : null,
     },
     {
-      title: '供应商全称',
+      title: t('payable.supplierFullName'),
       dataIndex: 'supplier_full_name',
       key: 'supplier_full_name',
       width: 200,
       ellipsis: true,
     },
     {
-      title: '应付金额',
+      title: t('payable.totalPayable'),
       dataIndex: 'total_payable',
       key: 'total_payable',
       width: 120,
@@ -174,7 +176,7 @@ const PayableTable = ({
       render: (value) => formatCurrency(value),
     },
     {
-      title: '已付金额',
+      title: t('payable.totalPaid'),
       dataIndex: 'total_paid',
       key: 'total_paid',
       width: 120,
@@ -184,7 +186,7 @@ const PayableTable = ({
       render: (value) => formatCurrency(value),
     },
     {
-      title: '应付余额',
+      title: t('payable.balance'),
       dataIndex: 'balance',
       key: 'balance',
       width: 130,
@@ -194,7 +196,7 @@ const PayableTable = ({
       render: (value) => getBalanceTag(value),
     },
     {
-      title: '最近付款',
+      title: t('payable.lastPaymentDate'),
       dataIndex: 'last_payment_date',
       key: 'last_payment_date',
       width: 120,
@@ -203,14 +205,14 @@ const PayableTable = ({
       render: (value) => value || '-',
     },
     {
-      title: '付款方式',
+      title: t('payable.lastPaymentMethod'),
       dataIndex: 'last_payment_method',
       key: 'last_payment_method',
       width: 100,
       render: (value) => value || '-',
     },
     {
-      title: '操作',
+      title: t('payable.action'),
       key: 'action',
       width: 200,
       fixed: 'right',
@@ -222,7 +224,7 @@ const PayableTable = ({
             icon={<EyeOutlined />}
             onClick={() => handleViewDetails(record)}
           >
-            详情
+            {t('payable.details')}
           </Button>
           <Button
             type="primary"
@@ -230,7 +232,7 @@ const PayableTable = ({
             icon={<PlusOutlined />}
             onClick={() => onAddPayment(record)}
           >
-            新增付款
+            {t('payable.addPayment')}
           </Button>
         </Space>
       ),
@@ -242,7 +244,7 @@ const PayableTable = ({
       <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
         <Col>
           <Search
-            placeholder="搜索供应商简称"
+            placeholder={t('payable.searchSupplier')}
             allowClear
             onSearch={handleSearch}
             style={{ width: 250 }}
@@ -251,12 +253,11 @@ const PayableTable = ({
         </Col>
         <Col>
           <Text type="secondary">
-            共 {pagination.total} 个供应商，应付总额: {formatCurrency(
-              data.reduce((sum, item) => sum + (item.total_payable || 0), 0)
-            )}，
-            未付总额: {formatCurrency(
-              data.reduce((sum, item) => sum + Math.max(item.balance || 0, 0), 0)
-            )}
+            {t('payable.totalSuppliers', {
+              count: pagination.total,
+              totalPayable: formatCurrency(data.reduce((sum, item) => sum + (item.total_payable || 0), 0)),
+              totalUnpaid: formatCurrency(data.reduce((sum, item) => sum + Math.max(item.balance || 0, 0), 0))
+            })}
           </Text>
         </Col>
       </Row>
@@ -269,7 +270,7 @@ const PayableTable = ({
         pagination={{
           ...pagination,
           showQuickJumper: true,
-          showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`,
+          showTotal: (total, range) => t('payable.paginationTotal', { start: range[0], end: range[1], total }),
         }}
         onChange={onTableChange}
         scroll={{ x: 1200 }}
@@ -278,7 +279,7 @@ const PayableTable = ({
 
       {/* 供应商详情弹窗 */}
       <Modal
-        title={`供应商详情 - ${selectedSupplier?.supplier_short_name || ''}`}
+        title={t('payable.details') + ' - ' + (selectedSupplier?.supplier_short_name || '')}
         open={detailsVisible}
         onCancel={() => setDetailsVisible(false)}
         footer={null}
@@ -286,33 +287,33 @@ const PayableTable = ({
         style={{ top: 20 }}
       >
         {detailsLoading ? (
-          <div style={{ textAlign: 'center', padding: 50 }}>加载中...</div>
+          <div style={{ textAlign: 'center', padding: 50 }}>{t('payable.loading')}</div>
         ) : supplierDetails ? (
           <div>
             {/* 供应商基本信息 */}
             <div style={{ marginBottom: 24 }}>
-              <Typography.Title level={5}>供应商信息</Typography.Title>
+              <Typography.Title level={5}>{t('payable.supplierInfo')}</Typography.Title>
               <Row gutter={16}>
-                <Col span={8}>供应商代号: {supplierDetails.supplier?.code}</Col>
-                <Col span={8}>供应商简称: {supplierDetails.supplier?.short_name}</Col>
-                <Col span={8}>供应商全称: {supplierDetails.supplier?.full_name}</Col>
+                <Col span={8}>{t('payable.supplierCode')}: {supplierDetails.supplier?.code}</Col>
+                <Col span={8}>{t('payable.supplierShortName')}: {supplierDetails.supplier?.short_name}</Col>
+                <Col span={8}>{t('payable.supplierFullName')}: {supplierDetails.supplier?.full_name}</Col>
               </Row>
             </div>
 
             {/* 账款汇总 */}
             <div style={{ marginBottom: 24 }}>
-              <Typography.Title level={5}>账款汇总</Typography.Title>
+              <Typography.Title level={5}>{t('payable.summary')}</Typography.Title>
               <Row gutter={16}>
-                <Col span={8}>应付金额: {formatCurrency(supplierDetails.summary?.total_payable)}</Col>
-                <Col span={8}>已付金额: {formatCurrency(supplierDetails.summary?.total_paid)}</Col>
-                <Col span={8}>应付余额: {getBalanceTag(supplierDetails.summary?.balance)}</Col>
+                <Col span={8}>{t('payable.totalPayable')}: {formatCurrency(supplierDetails.summary?.total_payable)}</Col>
+                <Col span={8}>{t('payable.totalPaid')}: {formatCurrency(supplierDetails.summary?.total_paid)}</Col>
+                <Col span={8}>{t('payable.balance')}: {getBalanceTag(supplierDetails.summary?.balance)}</Col>
               </Row>
             </div>
 
             {/* 付款记录 */}
             <div style={{ marginBottom: 24 }}>
               <Typography.Title level={5}>
-                付款记录
+                {t('payable.paymentRecords')}
                 <Button
                   type="primary"
                   size="small"
@@ -323,7 +324,7 @@ const PayableTable = ({
                     onAddPayment(selectedSupplier);
                   }}
                 >
-                  新增付款
+                  {t('payable.addPayment')}
                 </Button>
               </Typography.Title>
               <Table
@@ -339,12 +340,12 @@ const PayableTable = ({
                 }}
                 scroll={{ y: 200 }}
                 columns={[
-                  { title: '付款金额', dataIndex: 'amount', render: (value) => formatCurrency(value) },
-                  { title: '付款日期', dataIndex: 'pay_date' },
-                  { title: '付款方式', dataIndex: 'pay_method' },
-                  { title: '备注', dataIndex: 'remark', ellipsis: true },
+                  { title: t('payable.paymentAmount'), dataIndex: 'amount', render: (value) => formatCurrency(value) },
+                  { title: t('payable.paymentDate'), dataIndex: 'pay_date' },
+                  { title: t('payable.paymentMethod'), dataIndex: 'pay_method' },
+                  { title: t('payable.remark'), dataIndex: 'remark', ellipsis: true },
                   {
-                    title: '操作',
+                    title: t('payable.action'),
                     width: 100,
                     render: (_, record) => (
                       <Space>
@@ -356,10 +357,10 @@ const PayableTable = ({
                             onEditPayment(record, selectedSupplier);
                           }}
                         >
-                          编辑
+                          {t('payable.editPayment')}
                         </Button>
                         <Popconfirm
-                          title="确定删除这条付款记录吗？"
+                          title={t('payable.deletePaymentConfirm')}
                           onConfirm={() => handleDeletePaymentConfirm(record.id)}
                         >
                           <Button type="link" size="small" danger icon={<DeleteOutlined />} />
@@ -373,7 +374,7 @@ const PayableTable = ({
 
             {/* 入库记录 */}
             <div>
-              <Typography.Title level={5}>入库记录</Typography.Title>
+              <Typography.Title level={5}>{t('payable.inboundRecords')}</Typography.Title>
               <Table
                 size="small"
                 dataSource={supplierDetails.inbound_records?.data || []}
@@ -387,13 +388,13 @@ const PayableTable = ({
                 }}
                 scroll={{ y: 200 }}
                 columns={[
-                  { title: '入库日期', dataIndex: 'inbound_date', width: 100 },
-                  { title: '产品型号', dataIndex: 'product_model', width: 120 },
-                  { title: '数量', dataIndex: 'quantity', width: 80, align: 'right' },
-                  { title: '单价', dataIndex: 'unit_price', width: 100, align: 'right', render: (value) => formatCurrency(value) },
-                  { title: '总价', dataIndex: 'total_price', width: 100, align: 'right', render: (value) => formatCurrency(value) },
-                  { title: '订单号', dataIndex: 'order_number', width: 120, ellipsis: true },
-                  { title: '备注', dataIndex: 'remark', ellipsis: true },
+                  { title: t('payable.inboundDate'), dataIndex: 'inbound_date', width: 100 },
+                  { title: t('payable.productModel'), dataIndex: 'product_model', width: 120 },
+                  { title: t('payable.quantity'), dataIndex: 'quantity', width: 80, align: 'right' },
+                  { title: t('payable.unitPrice'), dataIndex: 'unit_price', width: 100, align: 'right', render: (value) => formatCurrency(value) },
+                  { title: t('payable.totalPrice'), dataIndex: 'total_price', width: 100, align: 'right', render: (value) => formatCurrency(value) },
+                  { title: t('payable.orderNumber'), dataIndex: 'order_number', width: 120, ellipsis: true },
+                  { title: t('payable.remark'), dataIndex: 'remark', ellipsis: true },
                 ]}
               />
             </div>

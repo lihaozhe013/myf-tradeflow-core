@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Select, DatePicker, Button, Row, Col } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -10,13 +11,14 @@ const InboundFilter = ({
   products, 
   onFilter 
 }) => {
+  const { t } = useTranslation();
   return (
     <Row gutter={16} style={{ marginBottom: 16 }}>
       <Col span={5}>
         <Select
           allowClear
           showSearch
-          placeholder="选择供应商"
+          placeholder={t('inbound.selectSupplier')}
           style={{ width: '100%' }}
           value={filters.supplier_short_name}
           onChange={v => setFilters(f => ({ ...f, supplier_short_name: v }))}
@@ -28,7 +30,7 @@ const InboundFilter = ({
         <Select
           allowClear
           showSearch
-          placeholder="选择产品型号"
+          placeholder={t('inbound.selectProductModel')}
           style={{ width: '100%' }}
           value={filters.product_model}
           onChange={v => setFilters(f => ({ ...f, product_model: v }))}
@@ -42,12 +44,12 @@ const InboundFilter = ({
           value={filters.dateRange && filters.dateRange[0] ? [dayjs(filters.dateRange[0]), dayjs(filters.dateRange[1])] : []}
           onChange={dates => setFilters(f => ({ ...f, dateRange: dates ? [dates[0]?.format('YYYY-MM-DD'), dates[1]?.format('YYYY-MM-DD')] : [] }))}
           format="YYYY-MM-DD"
-          placeholder={['开始日期', '结束日期']}
+          placeholder={[t('inbound.startDate'), t('inbound.endDate')]}
         />
       </Col>
       <Col span={3}>
         <Button type="primary" icon={<SearchOutlined />} onClick={onFilter}>
-          筛选
+          {t('inbound.filter')}
         </Button>
       </Col>
     </Row>

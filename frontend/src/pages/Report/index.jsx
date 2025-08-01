@@ -11,6 +11,7 @@ import {
 import { FileExcelOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import ExportPanel from './components/ExportPanel';
+import { useTranslation } from 'react-i18next';
 
 const { Title } = Typography;
 const { TabPane } = Tabs;
@@ -28,14 +29,15 @@ const Report = () => {
   const [selectedProduct, setSelectedProduct] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState('');
 
+  const { t } = useTranslation();
   // 生成文件名
   const generateFilename = (exportType) => {
     const timestamp = dayjs().format('YYYYMMDD_HHmmss');
     const typeMap = {
-      'base-info': '基础信息导出',
-      'inbound-outbound': '入库出库记录导出',
-      'receivable-payable': '应收应付明细导出',
-      'invoice': '发票导出'
+      'base-info': t('export.baseInfo'),
+      'inbound-outbound': t('export.inboundOutbound'),
+      'receivable-payable': t('export.receivablePayable'),
+      'invoice': t('export.invoice')
     };
     const typeName = typeMap[exportType] || exportType;
     return `${typeName}_${timestamp}.xlsx`;
@@ -45,7 +47,7 @@ const Report = () => {
   const handleExport = async (exportType, params) => {
     try {
       setLoading(true);
-      message.loading('正在生成Excel文件...', 0.5);
+      message.loading(t('export.generating'), 0.5);
       
       const response = await fetch(`/api/export/${exportType}`, {
         method: 'POST',
@@ -61,7 +63,7 @@ const Report = () => {
         
         // 检查文件大小
         if (blob.size === 0) {
-          message.warning('导出的文件为空，请检查筛选条件或数据');
+          message.warning(t('export.emptyFile'));
           return;
         }
         
@@ -76,17 +78,17 @@ const Report = () => {
         window.URL.revokeObjectURL(url);
         
         const fileSizeKB = (blob.size / 1024).toFixed(1);
-        message.success(`导出成功！文件大小：${fileSizeKB}KB，已开始下载`);
+        message.success(t('export.success', { size: fileSizeKB }));
       } else {
         const error = await response.json();
-        message.error(`导出失败：${error.message || '未知错误'}`);
+        message.error(t('export.failed', { msg: error.message || t('export.unknownError') }));
       }
     } catch (error) {
-      console.error('导出失败:', error);
+      console.error(t('export.failed'), error);
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        message.error('网络连接失败，请检查服务器状态');
+        message.error(t('export.networkError'));
       } else {
-        message.error(`导出失败：${error.message}`);
+        message.error(t('export.failed', { msg: error.message }));
       }
     } finally {
       setLoading(false);
