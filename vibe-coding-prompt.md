@@ -1,4 +1,4 @@
-# 项目开发说明（ask-llm专用）
+# 项目开发说明（vibe coding专用）
 
 本文件用于辅助LLM理解本项目结构、API、数据库设计和核心业务逻辑，便于自动化代码生成和智能对话开发。
 
@@ -97,7 +97,7 @@
 | remark | TEXT | 备注 |
 
 ### 3. 库存缓存文件 stock-summary.json
-**说明**：移除库存表，改用JSON文件存储每个产品的当前库存总量，通过入库/出库记录异步计算生成
+**说明**：本项目不再使用库存表，改用JSON文件存储每个产品的当前库存总量，通过入库/出库记录异步计算生成
 
 **文件位置**：`/data/stock-summary.json`
 
@@ -147,11 +147,6 @@
 | product_model | TEXT | 产品型号 |
 | effective_date | TEXT | 生效日期 |
 | unit_price | REAL | 单价 |
-
-### 7. 产品类型表 product_categories
-| 字段 | 类型 | 说明 |
-|---|---|---|
-| name | TEXT PRIMARY KEY | 产品类型名称 |
 
 ### 8. 回款记录表 receivable_payments
 | 字段 | 类型 | 说明 |
