@@ -136,6 +136,38 @@ function getCacheFilePath() {
 }
 
 /**
+ * 清理过期缓存（保留最近30天的缓存）
+ */
+function cleanExpiredCache(cacheData) {
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  
+  const cleanedData = {};
+  let cleanedCount = 0;
+  
+  Object.entries(cacheData).forEach(([key, data]) => {
+    if (data.last_updated) {
+      const lastUpdated = new Date(data.last_updated);
+      // 保留30天内的缓存
+      if (lastUpdated >= thirtyDaysAgo) {
+        cleanedData[key] = data;
+      } else {
+        cleanedCount++;
+      }
+    } else {
+      // 没有更新时间的数据也保留（兼容性）
+      cleanedData[key] = data;
+    }
+  });
+  
+  if (cleanedCount > 0) {
+    console.log(`清理了 ${cleanedCount} 个过期的分析缓存`);
+  }
+  
+  return cleanedData;
+}
+
+/**
  * 读取缓存数据
  */
 function readCache() {
@@ -143,7 +175,9 @@ function readCache() {
   if (fs.existsSync(cacheFile)) {
     try {
       const json = fs.readFileSync(cacheFile, 'utf-8');
-      return JSON.parse(json);
+      const cacheData = JSON.parse(json);
+      // 读取时自动清理过期缓存
+      return cleanExpiredCache(cacheData);
     } catch (e) {
       console.error('读取分析缓存失败:', e);
       return {};
@@ -158,7 +192,9 @@ function readCache() {
 function writeCache(cacheData) {
   const cacheFile = getCacheFilePath();
   try {
-    fs.writeFileSync(cacheFile, JSON.stringify(cacheData, null, 2), 'utf-8');
+    // 写入前先清理过期缓存
+    const cleanedData = cleanExpiredCache(cacheData);
+    fs.writeFileSync(cacheFile, JSON.stringify(cleanedData, null, 2), 'utf-8');
     return true;
   } catch (e) {
     console.error('写入分析缓存失败:', e);
@@ -394,6 +430,38 @@ router.get('/filter-options', (req, res) => {
       });
     });
   });
+});
+
+// POST /api/analysis/clean-cache - 手动清理过期缓存
+router.post('/clean-cache', (req, res) => {
+  try {
+    const cache = readCache();
+    const originalSize = Object.keys(cache).length;
+    
+    if (writeCache(cache)) {
+      const newCache = readCache();
+      const newSize = Object.keys(newCache).length;
+      const cleanedCount = originalSize - newSize;
+      
+      res.json({
+        success: true,
+        message: `清理完成，删除了 ${cleanedCount} 个过期缓存`,
+        original_size: originalSize,
+        new_size: newSize
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: '清理缓存失败'
+      });
+    }
+  } catch (error) {
+    console.error('清理缓存失败:', error);
+    res.status(500).json({
+      success: false,
+      message: '清理缓存失败'
+    });
+  }
 });
 
 module.exports = router;
