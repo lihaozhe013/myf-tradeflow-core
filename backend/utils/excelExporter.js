@@ -128,6 +128,35 @@ class ExcelExporter {
   }
 
   /**
+   * 导出对账单
+   * @param {Object} options - 导出选项
+   * @returns {Promise<Buffer>} Excel文件Buffer
+   */
+  async exportStatement(options = {}) {
+    try {
+      const data = await this.queries.getInboundOutboundData(options);
+      
+      const workbook = XLSX.utils.book_new();
+      
+      // 1: 入库记录（对账单格式）
+      if (options.tables?.includes('1') && data.inbound) {
+        const worksheet = this.createWorksheet(data.inbound, TEMPLATES.inbound_statement);
+        XLSX.utils.book_append_sheet(workbook, worksheet, TEMPLATES.inbound_statement.sheetName);
+      }
+      
+      // 2: 出库记录（对账单格式）
+      if (options.tables?.includes('2') && data.outbound) {
+        const worksheet = this.createWorksheet(data.outbound, TEMPLATES.outbound_statement);
+        XLSX.utils.book_append_sheet(workbook, worksheet, TEMPLATES.outbound_statement.sheetName);
+      }
+      
+      return XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+    } catch (error) {
+      throw new Error(`对账单导出失败: ${error.message}`);
+    }
+  }
+
+  /**
    * 导出发票明细
    * @param {Object} options - 导出选项
    * @param {string} options.partnerCode - 合作伙伴代号（必填）
@@ -227,7 +256,8 @@ class ExcelExporter {
       'base-info': '基础信息导出',
       'inbound-outbound': '入库出库记录导出',
       'receivable-payable': '应收应付明细导出',
-      'invoice': '发票导出'
+      'invoice': '发票导出',
+      'statement': '对账单导出'
     };
     const typeName = typeMap[exportType] || exportType;
     return `${typeName}_${timestamp}.xlsx`;
