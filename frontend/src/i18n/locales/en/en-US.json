@@ -55,7 +55,8 @@
     "monthlyChange": "Monthly Change",
     "increase": "(Increase)",
     "salesAmount": "Sales Amount",
-    "noChange": "No Change"
+    "noChange": "No Change",
+    "decrease": "(Decrease)"
   },
   "inbound": {
     "id": "ID",
@@ -259,7 +260,8 @@
     "normal": "Normal",
     "searchProductModel": "Search Product Model",
     "status": "Status",
-    "paginationTotal": "Showing {{start}}-{{end}} of {{total}} results."
+    "paginationTotal": "Showing {{start}}-{{end}} of {{total}} results.",
+    "totalCostEstimate": "Total Cost Estimate"
   },
   "export": {
     "baseInfo": "Base Info",

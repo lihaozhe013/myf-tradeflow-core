@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getStockSummary, refreshStockCache } = require('../utils/stockCacheService');
+const { getStockSummary, refreshStockCache, getStockCache } = require('../utils/stockCacheService');
 
 // 获取库存明细
 router.get('/', (req, res) => {
@@ -13,6 +13,21 @@ router.get('/', (req, res) => {
     }
     
     res.json(result);
+  });
+});
+
+// 获取总成本估算
+router.get('/total-cost-estimate', (req, res) => {
+  getStockCache((err, stockData) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    
+    res.json({ 
+      total_cost_estimate: stockData.total_cost_estimate || 0,
+      last_updated: stockData.last_updated 
+    });
   });
 });
 
