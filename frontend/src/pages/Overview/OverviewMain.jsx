@@ -85,7 +85,7 @@ const OverviewMain = () => {
     const soldGoodsCost = overview.sold_goods_cost || 0;
     const sales = overview.total_sales_amount || 0;
     if (soldGoodsCost === 0) return 0;
-    return ((sales - soldGoodsCost) / soldGoodsCost * 100).toFixed(1);
+    return ((sales - soldGoodsCost) / sales * 100).toFixed(2);
   };
 
   if (loading) {
