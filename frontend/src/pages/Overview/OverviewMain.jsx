@@ -132,7 +132,7 @@ const OverviewMain = () => {
   return (
     <div
       style={{
-        minHeight: '100vh',
+        minHeight: '65vh',
         background: 'linear-gradient(135deg, #f8fafc 0%, #e9f5ff 100%)',
         padding: '24px',
         borderRadius: '12px',

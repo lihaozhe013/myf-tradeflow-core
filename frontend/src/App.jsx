@@ -117,62 +117,62 @@ function AppContent() {
   const menuItems = [
     {
       key: 'overview',
-      label: <Link to="/overview">{t('nav.overview')}</Link>,
+      label: <Link to="/overview" style={{ fontWeight: 'bold' }}>{t('nav.overview')}</Link>,
     },
     {
       key: 'inbound',
-      label: <Link to="/inbound">{t('nav.inbound')}</Link>,
+      label: <Link to="/inbound" style={{ fontWeight: 'bold' }}>{t('nav.inbound')}</Link>,
     },
     {
       key: 'outbound',
-      label: <Link to="/outbound">{t('nav.outbound')}</Link>,
+      label: <Link to="/outbound" style={{ fontWeight: 'bold' }}>{t('nav.outbound')}</Link>,
     },
     {
       key: 'stock',
-      label: <Link to="/stock">{t('nav.stock')}</Link>,
+      label: <Link to="/stock" style={{ fontWeight: 'bold' }}>{t('nav.stock')}</Link>,
     },
     {
       key: 'partners',
-      label: <Link to="/partners">{t('nav.partners')}</Link>,
+      label: <Link to="/partners" style={{ fontWeight: 'bold' }}>{t('nav.partners')}</Link>,
     },
     {
       key: 'products',
-      label: <Link to="/products">{t('nav.products')}</Link>,
+      label: <Link to="/products" style={{ fontWeight: 'bold' }}>{t('nav.products')}</Link>,
     },
     {
       key: 'product-prices',
-      label: <Link to="/product-prices">{t('nav.productPrices')}</Link>,
+      label: <Link to="/product-prices" style={{ fontWeight: 'bold' }}>{t('nav.productPrices')}</Link>,
     },
     {
       key: 'receivable',
-      label: <Link to="/receivable">{t('nav.receivable')}</Link>,
+      label: <Link to="/receivable" style={{ fontWeight: 'bold' }}>{t('nav.receivable')}</Link>,
     },
     {
       key: 'payable',
-      label: <Link to="/payable">{t('nav.payable')}</Link>,
+      label: <Link to="/payable" style={{ fontWeight: 'bold' }}>{t('nav.payable')}</Link>,
     },
     {
       key: 'analysis',
-      label: <Link to="/analysis">{t('nav.analysis')}</Link>,
+      label: <Link to="/analysis" style={{ fontWeight: 'bold' }}>{t('nav.analysis')}</Link>,
     },
     {
       key: 'report',
-      label: <Link to="/report">{t('nav.report')}</Link>,
+      label: <Link to="/report" style={{ fontWeight: 'bold' }}>{t('nav.report')}</Link>,
     },
   ];
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Header style={{ padding: '0 24px' }}>
+      <Header style={{ padding: '0 24px', height: '50px', lineHeight: '50px' }}>
         <Menu 
           theme="dark" 
           mode="horizontal" 
           selectedKeys={[getSelectedKey()]}
           items={menuItems}
-          style={{ lineHeight: '64px' }}
+          style={{ lineHeight: '50px' }}
         />
       </Header>
-      <Content style={{ padding: '24px', background: '#f0f2f5' }}>
+      <Content style={{ padding: '25px', background: '#f0f2f5', marginTop: '0px' }}>
         <div style={{ maxWidth: '1800px', margin: '0 auto' }}>
           <ErrorBoundary>
             <Routes>
