@@ -152,6 +152,86 @@ const ExportPanel = ({
         </Col>
         
         <Col span={24}>
+          <Card title="对账单导出" size="small">
+            <Form layout="inline" style={{ marginBottom: 16 }}>
+              <Form.Item label={t('export.dateRange')}>
+                <RangePicker
+                  value={dateRange}
+                  onChange={setDateRange}
+                  format="YYYY-MM-DD"
+                />
+              </Form.Item>
+              <Form.Item label={t('export.productCode')}>
+                <Input
+                  placeholder={t('export.optional')}
+                  value={selectedProduct}
+                  onChange={(e) => setSelectedProduct(e.target.value)}
+                  style={{ width: 120 }}
+                />
+              </Form.Item>
+              <Form.Item label={t('export.partnerCode')}>
+                <Input
+                  placeholder={t('export.optional')}
+                  value={selectedCustomer}
+                  onChange={(e) => setSelectedCustomer(e.target.value)}
+                  style={{ width: 120 }}
+                />
+              </Form.Item>
+            </Form>
+            <Space wrap>
+              <Button
+                type="default"
+                className="hover-primary"
+                icon={<FileExcelOutlined />}
+                onClick={() => handleExport('statement', {
+                  tables: '12',
+                  dateFrom: dateRange[0].format('YYYY-MM-DD'),
+                  dateTo: dateRange[1].format('YYYY-MM-DD'),
+                  productCode: selectedProduct || undefined,
+                  customerCode: selectedCustomer || undefined
+                })}
+                loading={loading}
+              >
+                导出对账单
+              </Button>
+              <Button
+                type="default"
+                className="hover-primary"
+                icon={<FileExcelOutlined />}
+                onClick={() => handleExport('statement', {
+                  tables: '1',
+                  dateFrom: dateRange[0].format('YYYY-MM-DD'),
+                  dateTo: dateRange[1].format('YYYY-MM-DD'),
+                  productCode: selectedProduct || undefined,
+                  customerCode: selectedCustomer || undefined
+                })}
+                loading={loading}
+              >
+                入库对账单
+              </Button>
+              <Button
+                type="default"
+                className="hover-primary"
+                icon={<FileExcelOutlined />}
+                onClick={() => handleExport('statement', {
+                  tables: '2',
+                  dateFrom: dateRange[0].format('YYYY-MM-DD'),
+                  dateTo: dateRange[1].format('YYYY-MM-DD'),
+                  productCode: selectedProduct || undefined,
+                  customerCode: selectedCustomer || undefined
+                })}
+                loading={loading}
+              >
+                出库对账单
+              </Button>
+            </Space>
+            <div style={{ marginTop: 8, fontSize: '12px', color: '#666' }}>
+              对账单采用定制格式，与完整记录格式不同
+            </div>
+          </Card>
+        </Col>
+        
+        <Col span={24}>
           <Card title={t('export.receivablePayable')} size="small">
             <Form layout="inline" style={{ marginBottom: 16 }}>
               <Form.Item label={t('export.inoutDate')}>

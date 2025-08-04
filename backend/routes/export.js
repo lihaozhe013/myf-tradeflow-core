@@ -54,6 +54,38 @@ router.post('/inbound-outbound', async (req, res) => {
     }
 });
 
+// 对账单导出 
+// 注意：对账单实际上和导出入库出库记录是一模一样的表，只是排版不同。
+// 入库出库记录是完整的记录，对账单是定制格式的记录
+
+// 导出对账单
+router.post('/statement', async (req, res) => {
+    try {
+        const { tables, dateFrom, dateTo, productCode, customerCode } = req.body;
+        
+        const exporter = new ExcelExporter();
+        const buffer = await exporter.exportStatement({
+            tables: tables || '12',
+            dateFrom,
+            dateTo,
+            productCode,
+            customerCode
+        });
+        
+        const filename = exporter.generateFilename('statement');
+        
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
+        res.send(buffer);
+    } catch (error) {
+        console.error('对账单导出失败:', error);
+        res.status(500).json({
+            success: false,
+            message: `导出失败: ${error.message}`
+        });
+    }
+});
+
 // 导出应收应付明细
 router.post('/receivable-payable', async (req, res) => {
     try {
@@ -132,6 +164,13 @@ router.get('/status', (req, res) => {
                 name: 'inbound-outbound',
                 description: '入库出库记录导出',
                 endpoint: '/api/export/inbound-outbound',
+                method: 'POST',
+                response_type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            },
+            {
+                name: 'statement',
+                description: '对账单导出（定制格式的入库出库记录）',
+                endpoint: '/api/export/statement',
                 method: 'POST',
                 response_type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             },

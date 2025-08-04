@@ -36,6 +36,7 @@ const Report = () => {
     const typeMap = {
       'base-info': t('export.baseInfo'),
       'inbound-outbound': t('export.inboundOutbound'),
+      'statement': '对账单导出',
       'receivable-payable': t('export.receivablePayable'),
       'invoice': t('export.invoice')
     };
