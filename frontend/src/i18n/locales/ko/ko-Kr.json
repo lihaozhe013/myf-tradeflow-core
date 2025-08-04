@@ -53,7 +53,8 @@
     "monthlyChange": "월별 변동량",
     "increase": "(증가)",
     "salesAmount": "판매 금액",
-    "noChange": "변동 없음"
+    "noChange": "변동 없음",
+    "decrease": "(감소)"
   },
   "inbound": {
     "id": "ID",
@@ -70,7 +71,6 @@
     "noInvoice": "송장 링크 없음",
     "actions": "작업",
     "deleteConfirm": "이 입고 기록을 삭제하시겠습니까?",
-
     "editInboundRecord": "입고 기록 편집",
     "addInboundRecord": "입고 기록 추가",
     "inputSupplierCode": "공급업체 코드를 입력하세요",
@@ -260,7 +260,8 @@
     "lowStock": "재고 부족",
     "normal": "정상",
     "searchProductModel": "제품 모델 검색",
-    "paginationTotal": "{{total}}개 중 {{start}}-{{end}}번째 결과"
+    "paginationTotal": "{{total}}개 중 {{start}}-{{end}}번째 결과",
+    "totalCostEstimate": "총 비용 추정"
   },
   "export": {
     "baseInfo": "기초 정보",

@@ -221,7 +221,8 @@
     "recalculateFailed": "库存重新计算失败",
     "refreshCacheFailed": "库存缓存刷新失败",
     "fetchFailed": "获取库存数据失败",
-    "paginationTotal": "第 {{start}}-{{end}} 条/共 {{total}} 条"
+    "paginationTotal": "第 {{start}}-{{end}} 条/共 {{total}} 条",
+    "totalCostEstimate": "总成本估算"
   },
   "outbound": {
     "id": "ID",

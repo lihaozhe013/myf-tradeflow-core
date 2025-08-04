@@ -2,8 +2,43 @@ const db = require('../db');
 const fs = require('fs');
 const path = require('path');
 const { logger } = require('./logger');
+const decimalCalc = require('./decimalCalculator');
 
 const STOCK_CACHE_FILE = path.resolve(__dirname, '../../data/stock-summary.json');
+
+// 计算总成本估算
+function calculateTotalCostEstimate(stockData, callback) {
+  // 获取所有有库存的产品
+  const productsWithStock = Object.entries(stockData.products).filter(([model, data]) => data.current_stock > 0);
+  
+  if (productsWithStock.length === 0) {
+    return callback(null, 0);
+  }
+  
+  let totalCost = decimalCalc.decimal(0);
+  let completedQueries = 0;
+  
+  productsWithStock.forEach(([productModel, productData]) => {
+    // 获取该产品最新的单价（从入库记录中取最新的单价）
+    db.get(
+      'SELECT unit_price FROM inbound_records WHERE product_model = ? ORDER BY inbound_date DESC, id DESC LIMIT 1',
+      [productModel],
+      (err, row) => {
+        if (!err && row && row.unit_price) {
+          // 计算该产品的库存成本：库存数量 * 最新单价
+          const productCost = decimalCalc.multiply(productData.current_stock, row.unit_price);
+          totalCost = decimalCalc.add(totalCost, productCost);
+        }
+        
+        completedQueries++;
+        if (completedQueries === productsWithStock.length) {
+          // 转换为数字格式返回
+          callback(null, decimalCalc.toNumber(totalCost, 2));
+        }
+      }
+    );
+  });
+}
 
 // 从入库/出库记录计算每个产品的当前库存
 function calculateStockFromRecords(callback) {
@@ -54,7 +89,8 @@ function calculateStockFromRecords(callback) {
       // 没有库存数据
       return callback(null, {
         last_updated: new Date().toISOString(),
-        products: {}
+        products: {},
+        total_cost_estimate: 0
       });
     }
 
@@ -76,9 +112,21 @@ function calculateStockFromRecords(callback) {
           stockMap[productModel] = productData;
           productQueries++;
           if (productQueries === productList.length) {
-            callback(null, {
+            // 在所有库存计算完成后，计算总成本估算
+            const finalStockData = {
               last_updated: new Date().toISOString(),
               products: stockMap
+            };
+            
+            calculateTotalCostEstimate(finalStockData, (costErr, totalCostEstimate) => {
+              if (costErr) {
+                logger.error('计算总成本估算失败', { error: costErr.message });
+                finalStockData.total_cost_estimate = 0;
+              } else {
+                finalStockData.total_cost_estimate = totalCostEstimate;
+              }
+              
+              callback(null, finalStockData);
             });
           }
         }
@@ -94,9 +142,21 @@ function calculateStockFromRecords(callback) {
           stockMap[productModel] = productData;
           productQueries++;
           if (productQueries === productList.length) {
-            callback(null, {
+            // 在所有库存计算完成后，计算总成本估算
+            const finalStockData = {
               last_updated: new Date().toISOString(),
               products: stockMap
+            };
+            
+            calculateTotalCostEstimate(finalStockData, (costErr, totalCostEstimate) => {
+              if (costErr) {
+                logger.error('计算总成本估算失败', { error: costErr.message });
+                finalStockData.total_cost_estimate = 0;
+              } else {
+                finalStockData.total_cost_estimate = totalCostEstimate;
+              }
+              
+              callback(null, finalStockData);
             });
           }
         }
