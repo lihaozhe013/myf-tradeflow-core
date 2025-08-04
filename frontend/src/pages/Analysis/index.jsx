@@ -20,12 +20,15 @@ import {
   RiseOutlined,
   PercentageOutlined
 } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
 
 const Analysis = () => {
+  const { t } = useTranslation();
+  
   // 状态管理
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -57,11 +60,11 @@ const Analysis = () => {
         setCustomers(result.customers);
         setProducts(result.products);
       } else {
-        message.error('获取筛选选项失败');
+        message.error(t('analysis.getFilterOptionsFailed'));
       }
     } catch (error) {
       console.error('获取筛选选项失败:', error);
-      message.error('获取筛选选项失败');
+      message.error(t('analysis.getFilterOptionsFailed'));
     } finally {
       setLoading(false);
     }
@@ -70,7 +73,7 @@ const Analysis = () => {
   // 获取分析数据
   const fetchAnalysisData = async () => {
     if (!dateRange || !dateRange[0] || !dateRange[1]) {
-      message.warning('请选择时间区间');
+      message.warning(t('analysis.selectTimeRange'));
       return;
     }
 
@@ -99,14 +102,14 @@ const Analysis = () => {
         // 数据未生成，需要刷新
         setAnalysisData(null);
         if (response.status === 503) {
-          message.info('数据未生成，请点击刷新按钮计算数据');
+          message.info(t('analysis.dataNotGenerated'));
         } else {
-          message.error(result.message || '获取分析数据失败');
+          message.error(result.message || t('analysis.getAnalysisDataFailed'));
         }
       }
     } catch (error) {
       console.error('获取分析数据失败:', error);
-      message.error('获取分析数据失败');
+      message.error(t('analysis.getAnalysisDataFailed'));
       setAnalysisData(null);
     } finally {
       setLoading(false);
@@ -116,7 +119,7 @@ const Analysis = () => {
   // 刷新分析数据
   const refreshAnalysisData = async () => {
     if (!dateRange || !dateRange[0] || !dateRange[1]) {
-      message.warning('请选择时间区间');
+      message.warning(t('analysis.selectTimeRange'));
       return;
     }
 
@@ -148,13 +151,13 @@ const Analysis = () => {
       
       if (result.success) {
         setAnalysisData(result.data);
-        message.success('数据刷新成功');
+        message.success(t('analysis.refreshSuccess'));
       } else {
-        message.error(result.message || '刷新数据失败');
+        message.error(result.message || t('analysis.refreshFailed'));
       }
     } catch (error) {
       console.error('刷新数据失败:', error);
-      message.error('刷新数据失败');
+      message.error(t('analysis.refreshFailed'));
     } finally {
       setRefreshing(false);
     }
@@ -182,45 +185,45 @@ const Analysis = () => {
 
   // 获取客户显示名称
   const getCustomerDisplayName = () => {
-    if (selectedCustomer === 'ALL') return '全部客户';
+    if (selectedCustomer === 'ALL') return t('analysis.allCustomers');
     const customer = customers.find(c => c.code === selectedCustomer);
     return customer ? customer.name : selectedCustomer;
   };
 
   // 获取产品显示名称
   const getProductDisplayName = () => {
-    if (selectedProduct === 'ALL') return '全部产品';
+    if (selectedProduct === 'ALL') return t('analysis.allProducts');
     return selectedProduct;
   };
 
   return (
     <div style={{ padding: '0 24px' }}>
-      <Card title="数据分析" style={{ marginBottom: 24 }}>
+      <Card title={t('analysis.title')} style={{ marginBottom: 24 }}>
         
         {/* 筛选条件区域 */}
         <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
           <Col xs={24} sm={12} md={8}>
             <div style={{ marginBottom: 8 }}>
-              <strong>时间区间</strong>
+              <strong>{t('analysis.timeRange')}</strong>
             </div>
             <RangePicker
               value={dateRange}
               onChange={setDateRange}
               style={{ width: '100%' }}
               format="YYYY-MM-DD"
-              placeholder={['开始日期', '结束日期']}
+              placeholder={[t('analysis.startDate'), t('analysis.endDate')]}
             />
           </Col>
           
           <Col xs={24} sm={12} md={8}>
             <div style={{ marginBottom: 8 }}>
-              <strong>客户</strong>
+              <strong>{t('analysis.customer')}</strong>
             </div>
             <Select
               value={selectedCustomer}
               onChange={setSelectedCustomer}
               style={{ width: '100%' }}
-              placeholder="请选择客户"
+              placeholder={t('analysis.selectCustomer')}
               loading={loading}
             >
               {customers.map(customer => (
@@ -233,13 +236,13 @@ const Analysis = () => {
           
           <Col xs={24} sm={12} md={8}>
             <div style={{ marginBottom: 8 }}>
-              <strong>产品</strong>
+              <strong>{t('analysis.product')}</strong>
             </div>
             <Select
               value={selectedProduct}
               onChange={setSelectedProduct}
               style={{ width: '100%' }}
-              placeholder="请选择产品"
+              placeholder={t('analysis.selectProduct')}
               loading={loading}
             >
               {products.map(product => (
@@ -260,7 +263,7 @@ const Analysis = () => {
               onClick={refreshAnalysisData}
               loading={refreshing}
             >
-              刷新数据
+              {t('analysis.refreshData')}
             </Button>
           </Col>
         </Row>
@@ -272,10 +275,10 @@ const Analysis = () => {
           <Alert
             message={
               <Space>
-                <span><strong>分析条件:</strong></span>
-                <span>时间: {dateRange[0].format('YYYY-MM-DD')} 至 {dateRange[1].format('YYYY-MM-DD')}</span>
-                <span>客户: {getCustomerDisplayName()}</span>
-                <span>产品: {getProductDisplayName()}</span>
+                <span><strong>{t('analysis.analysisConditions')}:</strong></span>
+                <span>{t('analysis.time')}: {dateRange[0].format('YYYY-MM-DD')} {t('analysis.to')} {dateRange[1].format('YYYY-MM-DD')}</span>
+                <span>{t('analysis.customer')}: {getCustomerDisplayName()}</span>
+                <span>{t('analysis.product')}: {getProductDisplayName()}</span>
               </Space>
             }
             type="info"
@@ -290,7 +293,7 @@ const Analysis = () => {
               <Col xs={24} sm={12} md={6}>
                 <Card>
                   <Statistic
-                    title="销售额"
+                    title={t('analysis.salesAmount')}
                     value={formatCurrency(analysisData.sales_amount)}
                     prefix={<DollarOutlined style={{ color: '#52c41a' }} />}
                     valueStyle={{ color: '#52c41a' }}
@@ -301,7 +304,7 @@ const Analysis = () => {
               <Col xs={24} sm={12} md={6}>
                 <Card>
                   <Statistic
-                    title="成本"
+                    title={t('analysis.cost')}
                     value={formatCurrency(analysisData.cost_amount)}
                     prefix={<ShoppingCartOutlined style={{ color: '#faad14' }} />}
                     valueStyle={{ color: '#faad14' }}
@@ -312,7 +315,7 @@ const Analysis = () => {
               <Col xs={24} sm={12} md={6}>
                 <Card>
                   <Statistic
-                    title="利润"
+                    title={t('analysis.profit')}
                     value={formatCurrency(analysisData.profit_amount)}
                     prefix={<RiseOutlined style={{ color: analysisData.profit_amount >= 0 ? '#52c41a' : '#ff4d4f' }} />}
                     valueStyle={{ color: analysisData.profit_amount >= 0 ? '#52c41a' : '#ff4d4f' }}
@@ -323,7 +326,7 @@ const Analysis = () => {
               <Col xs={24} sm={12} md={6}>
                 <Card>
                   <Statistic
-                    title="利润率"
+                    title={t('analysis.profitRate')}
                     value={formatPercentage(analysisData.profit_rate)}
                     prefix={<PercentageOutlined style={{ color: analysisData.profit_rate >= 0 ? '#52c41a' : '#ff4d4f' }} />}
                     valueStyle={{ color: analysisData.profit_rate >= 0 ? '#52c41a' : '#ff4d4f' }}
@@ -334,8 +337,8 @@ const Analysis = () => {
           ) : (
             <div style={{ textAlign: 'center', padding: '60px 0' }}>
               <Alert
-                message="暂无分析数据"
-                description="请选择筛选条件并点击刷新按钮生成分析数据"
+                message={t('analysis.noAnalysisData')}
+                description={t('analysis.noAnalysisDataDesc')}
                 type="info"
                 showIcon
               />
@@ -346,7 +349,7 @@ const Analysis = () => {
         {/* 数据更新时间 */}
         {analysisData && analysisData.last_updated && (
           <div style={{ textAlign: 'center', marginTop: 24, color: '#666' }}>
-            <small>数据更新时间: {dayjs(analysisData.last_updated).format('YYYY-MM-DD HH:mm:ss')}</small>
+            <small>{t('analysis.dataUpdateTime')}: {dayjs(analysisData.last_updated).format('YYYY-MM-DD HH:mm:ss')}</small>
           </div>
         )}
       </Card>

@@ -9,7 +9,8 @@
     "productPrices": "Product Prices",
     "receivable": "Receivable",
     "payable": "Payable",
-    "report": "Export"
+    "report": "Export",
+    "analysis": "Data Analysis"
   },
   "common": {
     "language": "Language",
@@ -401,5 +402,34 @@
     "saveFailed": "Save failed, check your network connection",
     "deleteSuccess": "Payment record deleted successfully",
     "paginationTotal": "Showing {{start}}-{{end}} of {{total}} results."
+  },
+  "analysis": {
+    "title": "Data Analysis",
+    "timeRange": "Time Range",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "customer": "Customer",
+    "product": "Product",
+    "selectCustomer": "Please select customer",
+    "selectProduct": "Please select product",
+    "refreshData": "Refresh Data",
+    "allCustomers": "All Customers",
+    "allProducts": "All Products",
+    "analysisConditions": "Analysis Conditions",
+    "time": "Time",
+    "to": "to",
+    "salesAmount": "Sales Amount",
+    "cost": "Cost",
+    "profit": "Profit",
+    "profitRate": "Profit Rate",
+    "noAnalysisData": "No Analysis Data",
+    "noAnalysisDataDesc": "Please select filter conditions and click refresh button to generate analysis data",
+    "dataUpdateTime": "Data Update Time",
+    "getFilterOptionsFailed": "Failed to get filter options",
+    "selectTimeRange": "Please select time range",
+    "getAnalysisDataFailed": "Failed to get analysis data",
+    "dataNotGenerated": "Data not generated, please click refresh button to calculate data",
+    "refreshSuccess": "Data refresh successful",
+    "refreshFailed": "Failed to refresh data"
   }
 }

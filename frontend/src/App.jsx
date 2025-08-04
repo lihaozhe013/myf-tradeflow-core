@@ -153,7 +153,7 @@ function AppContent() {
     },
     {
       key: 'analysis',
-      label: <Link to="/analysis">数据分析</Link>,
+      label: <Link to="/analysis">{t('nav.analysis')}</Link>,
     },
     {
       key: 'report',

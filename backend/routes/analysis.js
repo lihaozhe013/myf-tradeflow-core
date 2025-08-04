@@ -408,7 +408,7 @@ router.get('/filter-options', (req, res) => {
       
       // 组装筛选选项
       const customerOptions = [
-        { code: 'ALL', name: '全部客户' },
+        { code: 'ALL', name: 'All' },
         ...customers.map(c => ({
           code: c.code,
           name: `${c.short_name} (${c.full_name})`
@@ -416,7 +416,7 @@ router.get('/filter-options', (req, res) => {
       ];
       
       const productOptions = [
-        { model: 'ALL', name: '全部产品' },
+        { model: 'ALL', name: 'All' },
         ...products.map(p => ({
           model: p.product_model,
           name: p.product_model

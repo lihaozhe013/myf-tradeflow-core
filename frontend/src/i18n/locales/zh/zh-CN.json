@@ -9,7 +9,8 @@
     "productPrices": "价格",
     "receivable": "应收账款",
     "payable": "应付账款",
-    "report": "导出"
+    "report": "导出",
+    "analysis": "数据分析"
   },
   "common": {
     "language": "语言",
@@ -424,5 +425,34 @@
     "deleteSuccess": "回款记录删除成功",
     "deleteFailed": "删除失败，请检查网络连接",
     "paginationTotal": "第 {{start}}-{{end}} 条/共 {{total}} 条"
+  },
+  "analysis": {
+    "title": "数据分析",
+    "timeRange": "时间区间",
+    "startDate": "开始日期",
+    "endDate": "结束日期",
+    "customer": "客户",
+    "product": "产品",
+    "selectCustomer": "请选择客户",
+    "selectProduct": "请选择产品",
+    "refreshData": "刷新数据",
+    "allCustomers": "全部客户",
+    "allProducts": "全部产品",
+    "analysisConditions": "分析条件",
+    "time": "时间",
+    "to": "至",
+    "salesAmount": "销售额",
+    "cost": "成本",
+    "profit": "利润",
+    "profitRate": "利润率",
+    "noAnalysisData": "暂无分析数据",
+    "noAnalysisDataDesc": "请选择筛选条件并点击刷新按钮生成分析数据",
+    "dataUpdateTime": "数据更新时间",
+    "getFilterOptionsFailed": "获取筛选选项失败",
+    "selectTimeRange": "请选择时间区间",
+    "getAnalysisDataFailed": "获取分析数据失败",
+    "dataNotGenerated": "数据未生成，请点击刷新按钮计算数据",
+    "refreshSuccess": "数据刷新成功",
+    "refreshFailed": "刷新数据失败"
   }
 }
