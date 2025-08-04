@@ -2,7 +2,7 @@
   "name": "myf-db-systool",
   "private": true,
   "version": "0.0.0",
-  "description": "小型公司进出货 + 账务系统",
+  "description": "小型公司ERP系统",
   "scripts": {
     "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",

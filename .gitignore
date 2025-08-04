@@ -32,3 +32,4 @@ frontend/src/config/appConfig.json
 backend/data.db
 
 .vscode/
+frontend/public/icon.svg
