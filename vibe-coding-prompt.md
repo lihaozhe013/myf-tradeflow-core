@@ -9,10 +9,11 @@
 - **backend/**
   - `server.js`：Express服务器入口
   - `db.js`：SQLite数据库连接和操作
-  - `routes/`：API路由模块（如inbound、outbound、stock、partners、products、productPrices、receivable、payable等）
+  - `routes/`：API路由模块（如inbound、outbound、stock、partners、products、productPrices、ceivable、payable、analysis等）
     - `export.js`：Node.js原生Excel导出API（基础信息、入库出库、应收应付）
     - `receivable.js`：应收账款管理API（实时聚合、回款记录CRUD）
     - `payable.js`：应付账款管理API（实时聚合、付款记录CRUD）
+    - `analysis.js`：数据分析API（按时间、客户、产品维度分析销售数据，支持缓存机制）
   - `utils/`：数据库结构、测试数据、库存等工具
     - `excelExporter.js`：Excel导出核心类（Node.js + xlsx实现）
     - `exportTemplates.js`：Excel导出模板定义
@@ -46,6 +47,7 @@
     - `Partners.jsx`：客户/供应商管理页
     - `Products.jsx`：产品管理页
     - `ProductPrices.jsx`：产品价格管理页
+    - `Analysis/index.jsx`：数据分析页面（按时间、客户、产品维度分析销售数据）
 - 根目录：`package.json`、`README.md`、`ask-llm.md`（本文件）
 - **data/**：数据存储目录
   - `log/`：日志文件目录（生产环境）
@@ -53,6 +55,7 @@
     - `error.log`：错误日志
     - `access.log`：HTTP访问日志
   - `data.db` SQLite 数据库文件
+  - `analysis-cache.json`：数据分析缓存文件（自动清理30天以上过期数据）
 
 ---
 
@@ -222,6 +225,12 @@
 | GET | /api/payable/details/:supplier_code | 获取供应商应付账款详情 |
 | GET | /api/overview/stats | 获取系统统计数据（**纯读取overview-stats.json缓存文件**，包含总体数据、缺货产品明细字段 out_of_stock_products，无任何计算逻辑） |
 | POST | /api/overview/stats | 强制刷新统计数据，**执行所有概览相关计算并写入缓存**，包括销售额分布、库存状态、所有产品本月变化量等，返回最新统计数据 |
+| GET | /api/overview/monthly-stock-change/:productModel | 获取指定产品的本月库存变化量（简化版本，参数：产品型号productModel，返回月初库存、当前库存、本月变化量，移除额外的统计信息以减少计算量） |
+| GET | /api/overview/top-sales-products | 获取销售额前10的商品及"其他"合计（返回格式：[{ product_model, total_sales }...]，最后一项为"其他"合计，**只读overview-stats.json缓存，避免每次请求实时计算**） |
+| GET | /api/analysis/data | 获取分析数据（从缓存读取，参数：start_date, end_date, customer_code?, product_model?） |
+| POST | /api/analysis/refresh | 刷新分析数据（重新计算并写入缓存，请求体：start_date, end_date, customer_code?, product_model?） |
+| GET | /api/analysis/filter-options | 获取分析筛选选项（返回所有客户和产品选项） |
+| POST | /api/analysis/clean-cache | 手动清理过期缓存（清理30天以上的缓存数据） |
 
 #### GET /api/overview/stats 返回字段 out_of_stock_products
 
@@ -298,6 +307,7 @@
 - **产品价格管理页**：价格历史管理
 - **应收账款管理页**：实时聚合应收账款、回款记录管理
 - **应付账款管理页**：实时聚合应付账款、付款记录管理
+- **数据分析页**：按时间区间、客户、产品维度进行销售数据分析，计算销售额、成本、利润和利润率，支持缓存机制
 
 ### 组件化架构
 **应收账款管理 (`pages/Receivable/`)**
@@ -321,6 +331,9 @@
 - `components/OutboundFilter.jsx` - 筛选器组件（客户、产品、日期范围）
 - `components/OutboundTable.jsx` - 表格组件（展示、编辑、删除操作）
 - `components/OutboundModal.jsx` - 弹窗表单组件（新增/编辑出库记录）
+
+**数据分析 (`pages/Analysis/`)**
+- `index.jsx` - 主分析页面，负责状态管理和业务逻辑，支持时间区间、客户、产品筛选，展示销售额、成本、利润和利润率
 
 ### 组件设计原则
 - **单一职责**：每个组件只负责一个特定功能
@@ -488,7 +501,91 @@ npm run clean:logs
 
 ---
 
-## 九、精确计算架构（decimal.js）
+## 十、数据分析功能架构
+
+### 功能概述
+数据分析页面支持按时间区间、客户、产品维度进行销售数据分析，计算销售额、成本、利润和利润率。
+
+### 缓存机制设计
+**缓存文件**：`/data/analysis-cache.json`
+
+**缓存策略**：
+- **读写分离**：GET 请求只读缓存，POST 请求重新计算并写入缓存
+- **自动过期**：自动清理30天以上的过期缓存，防止缓存文件无限增长
+- **缓存键规则**：`${start_date}_${end_date}_${customer_code || 'ALL'}_${product_model || 'ALL'}`
+
+**缓存数据结构**：
+```json
+{
+  "2025-01-01_2025-01-31_ALL_ALL": {
+    "sales_amount": 150000.00,
+    "cost_amount": 120000.00,
+    "profit_amount": 30000.00,
+    "profit_rate": 20.00,
+    "query_params": {
+      "start_date": "2025-01-01",
+      "end_date": "2025-01-31",
+      "customer_code": "ALL",
+      "product_model": "ALL"
+    },
+    "last_updated": "2025-08-04T10:30:00.000Z"
+  }
+}
+```
+
+### 计算逻辑
+**销售额计算**：
+- 正数单价出库记录的销售额汇总
+- 减去负数单价出库记录的特殊支出
+
+**成本计算**：
+- 采用加权平均成本法，参考概览页面的 `calculateSoldGoodsCost` 函数
+- 基于全时间范围的入库记录计算各产品的平均成本
+- 根据指定条件的出库记录计算实际成本
+
+**利润和利润率**：
+- 利润 = 销售额 - 成本
+- 利润率 = (利润 / 销售额) × 100%
+
+### API 接口
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | /api/analysis/data | 获取分析数据（从缓存读取） |
+| POST | /api/analysis/refresh | 刷新分析数据（重新计算并写入缓存） |
+| GET | /api/analysis/filter-options | 获取筛选选项（客户和产品列表） |
+| POST | /api/analysis/clean-cache | 手动清理过期缓存 |
+
+### 前端设计
+**筛选条件**：
+- 时间区间选择器（Ant Design RangePicker）
+- 客户选择下拉框（包含"全部客户"选项）
+- 产品选择下拉框（包含"全部产品"选项）
+
+**数据展示**：
+- 销售额、成本、利润、利润率四个关键指标
+- 使用 Ant Design Statistic 组件展示
+- 支持正负数颜色区分（绿色表示盈利，红色表示亏损）
+
+**用户体验**：
+- 筛选条件变化时自动获取缓存数据
+- 手动刷新按钮重新计算最新数据
+- Loading 状态和错误提示
+- 显示数据更新时间
+
+### 精确计算
+- **全程使用 decimal.js**：确保所有金额、成本、利润计算的精度
+- **数据库结果处理**：使用 `decimalCalc.fromSqlResult()` 处理 SQL 查询结果
+- **存储格式转换**：使用 `decimalCalc.toDbNumber()` 转换为数据库存储格式
+
+### 性能优化
+- **缓存优先**：优先读取缓存数据，避免重复计算
+- **自动清理**：定期清理过期缓存，控制文件大小
+- **精确索引**：使用精确的缓存键避免数据冲突
+- **错误处理**：完善的异常处理确保系统稳定性
+
+---
+
+## 十一、精确计算架构（decimal.js）
 
 ### 浮点数精度问题解决方案
 
@@ -552,11 +649,18 @@ decimalCalc.batchCalculateTotalPrice(records)                      // 批量计�
   - 销售额前10商品统计及"其他"合计
   - 本月库存变化量计算
 
-**4. 导出查询模块**
+**4. 数据分析计算**
+- `routes/analysis.js`：
+  - 按时间区间、客户、产品维度的销售额计算
+  - 成本计算（加权平均成本法）
+  - 利润和利润率计算
+  - 特殊收入/支出处理
+
+**5. 导出查询模块**
 - `utils/exportQueries.js`：应收/应付汇总余额计算
 - `utils/reportService.js`：财务报表利润和现金流计算
 
-**5. 数据库升级工具**
+**6. 数据库升级工具**
 - `utils/dbUpgrade.js`：历史数据迁移时的计算修正
 
 ### 精度配置

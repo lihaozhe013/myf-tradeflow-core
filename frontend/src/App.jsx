@@ -11,6 +11,7 @@ import Report from './pages/Report/index';
 import Overview from './pages/Overview';
 import Receivable from './pages/Receivable';
 import Payable from './pages/Payable';
+import Analysis from './pages/Analysis';
 import { Menu, Layout, Alert, Select, Space } from 'antd';
 import { GlobalOutlined } from '@ant-design/icons';
 import './App.css';
@@ -107,6 +108,7 @@ function AppContent() {
     if (path === '/product-prices') return 'product-prices';
     if (path === '/receivable') return 'receivable';
     if (path === '/payable') return 'payable';
+    if (path === '/analysis') return 'analysis';
     if (path === '/report') return 'report';
     return 'overview';
   };
@@ -150,6 +152,10 @@ function AppContent() {
       label: <Link to="/payable">{t('nav.payable')}</Link>,
     },
     {
+      key: 'analysis',
+      label: <Link to="/analysis">数据分析</Link>,
+    },
+    {
       key: 'report',
       label: <Link to="/report">{t('nav.report')}</Link>,
     },
@@ -180,6 +186,7 @@ function AppContent() {
               <Route path="/product-prices" element={<ProductPrices />} />
               <Route path="/receivable" element={<Receivable />} />
               <Route path="/payable" element={<Payable />} />
+              <Route path="/analysis" element={<Analysis />} />
               <Route path="/report" element={<Report />} />
               <Route path="*" element={<Navigate to="/overview" replace />} />
             </Routes>
