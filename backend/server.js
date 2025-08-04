@@ -61,6 +61,7 @@ const stockRebuildRoutes = require('./routes/stockRebuild');       // 库存重�
 const receivableRoutes = require('./routes/receivable');           // 应收账款管理
 const payableRoutes = require('./routes/payable');                 // 应付账款管理
 const exportRoutes = require('./routes/export');                   // 导出功能
+const analysisRoutes = require('./routes/analysis');               // 数据分析功能
 
 // 注册 API 路由
 app.use('/api/overview', overviewRoutes);
@@ -75,6 +76,7 @@ app.use('/api/stock-rebuild', stockRebuildRoutes);
 app.use('/api/receivable', receivableRoutes);
 app.use('/api/payable', payableRoutes);
 app.use('/api/export', exportRoutes);
+app.use('/api/analysis', analysisRoutes);
 
 // =============================================================================
 // 错误处理中间件
