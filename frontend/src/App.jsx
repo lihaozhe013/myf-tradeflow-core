@@ -177,7 +177,7 @@ function AppContent() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <Link to="/about">
-            <Avatar src="/icon.svg" alt="Icon" style={{ cursor: 'pointer', width: '43px', height: '43px' }} />
+            <Avatar src="/logo.svg" alt="Icon" style={{ cursor: 'pointer', width: '43px', height: '43px' }} />
           </Link>
         </div>
       </Header>

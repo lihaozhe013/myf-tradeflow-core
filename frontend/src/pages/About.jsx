@@ -111,7 +111,7 @@ function About() {
             }}
           >
             <Image
-              src="/icon.svg"
+              src="/logo.svg"
               alt="Company Logo"
               style={{ 
                 width: '300px',
