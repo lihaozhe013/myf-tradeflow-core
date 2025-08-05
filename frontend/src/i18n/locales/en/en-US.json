@@ -435,7 +435,10 @@
     "getAnalysisDataFailed": "Failed to get analysis data",
     "dataNotGenerated": "Data not generated, please click refresh button to calculate data",
     "refreshSuccess": "Data refresh successful",
-    "refreshFailed": "Failed to refresh data"
+    "refreshFailed": "Failed to refresh data",
+    "customerProductDetail": "Product Sales Detail for {{customer}}",
+    "productCustomerDetail": "Customer Sales Detail for {{product}}",
+    "totalRecords": "Total {{total}} records"
   },
   "about": {
     "title": "About Us",

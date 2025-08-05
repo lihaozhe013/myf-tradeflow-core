@@ -11,7 +11,8 @@ import {
   Spin,
   Space,
   Divider,
-  Alert
+  Alert,
+  Table
 } from 'antd';
 import { 
   ReloadOutlined, 
@@ -35,6 +36,7 @@ const Analysis = () => {
   const [customers, setCustomers] = useState([]);
   const [products, setProducts] = useState([]);
   const [analysisData, setAnalysisData] = useState(null);
+  const [detailData, setDetailData] = useState([]);
   
   // 筛选条件
   const [dateRange, setDateRange] = useState([
@@ -93,6 +95,7 @@ const Analysis = () => {
         params.append('product_model', selectedProduct);
       }
 
+      // 获取基本分析数据
       const response = await fetch(`/api/analysis/data?${params}`);
       const result = await response.json();
       
@@ -107,10 +110,21 @@ const Analysis = () => {
           message.error(result.message || t('analysis.getAnalysisDataFailed'));
         }
       }
+
+      // 获取详细分析数据
+      const detailResponse = await fetch(`/api/analysis/detail?${params}`);
+      const detailResult = await detailResponse.json();
+      
+      if (detailResult.success) {
+        setDetailData(detailResult.data.detail_data || []);
+      } else {
+        setDetailData([]);
+      }
     } catch (error) {
       console.error('获取分析数据失败:', error);
       message.error(t('analysis.getAnalysisDataFailed'));
       setAnalysisData(null);
+      setDetailData([]);
     } finally {
       setLoading(false);
     }
@@ -152,6 +166,9 @@ const Analysis = () => {
       if (result.success) {
         setAnalysisData(result.data);
         message.success(t('analysis.refreshSuccess'));
+        
+        // 刷新成功后也要获取详细数据
+        fetchAnalysisData();
       } else {
         message.error(result.message || t('analysis.refreshFailed'));
       }
@@ -194,6 +211,111 @@ const Analysis = () => {
   const getProductDisplayName = () => {
     if (selectedProduct === 'ALL') return t('analysis.allProducts');
     return selectedProduct;
+  };
+
+  // 判断是否需要显示详细表格
+  const shouldShowDetailTable = () => {
+    const hasSpecificCustomer = selectedCustomer && selectedCustomer !== 'ALL';
+    const hasSpecificProduct = selectedProduct && selectedProduct !== 'ALL';
+    
+    // 只有当指定了客户但产品为All，或指定了产品但客户为All时才显示详细表格
+    return (hasSpecificCustomer && !hasSpecificProduct) || (!hasSpecificCustomer && hasSpecificProduct);
+  };
+
+  // 获取详细表格标题
+  const getDetailTableTitle = () => {
+    const hasSpecificCustomer = selectedCustomer && selectedCustomer !== 'ALL';
+    const hasSpecificProduct = selectedProduct && selectedProduct !== 'ALL';
+    
+    if (hasSpecificCustomer && !hasSpecificProduct) {
+      const customerName = getCustomerDisplayName();
+      return t('analysis.customerProductDetail', { customer: customerName });
+    } else if (!hasSpecificCustomer && hasSpecificProduct) {
+      const productName = getProductDisplayName();
+      return t('analysis.productCustomerDetail', { product: productName });
+    }
+    return '';
+  };
+
+  // 详细表格列配置
+  const getDetailTableColumns = () => {
+    const hasSpecificCustomer = selectedCustomer && selectedCustomer !== 'ALL';
+    const hasSpecificProduct = selectedProduct && selectedProduct !== 'ALL';
+    
+    const baseColumns = [
+      {
+        title: t('analysis.salesAmount'),
+        dataIndex: 'sales_amount',
+        key: 'sales_amount',
+        render: (value) => formatCurrency(value),
+        align: 'right',
+        sorter: (a, b) => a.sales_amount - b.sales_amount,
+      },
+      {
+        title: t('analysis.cost'),
+        dataIndex: 'cost_amount',
+        key: 'cost_amount',
+        render: (value) => formatCurrency(value),
+        align: 'right',
+        sorter: (a, b) => a.cost_amount - b.cost_amount,
+      },
+      {
+        title: t('analysis.profit'),
+        dataIndex: 'profit_amount',
+        key: 'profit_amount',
+        render: (value) => (
+          <span style={{ color: value >= 0 ? '#52c41a' : '#ff4d4f' }}>
+            {formatCurrency(value)}
+          </span>
+        ),
+        align: 'right',
+        sorter: (a, b) => a.profit_amount - b.profit_amount,
+      },
+      {
+        title: t('analysis.profitRate'),
+        dataIndex: 'profit_rate',
+        key: 'profit_rate',
+        render: (value) => (
+          <span style={{ color: value >= 0 ? '#52c41a' : '#ff4d4f' }}>
+            {formatPercentage(value)}
+          </span>
+        ),
+        align: 'right',
+        sorter: (a, b) => a.profit_rate - b.profit_rate,
+      },
+    ];
+
+    if (hasSpecificCustomer && !hasSpecificProduct) {
+      // 显示产品列
+      return [
+        {
+          title: t('analysis.product'),
+          dataIndex: 'product_model',
+          key: 'product_model',
+          fixed: 'left',
+          width: 150,
+        },
+        ...baseColumns
+      ];
+    } else if (!hasSpecificCustomer && hasSpecificProduct) {
+      // 显示客户列
+      return [
+        {
+          title: t('analysis.customer'),
+          dataIndex: 'customer_code',
+          key: 'customer_code',
+          fixed: 'left',
+          width: 150,
+          render: (value) => {
+            const customer = customers.find(c => c.code === value);
+            return customer ? customer.name : value;
+          },
+        },
+        ...baseColumns
+      ];
+    }
+    
+    return baseColumns;
   };
 
   return (
@@ -350,6 +472,26 @@ const Analysis = () => {
         {analysisData && analysisData.last_updated && (
           <div style={{ textAlign: 'center', marginTop: 24, color: '#666' }}>
             <small>{t('analysis.dataUpdateTime')}: {dayjs(analysisData.last_updated).format('YYYY-MM-DD HH:mm:ss')}</small>
+          </div>
+        )}
+
+        {/* 详细分析表格 */}
+        {shouldShowDetailTable() && detailData.length > 0 && (
+          <div style={{ marginTop: 32 }}>
+            <Card title={getDetailTableTitle()}>
+              <Table
+                columns={getDetailTableColumns()}
+                dataSource={detailData}
+                rowKey={(record) => `${record.customer_code}_${record.product_model}`}
+                pagination={{
+                  showSizeChanger: true,
+                  showQuickJumper: true,
+                  showTotal: (total) => t('analysis.totalRecords', { total }),
+                }}
+                scroll={{ x: 800 }}
+                size="middle"
+              />
+            </Card>
           </div>
         )}
       </Card>

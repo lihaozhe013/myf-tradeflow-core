@@ -458,7 +458,10 @@
     "getAnalysisDataFailed": "获取分析数据失败",
     "dataNotGenerated": "数据未生成，请点击刷新按钮计算数据",
     "refreshSuccess": "数据刷新成功",
-    "refreshFailed": "刷新数据失败"
+    "refreshFailed": "刷新数据失败",
+    "customerProductDetail": "{{customer}} 的产品销售明细",
+    "productCustomerDetail": "{{product}} 的客户销售明细",
+    "totalRecords": "共 {{total}} 条记录"
   },
   "about": {
     "title": "关于我们",
