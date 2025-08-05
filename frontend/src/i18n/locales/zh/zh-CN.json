@@ -316,7 +316,12 @@
     "success": "导出成功！文件大小：{{size}}KB，已开始下载",
     "failed": "导出失败：{{msg}}",
     "unknownError": "未知错误",
-    "networkError": "网络连接失败，请检查服务器状态"
+    "networkError": "网络连接失败，请检查服务器状态",
+    "statement": "对账单导出",
+    "exportStatement": "导出对账单",
+    "inboundStatement": "入库对账单",
+    "outboundStatement": "出库对账单",
+    "statementTip": "对账单采用定制格式，与完整记录格式不同"
   },
   "payable": {
     "title": "应付账款",
@@ -454,5 +459,25 @@
     "dataNotGenerated": "数据未生成，请点击刷新按钮计算数据",
     "refreshSuccess": "数据刷新成功",
     "refreshFailed": "刷新数据失败"
+  },
+  "about": {
+    "title": "关于我们",
+    "companyProfile": "公司简介",
+    "defaultDescription": "这是一个专为小型贸易公司设计的进出货管理系统。",
+    "systemInfo": "系统信息",
+    "systemVersion": "系统版本",
+    "releaseDate": "发布日期",
+    "techStack": "技术栈",
+    "development": "开发",
+    "devTeam": "开发团队",
+    "contact": "联系方式",
+    "email": "邮箱",
+    "phone": "电话",
+    "address": "地址",
+    "defaultAddress": "火星",
+    "systemName": "ERP System",
+    "systemSlogan": "定制ERP系统",
+    "fetchFailed": "获取关于信息失败",
+    "loadFailed": "加载失败"
   }
 }

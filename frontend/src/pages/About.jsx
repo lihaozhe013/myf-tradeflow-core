@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Row, Col, Typography, Spin, Alert, Image } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 const { Title, Paragraph, Text } = Typography;
 
 function About() {
+  const { t } = useTranslation();
   const [aboutData, setAboutData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -17,7 +19,7 @@ function About() {
       setLoading(true);
       const response = await fetch('/api/about');
       if (!response.ok) {
-        throw new Error('获取关于信息失败');
+        throw new Error(t('about.fetchFailed'));
       }
       const data = await response.json();
       setAboutData(data);
@@ -39,7 +41,7 @@ function About() {
   if (error) {
     return (
       <Alert
-        message="加载失败"
+        message={t('about.loadFailed')}
         description={error}
         type="error"
         showIcon
@@ -53,50 +55,50 @@ function About() {
       <Row gutter={[32, 32]} align="middle">
         <Col xs={24} md={16}>
           <Title level={1} style={{ color: '#1890ff', marginBottom: '24px' }}>
-            {aboutData?.title || '关于我们'}
+            {aboutData?.title || t('about.title')}
           </Title>
           
           <div style={{ marginBottom: '32px' }}>
             <Title level={3} style={{ color: '#333' }}>
-              {aboutData?.company?.name || '公司简介'}
+              {aboutData?.company?.name || t('about.companyProfile')}
             </Title>
             <Paragraph style={{ fontSize: '16px', lineHeight: '1.8', color: '#555' }}>
-              {aboutData?.company?.description || '这是一个专为小型贸易公司设计的进出货管理系统。'}
+              {aboutData?.company?.description || t('about.defaultDescription')}
             </Paragraph>
           </div>
 
           <div style={{ marginBottom: '32px' }}>
             <Title level={3} style={{ color: '#333' }}>
-              系统信息
+              {t('about.systemInfo')}
             </Title>
             <Row gutter={[16, 16]}>
               <Col span={12}>
-                <Text strong>系统版本：</Text>
+                <Text strong>{t('about.systemVersion')}：</Text>
                 <Text>{aboutData?.system?.version || '0.1.0'}</Text>
               </Col>
               <Col span={12}>
-                <Text strong>发布日期：</Text>
+                <Text strong>{t('about.releaseDate')}：</Text>
                 <Text>{aboutData?.system?.releaseDate || '2025-01-01'}</Text>
               </Col>
               <Col span={12}>
-                <Text strong>技术栈：</Text>
+                <Text strong>{t('about.techStack')}：</Text>
                 <Text>{aboutData?.system?.techStack || 'React + Node.js + SQLite'}</Text>
               </Col>
               <Col span={12}>
-                <Text strong>开发：</Text>
-                <Text>{aboutData?.system?.team || '开发团队'}</Text>
+                <Text strong>{t('about.development')}：</Text>
+                <Text>{aboutData?.system?.team || t('about.devTeam')}</Text>
               </Col>
             </Row>
           </div>
 
           <div>
             <Title level={3} style={{ color: '#333' }}>
-              联系方式
+              {t('about.contact')}
             </Title>
             <Paragraph style={{ fontSize: '16px', lineHeight: '1.8', color: '#555' }}>
-              <Text strong>邮箱：</Text>{aboutData?.contact?.email || 'example@example.com'}<br />
-              <Text strong>电话：</Text>{aboutData?.contact?.phone || '+1 xxx-xxx-xxxx'}<br />
-              <Text strong>地址：</Text>{aboutData?.contact?.address || '火星'}
+              <Text strong>{t('about.email')}：</Text>{aboutData?.contact?.email || 'example@example.com'}<br />
+              <Text strong>{t('about.phone')}：</Text>{aboutData?.contact?.phone || '+1 xxx-xxx-xxxx'}<br />
+              <Text strong>{t('about.address')}：</Text>{aboutData?.contact?.address || t('about.defaultAddress')}
             </Paragraph>
           </div>
         </Col>
@@ -128,10 +130,10 @@ function About() {
                 textAlign: 'center' 
               }}
             >
-              {aboutData?.company?.name || 'ERP System'}
+              {aboutData?.company?.name || t('about.systemName')}
             </Title>
             <Paragraph style={{ color: '#f0f0f0', textAlign: 'center' }}>
-              {aboutData?.company?.slogan || '定制ERP系统'}
+              {aboutData?.company?.slogan || t('about.systemSlogan')}
             </Paragraph>
           </Card>
         </Col>
