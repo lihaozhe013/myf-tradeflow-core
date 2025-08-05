@@ -19,4 +19,19 @@ async function copyAppConfig() {
 
 module.exports = { copyAppConfig };
 
+async function copyIcon() {
+  const src = path.resolve(__dirname, '../../data/logo.svg');
+  const destDir = path.resolve(__dirname, '../../frontend/public');
+  const dest = path.join(destDir, 'logo.svg');
+  try {
+    await fs.ensureDir(destDir);
+    await fs.copy(src, dest);
+    console.log('logo.svg copied successfully!');
+  } catch (err) {
+    console.error('Failed to copy logo.svg:', err);
+  }
+}
+
+module.exports = { copyAppConfig, copyIcon };
 copyAppConfig();
+copyIcon();

@@ -12,8 +12,9 @@ import Overview from './pages/Overview';
 import Receivable from './pages/Receivable';
 import Payable from './pages/Payable';
 import Analysis from './pages/Analysis';
-import { Menu, Layout, Alert, Select, Space } from 'antd';
-import { GlobalOutlined } from '@ant-design/icons';
+import About from './pages/About';
+import { Menu, Layout, Alert, Select, Space, Avatar } from 'antd';
+import { GlobalOutlined, SettingOutlined } from '@ant-design/icons';
 import './App.css';
 
 const { Header, Content, Footer } = Layout;
@@ -110,6 +111,7 @@ function AppContent() {
     if (path === '/payable') return 'payable';
     if (path === '/analysis') return 'analysis';
     if (path === '/report') return 'report';
+    if (path === '/about') return 'about';
     return 'overview';
   };
 
@@ -163,14 +165,21 @@ function AppContent() {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Header style={{ padding: '0 24px', height: '50px', lineHeight: '50px' }}>
-        <Menu 
-          theme="dark" 
-          mode="horizontal" 
-          selectedKeys={[getSelectedKey()]}
-          items={menuItems}
-          style={{ lineHeight: '50px' }}
-        />
+      <Header style={{ padding: '0 24px', height: '50px', lineHeight: '50px', display: 'flex', alignItems: 'center' }}>
+        <div style={{ flex: 1 }}>
+          <Menu 
+            theme="dark" 
+            mode="horizontal" 
+            selectedKeys={[getSelectedKey()]}
+            items={menuItems}
+            style={{ lineHeight: '50px', background: 'transparent' }}
+          />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <Link to="/about">
+            <Avatar src="/logo.svg" alt="Icon" style={{ cursor: 'pointer', width: '43px', height: '43px' }} />
+          </Link>
+        </div>
       </Header>
       <Content style={{ padding: '25px', background: '#f0f2f5', marginTop: '0px' }}>
         <div style={{ maxWidth: '1800px', margin: '0 auto' }}>
@@ -188,6 +197,7 @@ function AppContent() {
               <Route path="/payable" element={<Payable />} />
               <Route path="/analysis" element={<Analysis />} />
               <Route path="/report" element={<Report />} />
+              <Route path="/about" element={<About />} />
               <Route path="*" element={<Navigate to="/overview" replace />} />
             </Routes>
           </ErrorBoundary>

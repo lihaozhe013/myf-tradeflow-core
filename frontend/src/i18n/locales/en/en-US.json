@@ -294,7 +294,12 @@
     "success": "Export successful! File size: {{size}}KB, download started.",
     "failed": "Export failed: {{msg}}",
     "unknownError": "Unknown error",
-    "networkError": "Network connection failed, check server status."
+    "networkError": "Network connection failed, check server status.",
+    "statement": "Statement Export",
+    "exportStatement": "Export Statement",
+    "inboundStatement": "Inbound Statement",
+    "outboundStatement": "Outbound Statement",
+    "statementTip": "Statements use custom format, different from complete record format"
   },
   "payable": {
     "title": "Payable",
@@ -430,6 +435,29 @@
     "getAnalysisDataFailed": "Failed to get analysis data",
     "dataNotGenerated": "Data not generated, please click refresh button to calculate data",
     "refreshSuccess": "Data refresh successful",
-    "refreshFailed": "Failed to refresh data"
+    "refreshFailed": "Failed to refresh data",
+    "customerProductDetail": "Product Sales Detail for {{customer}}",
+    "productCustomerDetail": "Customer Sales Detail for {{product}}",
+    "totalRecords": "Total {{total}} records"
+  },
+  "about": {
+    "title": "About Us",
+    "companyProfile": "Company Profile",
+    "defaultDescription": "This is an inventory management system designed specifically for small trading companies.",
+    "systemInfo": "System Information",
+    "systemVersion": "System Version",
+    "releaseDate": "Release Date",
+    "techStack": "Tech Stack",
+    "development": "Development",
+    "devTeam": "Development Team",
+    "contact": "Contact Information",
+    "email": "Email",
+    "phone": "Phone",
+    "address": "Address",
+    "defaultAddress": "Mars",
+    "systemName": "ERP System",
+    "systemSlogan": "Custom ERP System",
+    "fetchFailed": "Failed to fetch about information",
+    "loadFailed": "Load Failed"
   }
 }

@@ -152,7 +152,7 @@ const ExportPanel = ({
         </Col>
         
         <Col span={24}>
-          <Card title="对账单导出" size="small">
+          <Card title={t('export.statement')} size="small">
             <Form layout="inline" style={{ marginBottom: 16 }}>
               <Form.Item label={t('export.dateRange')}>
                 <RangePicker
@@ -192,7 +192,7 @@ const ExportPanel = ({
                 })}
                 loading={loading}
               >
-                导出对账单
+                {t('export.exportStatement')}
               </Button>
               <Button
                 type="default"
@@ -207,7 +207,7 @@ const ExportPanel = ({
                 })}
                 loading={loading}
               >
-                入库对账单
+                {t('export.inboundStatement')}
               </Button>
               <Button
                 type="default"
@@ -222,11 +222,11 @@ const ExportPanel = ({
                 })}
                 loading={loading}
               >
-                出库对账单
+                {t('export.outboundStatement')}
               </Button>
             </Space>
             <div style={{ marginTop: 8, fontSize: '12px', color: '#666' }}>
-              对账单采用定制格式，与完整记录格式不同
+              {t('export.statementTip')}
             </div>
           </Card>
         </Col>
