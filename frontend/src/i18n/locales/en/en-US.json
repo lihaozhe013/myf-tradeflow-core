@@ -418,6 +418,7 @@
     "selectCustomer": "Please select customer",
     "selectProduct": "Please select product",
     "refreshData": "Refresh Data",
+    "exportData": "Export Data",
     "allCustomers": "All Customers",
     "allProducts": "All Products",
     "analysisConditions": "Analysis Conditions",
@@ -438,7 +439,10 @@
     "refreshFailed": "Failed to refresh data",
     "customerProductDetail": "Product Sales Detail for {{customer}}",
     "productCustomerDetail": "Customer Sales Detail for {{product}}",
-    "totalRecords": "Total {{total}} records"
+    "totalRecords": "Total {{total}} records",
+    "noDataToExport": "No data to export",
+    "exportSuccess": "Export successful",
+    "exportFailed": "Export failed"
   },
   "about": {
     "title": "About Us",

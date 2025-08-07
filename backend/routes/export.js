@@ -146,6 +146,42 @@ router.post('/invoice', async (req, res) => {
     }
 });
 
+// 导出分析数据
+router.post('/analysis', async (req, res) => {
+    try {
+        const { analysisData, detailData, startDate, endDate, customerCode, productModel } = req.body;
+        
+        if (!analysisData) {
+            return res.status(400).json({
+                success: false,
+                message: '分析数据是必填项'
+            });
+        }
+        
+        const exporter = new ExcelExporter();
+        const buffer = await exporter.exportAnalysis({
+            analysisData,
+            detailData: detailData || [],
+            startDate,
+            endDate,
+            customerCode,
+            productModel
+        });
+        
+        const filename = exporter.generateFilename('analysis');
+        
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
+        res.send(buffer);
+    } catch (error) {
+        console.error('分析数据导出失败:', error);
+        res.status(500).json({
+            success: false,
+            message: `导出失败: ${error.message}`
+        });
+    }
+});
+
 // 获取导出状态
 router.get('/status', (req, res) => {
     res.json({
@@ -187,6 +223,14 @@ router.get('/status', (req, res) => {
                 endpoint: '/api/export/invoice',
                 method: 'POST',
                 required_params: ['partnerCode', 'dateFrom', 'dateTo'],
+                response_type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            },
+            {
+                name: 'analysis',
+                description: '数据分析导出（分析汇总和详细数据）',
+                endpoint: '/api/export/analysis',
+                method: 'POST',
+                required_params: ['analysisData'],
                 response_type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             }
         ],

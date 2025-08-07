@@ -441,6 +441,7 @@
     "selectCustomer": "请选择客户",
     "selectProduct": "请选择产品",
     "refreshData": "刷新数据",
+    "exportData": "导出数据",
     "allCustomers": "全部客户",
     "allProducts": "全部产品",
     "analysisConditions": "分析条件",
@@ -461,7 +462,10 @@
     "refreshFailed": "刷新数据失败",
     "customerProductDetail": "{{customer}} 的产品销售明细",
     "productCustomerDetail": "{{product}} 的客户销售明细",
-    "totalRecords": "共 {{total}} 条记录"
+    "totalRecords": "共 {{total}} 条记录",
+    "noDataToExport": "暂无数据可导出",
+    "exportSuccess": "导出成功",
+    "exportFailed": "导出失败"
   },
   "about": {
     "title": "关于我们",

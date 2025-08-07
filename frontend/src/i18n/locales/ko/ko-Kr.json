@@ -419,6 +419,7 @@
     "selectCustomer": "고객을 선택하세요",
     "selectProduct": "제품을 선택하세요",
     "refreshData": "데이터 새로고침",
+    "exportData": "데이터 내보내기",
     "allCustomers": "모든 고객",
     "allProducts": "모든 제품",
     "analysisConditions": "분석 조건",
@@ -439,7 +440,10 @@
     "refreshFailed": "데이터 새로고침 실패",
     "customerProductDetail": "{{customer}}의 제품 판매 세부사항",
     "productCustomerDetail": "{{product}}의 고객 판매 세부사항",
-    "totalRecords": "총 {{total}}개 기록"
+    "totalRecords": "총 {{total}}개 기록",
+    "noDataToExport": "내보낼 데이터 없음",
+    "exportSuccess": "내보내기 성공",
+    "exportFailed": "내보내기 실패"
   },
   "about": {
     "title": "회사 소개",

@@ -12,20 +12,21 @@ import {
   Space,
   Divider,
   Alert,
-  Table
+  Table,
+  AutoComplete
 } from 'antd';
 import { 
   ReloadOutlined, 
   DollarOutlined, 
   ShoppingCartOutlined, 
   RiseOutlined,
-  PercentageOutlined
+  PercentageOutlined,
+  DownloadOutlined
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 
 const { RangePicker } = DatePicker;
-const { Option } = Select;
 
 const Analysis = () => {
   const { t } = useTranslation();
@@ -33,6 +34,7 @@ const Analysis = () => {
   // 状态管理
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [customers, setCustomers] = useState([]);
   const [products, setProducts] = useState([]);
   const [analysisData, setAnalysisData] = useState(null);
@@ -40,8 +42,8 @@ const Analysis = () => {
   
   // 筛选条件
   const [dateRange, setDateRange] = useState([
-    dayjs().subtract(1, 'month'),
-    dayjs()
+    dayjs().subtract(1, 'month').startOf('month'), // 上个月第一天
+    dayjs().subtract(1, 'month').endOf('month')     // 上个月最后一天
   ]);
   const [selectedCustomer, setSelectedCustomer] = useState('ALL');
   const [selectedProduct, setSelectedProduct] = useState('ALL');
@@ -177,6 +179,82 @@ const Analysis = () => {
       message.error(t('analysis.refreshFailed'));
     } finally {
       setRefreshing(false);
+    }
+  };
+
+  // 导出分析数据
+  const exportAnalysisData = async () => {
+    if (!analysisData) {
+      message.warning(t('analysis.noDataToExport'));
+      return;
+    }
+
+    if (!dateRange || !dateRange[0] || !dateRange[1]) {
+      message.warning(t('analysis.selectTimeRange'));
+      return;
+    }
+
+    try {
+      setExporting(true);
+      
+      // 处理详细数据，添加客户名称映射
+      const processedDetailData = detailData.map(item => {
+        const customer = customers.find(c => c.code === item.customer_code);
+        return {
+          ...item,
+          customer_name: customer ? customer.short_name : item.customer_code
+        };
+      });
+      
+      const requestBody = {
+        analysisData,
+        detailData: processedDetailData,
+        startDate: dateRange[0].format('YYYY-MM-DD'),
+        endDate: dateRange[1].format('YYYY-MM-DD'),
+        customerCode: selectedCustomer !== 'ALL' ? selectedCustomer : undefined,
+        productModel: selectedProduct !== 'ALL' ? selectedProduct : undefined
+      };
+
+      const response = await fetch('/api/export/analysis', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errorResult = await response.json();
+        throw new Error(errorResult.message || t('analysis.exportFailed'));
+      }
+
+      // 获取文件名
+      const contentDisposition = response.headers.get('content-disposition');
+      let filename = '数据分析导出.xlsx';
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+        if (filenameMatch) {
+          filename = decodeURIComponent(filenameMatch[1].replace(/['"]/g, ''));
+        }
+      }
+
+      // 下载文件
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      message.success(t('analysis.exportSuccess'));
+    } catch (error) {
+      console.error('导出失败:', error);
+      message.error(error.message || t('analysis.exportFailed'));
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -341,52 +419,64 @@ const Analysis = () => {
             <div style={{ marginBottom: 8 }}>
               <strong>{t('analysis.customer')}</strong>
             </div>
-            <Select
+            <AutoComplete
               value={selectedCustomer}
               onChange={setSelectedCustomer}
               style={{ width: '100%' }}
               placeholder={t('analysis.selectCustomer')}
-              loading={loading}
-            >
-              {customers.map(customer => (
-                <Option key={customer.code} value={customer.code}>
-                  {customer.name}
-                </Option>
-              ))}
-            </Select>
+              options={customers.map(customer => ({
+                value: customer.code,
+                label: `${customer.code} - ${customer.name}`
+              }))}
+              filterOption={(inputValue, option) =>
+                option.label.toLowerCase().includes(inputValue.toLowerCase())
+              }
+              allowClear
+            />
           </Col>
           
           <Col xs={24} sm={12} md={8}>
             <div style={{ marginBottom: 8 }}>
               <strong>{t('analysis.product')}</strong>
             </div>
-            <Select
+            <AutoComplete
               value={selectedProduct}
               onChange={setSelectedProduct}
               style={{ width: '100%' }}
               placeholder={t('analysis.selectProduct')}
-              loading={loading}
-            >
-              {products.map(product => (
-                <Option key={product.model} value={product.model}>
-                  {product.name}
-                </Option>
-              ))}
-            </Select>
+              options={products.map(product => ({
+                value: product.model,
+                label: `${product.model} - ${product.name}`
+              }))}
+              filterOption={(inputValue, option) =>
+                option.label.toLowerCase().includes(inputValue.toLowerCase())
+              }
+              allowClear
+            />
           </Col>
         </Row>
 
         {/* 操作按钮 */}
         <Row style={{ marginBottom: 24 }}>
           <Col>
-            <Button
-              type="primary"
-              icon={<ReloadOutlined />}
-              onClick={refreshAnalysisData}
-              loading={refreshing}
-            >
-              {t('analysis.refreshData')}
-            </Button>
+            <Space>
+              <Button
+                type="primary"
+                icon={<ReloadOutlined />}
+                onClick={refreshAnalysisData}
+                loading={refreshing}
+              >
+                {t('analysis.refreshData')}
+              </Button>
+              <Button
+                icon={<DownloadOutlined />}
+                onClick={exportAnalysisData}
+                loading={exporting}
+                disabled={!analysisData}
+              >
+                {t('analysis.exportData')}
+              </Button>
+            </Space>
           </Col>
         </Row>
 
