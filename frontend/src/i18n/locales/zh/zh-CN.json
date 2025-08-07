@@ -465,7 +465,27 @@
     "totalRecords": "共 {{total}} 条记录",
     "noDataToExport": "暂无数据可导出",
     "exportSuccess": "导出成功",
-    "exportFailed": "导出失败"
+    "exportFailed": "导出失败",
+    "advancedExport": {
+      "title": "高级导出选项",
+      "notice": "注意",
+      "noticeDescription": "你选择了全部客户和全部产品，系统将生成多工作表的详细分析报告。这可能非常慢，并且可能导致系统崩溃。",
+      "exportMethod": "导出方式",
+      "byCustomer": "按客户分类导出",
+      "byProduct": "按产品分类导出",
+      "byCustomerDesc": "为每个客户生成独立工作表，包含该客户的产品销售明细",
+      "byProductDesc": "为每个产品生成独立工作表，包含该产品的客户销售明细",
+      "customerDescription": "为每个客户生成独立工作表，包含该客户的产品销售明细",
+      "productDescription": "为每个产品生成独立工作表，包含该产品的客户销售明细",
+      "exportPreview": "导出预览",
+      "estimatedSheets": "预计生成工作表数量",
+      "sheets": "张",
+      "startExport": "开始导出",
+      "cancel": "取消",
+      "exporting": "正在生成报告...",
+      "warning": "警告",
+      "warningDescription": "请注意，这个操作可能需要较长时间，并且会消耗大量内存。如果你使用的是Electron App版本，你的电脑可能因此卡死，请确保开始操作之前备份所有数据，请确保您的系统有足够的资源来处理此操作。"
+    }
   },
   "about": {
     "title": "关于我们",

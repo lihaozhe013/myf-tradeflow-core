@@ -244,4 +244,49 @@ router.get('/status', (req, res) => {
     });
 });
 
+// 高级分析数据导出
+router.post('/analysis/advanced', async (req, res) => {
+    try {
+        const { exportType, startDate, endDate } = req.body;
+        
+        // 验证必需参数
+        if (!exportType || !['customer', 'product'].includes(exportType)) {
+            return res.status(400).json({
+                success: false,
+                message: '导出类型必须是 customer 或 product'
+            });
+        }
+        
+        if (!startDate || !endDate) {
+            return res.status(400).json({
+                success: false,
+                message: '开始日期和结束日期不能为空'
+            });
+        }
+        
+        const exporter = new ExcelExporter();
+        const buffer = await exporter.exportAdvancedAnalysis({
+            exportType,
+            startDate,
+            endDate
+        });
+        
+        // 生成文件名
+        const typeText = exportType === 'customer' ? '客户分类' : '产品分类';
+        const dateText = `${startDate.replace(/-/g, '')}-${endDate.replace(/-/g, '')}`;
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/[T:-]/g, '');
+        const filename = `高级分析导出-${typeText}-${dateText}-${timestamp}.xlsx`;
+        
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
+        res.send(buffer);
+    } catch (error) {
+        console.error('高级分析数据导出失败:', error);
+        res.status(500).json({
+            success: false,
+            message: `导出失败: ${error.message}`
+        });
+    }
+});
+
 module.exports = router;

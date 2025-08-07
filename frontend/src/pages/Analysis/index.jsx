@@ -25,6 +25,7 @@ import {
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
+import AdvancedExportModal from './components/AdvancedExportModal';
 
 const { RangePicker } = DatePicker;
 
@@ -35,6 +36,7 @@ const Analysis = () => {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [advancedExportModalVisible, setAdvancedExportModalVisible] = useState(false);
   const [customers, setCustomers] = useState([]);
   const [products, setProducts] = useState([]);
   const [analysisData, setAnalysisData] = useState(null);
@@ -194,6 +196,18 @@ const Analysis = () => {
       return;
     }
 
+    // 如果客户和产品都选择ALL，显示高级导出选项Modal
+    if (selectedCustomer === 'ALL' && selectedProduct === 'ALL') {
+      setAdvancedExportModalVisible(true);
+      return;
+    }
+
+    // 普通导出逻辑
+    await performNormalExport();
+  };
+
+  // 执行普通导出
+  const performNormalExport = async () => {
     try {
       setExporting(true);
       
@@ -256,6 +270,70 @@ const Analysis = () => {
     } finally {
       setExporting(false);
     }
+  };
+
+  // 执行高级导出
+  const performAdvancedExport = async (exportType) => {
+    try {
+      setExporting(true);
+      setAdvancedExportModalVisible(false);
+      
+      const requestBody = {
+        exportType, // 'customer' 或 'product'
+        startDate: dateRange[0].format('YYYY-MM-DD'),
+        endDate: dateRange[1].format('YYYY-MM-DD')
+      };
+
+      const response = await fetch('/api/export/analysis/advanced', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errorResult = await response.json();
+        throw new Error(errorResult.message || t('analysis.exportFailed'));
+      }
+
+      // 获取文件名
+      const contentDisposition = response.headers.get('content-disposition');
+      let filename = `高级分析导出_${exportType === 'customer' ? '按客户分类' : '按产品分类'}.xlsx`;
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+        if (filenameMatch) {
+          filename = decodeURIComponent(filenameMatch[1].replace(/['"]/g, ''));
+        }
+      }
+
+      // 下载文件
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      message.success(t('analysis.exportSuccess'));
+    } catch (error) {
+      console.error('高级导出失败:', error);
+      message.error(error.message || t('analysis.exportFailed'));
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  // 获取有效客户和产品数量（用于Modal显示）
+  const getValidCustomerCount = () => {
+    return customers.filter(c => c.code !== 'ALL').length;
+  };
+
+  const getValidProductCount = () => {
+    return products.filter(p => p.model !== 'ALL').length;
   };
 
   // 筛选条件变化时自动获取数据
@@ -585,6 +663,17 @@ const Analysis = () => {
           </div>
         )}
       </Card>
+
+      {/* 高级导出Modal */}
+      <AdvancedExportModal
+        visible={advancedExportModalVisible}
+        onCancel={() => setAdvancedExportModalVisible(false)}
+        onConfirm={performAdvancedExport}
+        loading={exporting}
+        dateRange={dateRange}
+        customerCount={getValidCustomerCount()}
+        productCount={getValidProductCount()}
+      />
     </div>
   );
 };

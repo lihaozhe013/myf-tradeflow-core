@@ -442,7 +442,27 @@
     "totalRecords": "Total {{total}} records",
     "noDataToExport": "No data to export",
     "exportSuccess": "Export successful",
-    "exportFailed": "Export failed"
+    "exportFailed": "Export failed",
+    "advancedExport": {
+      "title": "Advanced Export Options",
+      "notice": "Notice",
+      "noticeDescription": "You have selected all customers and all products. The system will generate a multi-worksheet detailed analysis report. This may be very slow and could cause the system to crash.",
+      "exportMethod": "Export Method",
+      "byCustomer": "Export by Customer",
+      "byProduct": "Export by Product",
+      "byCustomerDesc": "Generate a separate worksheet for each customer, including detailed product sales for that customer.",
+      "byProductDesc": "Generate a separate worksheet for each product, including detailed customer sales for that product.",
+      "customerDescription": "Generate a separate worksheet for each customer, including detailed product sales for that customer.",
+      "productDescription": "Generate a separate worksheet for each product, including detailed customer sales for that product.",
+      "exportPreview": "Export Preview",
+      "estimatedSheets": "Estimated number of sheets",
+      "sheets": "sheets",
+      "startExport": "Start Export",
+      "cancel": "Cancel",
+      "exporting": "Generating report...",
+      "warning": "Warning",
+      "warningDescription": "Please be aware that this operation may take a long time and consume a large amount of memory. If you are using the Electron App version, your computer may freeze. Please ensure you back up all data before starting the operation and that your system has sufficient resources to handle this operation."
+    }
   },
   "about": {
     "title": "About Us",
