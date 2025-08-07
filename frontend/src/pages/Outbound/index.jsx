@@ -330,7 +330,7 @@ const Outbound = () => {
       <Card>
         <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
           <Col>
-            <Title level={3} style={{ margin: 0 }}>{t('outbound.title')}</Title>
+            <Title level={2} style={{ margin: 0 }}>{t('outbound.title')}</Title>
           </Col>
           <Col>
             <Button

@@ -294,7 +294,7 @@ const ProductPrices = () => {
       <Card>
         <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
           <Col>
-            <Title level={3} style={{ margin: 0 }}>{t('productPrices.title')}</Title>
+            <Title level={2} style={{ margin: 0 }}>{t('productPrices.title')}</Title>
           </Col>
           <Col>
             <Button

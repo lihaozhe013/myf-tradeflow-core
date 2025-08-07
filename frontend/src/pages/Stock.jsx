@@ -164,7 +164,7 @@ const Stock = () => {
           style={{ marginBottom: 16 }}
         >
           <Col>
-            <Title level={3} style={{ margin: 0 }}>
+            <Title level={2} style={{ margin: 0 }}>
               {t("stock.title")}
             </Title>
           </Col>

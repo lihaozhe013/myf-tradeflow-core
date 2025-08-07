@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Spin, Divider, message } from 'antd';
+import { Card, Spin, Divider, message, Row, Col, Typography } from 'antd';
+const { Title } = Typography;
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 
@@ -118,9 +119,13 @@ const Analysis = () => {
   }, [dateRange, selectedCustomer, selectedProduct]);
 
   return (
-    <div style={{ padding: '0 24px' }}>
-      <Card title={t('analysis.title')} style={{ marginBottom: 24 }}>
-        
+    <div>
+      <Card>
+        <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
+          <Col>
+            <Title level={2} style={{ margin: 0 }}>{t('analysis.title')}</Title>
+          </Col>
+        </Row>
         {/* 筛选条件和操作按钮 */}
         <AnalysisFilters
           dateRange={dateRange}

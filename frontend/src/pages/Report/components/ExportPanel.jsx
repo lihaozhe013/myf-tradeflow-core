@@ -32,7 +32,10 @@ const ExportPanel = ({
     <div>
       <Row gutter={[16, 16]}>
         <Col span={24}>
-          <Card title={t('export.baseInfo')} size="small">
+          <Card 
+            title={<span style={{ fontSize: '16px', fontWeight: 'bold' }}>{t('export.baseInfo')}</span>} 
+            size="small"
+          >
             <Space wrap>
               <Button
                 type="default"
@@ -75,7 +78,10 @@ const ExportPanel = ({
         </Col>
         
         <Col span={24}>
-          <Card title={t('export.inboundOutbound')} size="small">
+          <Card 
+            title={<span style={{ fontSize: '16px', fontWeight: 'bold' }}>{t('export.inboundOutbound')}</span>} 
+            size="small"
+          >
             <Form layout="inline" style={{ marginBottom: 16 }}>
               <Form.Item label={t('export.dateRange')}>
                 <RangePicker
@@ -152,7 +158,10 @@ const ExportPanel = ({
         </Col>
         
         <Col span={24}>
-          <Card title={t('export.statement')} size="small">
+          <Card 
+            title={<span style={{ fontSize: '16px', fontWeight: 'bold' }}>{t('export.statement')}</span>} 
+            size="small"
+          >
             <Form layout="inline" style={{ marginBottom: 16 }}>
               <Form.Item label={t('export.dateRange')}>
                 <RangePicker
@@ -232,7 +241,10 @@ const ExportPanel = ({
         </Col>
         
         <Col span={24}>
-          <Card title={t('export.receivablePayable')} size="small">
+          <Card 
+            title={<span style={{ fontSize: '16px', fontWeight: 'bold' }}>{t('export.receivablePayable')}</span>} 
+            size="small"
+          >
             <Form layout="inline" style={{ marginBottom: 16 }}>
               <Form.Item label={t('export.inoutDate')}>
                 <RangePicker
@@ -270,7 +282,10 @@ const ExportPanel = ({
         </Col>
         
         <Col span={24}>
-          <Card title={t('export.invoice')} size="small">
+          <Card 
+            title={<span style={{ fontSize: '16px', fontWeight: 'bold' }}>{t('export.invoice')}</span>} 
+            size="small"
+          >
             <Form layout="inline" style={{ marginBottom: 16 }}>
               <Form.Item label={t('export.partnerCode')} required>
                 <Input
