@@ -1,19 +1,19 @@
 const express = require('express');
 const router = express.Router();
-const decimalCalc = require('../utils/decimalCalculator');
+const decimalCalc = require('../../utils/decimalCalculator');
 
 // 导入工具模块
-const { calculateFilteredSoldGoodsCost } = require('./analysis/utils/costCalculator');
-const { calculateDetailAnalysis } = require('./analysis/utils/detailAnalyzer');
-const { calculateSalesData } = require('./analysis/utils/salesCalculator');
-const { getFilterOptions } = require('./analysis/utils/dataQueries');
-const { validateAnalysisParams, validateBasicParams } = require('./analysis/utils/validator');
+const { calculateFilteredSoldGoodsCost } = require('./utils/costCalculator');
+const { calculateDetailAnalysis } = require('./utils/detailAnalyzer');
+const { calculateSalesData } = require('./utils/salesCalculator');
+const { getFilterOptions } = require('./utils/dataQueries');
+const { validateAnalysisParams, validateBasicParams } = require('./utils/validator');
 const {
   generateCacheKey,
   generateDetailCacheKey,
   readCache,
   writeCache
-} = require('./analysis/utils/cacheManager');
+} = require('./utils/cacheManager');
 
 // GET /api/analysis/data - 获取分析数据（从缓存读取）
 router.get('/data', (req, res) => {

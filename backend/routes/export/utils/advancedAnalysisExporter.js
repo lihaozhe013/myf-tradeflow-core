@@ -1,5 +1,6 @@
 // 高级分析导出器
 const XLSX = require('xlsx');
+const ExportUtils = require('./exportUtils');
 
 class AdvancedAnalysisExporter {
   constructor(templates, queries) {
@@ -61,7 +62,7 @@ class AdvancedAnalysisExporter {
           profit_rate: `${Number(customer.profit_rate || 0).toFixed(2)}%`
         }];
 
-        const summaryWorksheet = this.createWorksheet(summaryData, this.templates.analysis_customer_summary);
+        const summaryWorksheet = ExportUtils.createWorksheet(summaryData, this.templates.analysis_customer_summary);
         const summarySheetName = `${customer.customer_name}-汇总`.substring(0, 30); // Excel工作表名称限制
         XLSX.utils.book_append_sheet(workbook, summaryWorksheet, summarySheetName);
 
@@ -87,7 +88,7 @@ class AdvancedAnalysisExporter {
             }));
 
           if (detailData.length > 0) {
-            const detailWorksheet = this.createWorksheet(detailData, this.templates.analysis_customer_detail);
+            const detailWorksheet = ExportUtils.createWorksheet(detailData, this.templates.analysis_customer_detail);
             const detailSheetName = `${customer.customer_name}-明细`.substring(0, 30);
             XLSX.utils.book_append_sheet(workbook, detailWorksheet, detailSheetName);
           }
@@ -124,7 +125,7 @@ class AdvancedAnalysisExporter {
           profit_rate: `${Number(product.profit_rate || 0).toFixed(2)}%`
         }];
 
-        const summaryWorksheet = this.createWorksheet(summaryData, this.templates.analysis_product_summary);
+        const summaryWorksheet = ExportUtils.createWorksheet(summaryData, this.templates.analysis_product_summary);
         const summarySheetName = `${product.product_model}-汇总`.substring(0, 30);
         XLSX.utils.book_append_sheet(workbook, summaryWorksheet, summarySheetName);
 
@@ -151,63 +152,13 @@ class AdvancedAnalysisExporter {
             }));
 
           if (detailData.length > 0) {
-            const detailWorksheet = this.createWorksheet(detailData, this.templates.analysis_product_detail);
+            const detailWorksheet = ExportUtils.createWorksheet(detailData, this.templates.analysis_product_detail);
             const detailSheetName = `${product.product_model}-明细`.substring(0, 30);
             XLSX.utils.book_append_sheet(workbook, detailWorksheet, detailSheetName);
           }
         }
       }
     }
-  }
-
-  /**
-   * 创建工作表
-   * @param {Array} data - 数据数组
-   * @param {Object} template - 模板配置
-   * @returns {Object} 工作表对象
-   */
-  createWorksheet(data, template) {
-    // 创建表头
-    const headers = template.columns.map(col => col.label);
-    
-    // 创建数据行
-    const rows = data.map(item => 
-      template.columns.map(col => {
-        const value = item[col.key];
-        // 处理数值类型
-        if (typeof value === 'number') {
-          return value;
-        }
-        // 处理其他类型，确保返回字符串
-        return value != null ? String(value) : '';
-      })
-    );
-    
-    // 合并表头和数据
-    const sheetData = [headers, ...rows];
-    
-    // 创建工作表
-    const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
-    
-    // 设置列宽
-    const colWidths = template.columns.map(col => {
-      // 根据列标签长度设置基础宽度
-      const labelWidth = col.label.length * 2;
-      // 根据数据类型设置宽度
-      let dataWidth = 10;
-      if (col.key.includes('date')) {
-        dataWidth = 12;
-      } else if (col.key.includes('price') || col.key.includes('amount')) {
-        dataWidth = 15;
-      } else if (col.key.includes('name') || col.key.includes('address')) {
-        dataWidth = 20;
-      }
-      return { wch: Math.max(labelWidth, dataWidth) };
-    });
-    
-    worksheet['!cols'] = colWidths;
-    
-    return worksheet;
   }
 }
 
