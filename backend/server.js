@@ -58,8 +58,8 @@ const productsRoutes = require('./routes/products');               // 产品管�
 const productPricesRoutes = require('./routes/productPrices');     // 产品价格管理
 const receivableRoutes = require('./routes/receivable');           // 应收账款管理
 const payableRoutes = require('./routes/payable');                 // 应付账款管理
-const exportRoutes = require('./routes/export');                   // 导出功能
-const analysisRoutes = require('./routes/analysis');               // 数据分析功能
+const exportRoutes = require('./routes/export/index');             // 导出功能
+const analysisRoutes = require('./routes/analysis/analysis');               // 数据分析功能
 const aboutRoutes = require('./routes/about');                     // 关于页面
 
 // 注册 API 路由
