@@ -18,12 +18,12 @@ function calculateFilteredSoldGoodsCost(startDate, endDate, customerCode, produc
   let whereConditions = ['unit_price >= 0'];
   let params = [];
   
-  if (customerCode && customerCode !== 'ALL') {
+  if (customerCode && customerCode !== 'All') {
     whereConditions.push('customer_code = ?');
     params.push(customerCode);
   }
   
-  if (productModel && productModel !== 'ALL') {
+  if (productModel && productModel !== 'All') {
     whereConditions.push('product_model = ?');
     params.push(productModel);
   }
@@ -90,7 +90,7 @@ function calculateFilteredSoldGoodsCost(startDate, endDate, customerCode, produc
       let specialIncomeConditions = ['unit_price < 0'];
       let specialIncomeParams = [];
       
-      if (productModel && productModel !== 'ALL') {
+      if (productModel && productModel !== 'All') {
         specialIncomeConditions.push('product_model = ?');
         specialIncomeParams.push(productModel);
       }
@@ -123,8 +123,8 @@ function calculateFilteredSoldGoodsCost(startDate, endDate, customerCode, produc
  * 生成缓存键
  */
 function generateCacheKey(startDate, endDate, customerCode, productModel) {
-  const customer = customerCode || 'ALL';
-  const product = productModel || 'ALL';
+  const customer = customerCode || 'All';
+  const product = productModel || 'All';
   return `${startDate}_${endDate}_${customer}_${product}`;
 }
 
@@ -132,8 +132,8 @@ function generateCacheKey(startDate, endDate, customerCode, productModel) {
  * 生成详细分析缓存键
  */
 function generateDetailCacheKey(startDate, endDate, customerCode, productModel) {
-  const customer = customerCode || 'ALL';
-  const product = productModel || 'ALL';
+  const customer = customerCode || 'All';
+  const product = productModel || 'All';
   return `detail_${startDate}_${endDate}_${customer}_${product}`;
 }
 
@@ -154,10 +154,10 @@ function getCacheFilePath() {
  */
 function calculateDetailAnalysis(startDate, endDate, customerCode, productModel, callback) {
   // 确定分组类型
-  const groupByCustomer = !customerCode || customerCode === 'ALL';
-  const groupByProduct = !productModel || productModel === 'ALL';
+  const groupByCustomer = !customerCode || customerCode === 'All';
+  const groupByProduct = !productModel || productModel === 'All';
   
-  // 如果两个都是ALL或都不是ALL，不需要详细分析
+  // 如果两个都是All或都不是All，不需要详细分析
   if ((groupByCustomer && groupByProduct) || (!groupByCustomer && !groupByProduct)) {
     return callback(null, []);
   }
@@ -228,8 +228,8 @@ function calculateDetailAnalysis(startDate, endDate, customerCode, productModel,
           calculateFilteredSoldGoodsCost(
             startDate, 
             endDate, 
-            currentCustomerCode === 'ALL' ? null : currentCustomerCode,
-            currentProductModel === 'ALL' ? null : currentProductModel,
+            currentCustomerCode === 'All' ? null : currentCustomerCode,
+            currentProductModel === 'All' ? null : currentProductModel,
             (costErr, costAmount) => {
               if (costErr) return reject(costErr);
               
@@ -436,12 +436,12 @@ router.post('/refresh', (req, res) => {
   let salesSqlConditions = ['unit_price >= 0', 'date(outbound_date) BETWEEN ? AND ?'];
   let salesParams = [start_date, end_date];
   
-  if (customer_code && customer_code !== 'ALL') {
+  if (customer_code && customer_code !== 'All') {
     salesSqlConditions.push('customer_code = ?');
     salesParams.push(customer_code);
   }
   
-  if (product_model && product_model !== 'ALL') {
+  if (product_model && product_model !== 'All') {
     salesSqlConditions.push('product_model = ?');
     salesParams.push(product_model);
   }
@@ -454,8 +454,8 @@ router.post('/refresh', (req, res) => {
         FROM outbound_records 
         WHERE unit_price < 0 
           AND date(outbound_date) BETWEEN ? AND ?
-          ${customer_code && customer_code !== 'ALL' ? 'AND customer_code = ?' : ''}
-          ${product_model && product_model !== 'ALL' ? 'AND product_model = ?' : ''}
+          ${customer_code && customer_code !== 'All' ? 'AND customer_code = ?' : ''}
+          ${product_model && product_model !== 'All' ? 'AND product_model = ?' : ''}
       ), 0) as special_expense
     FROM outbound_records 
     WHERE ${salesSqlConditions.join(' AND ')}
@@ -463,10 +463,10 @@ router.post('/refresh', (req, res) => {
   
   // 构建特殊支出查询的参数
   let specialExpenseParams = [start_date, end_date];
-  if (customer_code && customer_code !== 'ALL') {
+  if (customer_code && customer_code !== 'All') {
     specialExpenseParams.push(customer_code);
   }
-  if (product_model && product_model !== 'ALL') {
+  if (product_model && product_model !== 'All') {
     specialExpenseParams.push(product_model);
   }
   
@@ -514,8 +514,8 @@ router.post('/refresh', (req, res) => {
         query_params: {
           start_date,
           end_date,
-          customer_code: customer_code || 'ALL',
-          product_model: product_model || 'ALL'
+          customer_code: customer_code || 'All',
+          product_model: product_model || 'All'
         },
         last_updated: new Date().toISOString()
       };
@@ -592,7 +592,7 @@ router.get('/filter-options', (req, res) => {
       
       // 组装筛选选项
       const customerOptions = [
-        { code: 'ALL', name: 'All' },
+        { code: 'All', name: 'All' },
         ...customers.map(c => ({
           code: c.code,
           name: `${c.short_name} (${c.full_name})`
@@ -600,7 +600,7 @@ router.get('/filter-options', (req, res) => {
       ];
       
       const productOptions = [
-        { model: 'ALL', name: 'All' },
+        { model: 'All', name: 'All' },
         ...products.map(p => ({
           model: p.product_model,
           name: p.product_model

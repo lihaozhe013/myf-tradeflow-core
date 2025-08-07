@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Spin, Divider } from 'antd';
+import { Card, Spin, Divider, message } from 'antd';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 
@@ -38,13 +38,13 @@ const Analysis = () => {
   // 本地状态
   const [advancedExportModalVisible, setAdvancedExportModalVisible] = useState(false);
   
-  // 筛选条件 - 修改：不再自动选择ALL，留空
+  // 筛选条件 - 修改：不再自动选择All，留空
   const [dateRange, setDateRange] = useState([
     dayjs().subtract(1, 'month').startOf('month'), // 上个月第一天
     dayjs().subtract(1, 'month').endOf('month')     // 上个月最后一天
   ]);
-  const [selectedCustomer, setSelectedCustomer] = useState(null); // 改为null，不自动选择ALL
-  const [selectedProduct, setSelectedProduct] = useState(null);   // 改为null，不自动选择ALL
+  const [selectedCustomer, setSelectedCustomer] = useState(null); // 改为null，不自动选择All
+  const [selectedProduct, setSelectedProduct] = useState(null);   // 改为null，不自动选择All
 
   // 导出分析数据处理
   const handleExportAnalysis = async () => {
@@ -59,8 +59,9 @@ const Analysis = () => {
       return;
     }
 
-    // 如果客户和产品都未选择，显示高级导出选项Modal
-    if (!selectedCustomer && !selectedProduct) {
+    // 如果客户和产品都未选择，或都选择了All，显示高级导出选项Modal
+    if ((!selectedCustomer && !selectedProduct) || 
+        (selectedCustomer === 'All' && selectedProduct === 'All')) {
       setAdvancedExportModalVisible(true);
       return;
     }
@@ -85,6 +86,7 @@ const Analysis = () => {
     }
 
     // 检查是否至少选择了一个筛选条件（客户或产品）
+    // 注意：选择All也算作有效的筛选条件
     if (!selectedCustomer && !selectedProduct) {
       message.warning(t('analysis.selectFilterCondition'));
       return;
@@ -101,11 +103,11 @@ const Analysis = () => {
 
   // 获取有效客户和产品数量（用于Modal显示）
   const getValidCustomerCount = () => {
-    return customers.filter(c => c.code !== 'ALL').length;
+    return customers.filter(c => c.code !== 'All').length;
   };
 
   const getValidProductCount = () => {
-    return products.filter(p => p.model !== 'ALL').length;
+    return products.filter(p => p.model !== 'All').length;
   };
 
   // 筛选条件变化时自动获取数据 - 修改：只有在有筛选条件时才获取
