@@ -443,6 +443,7 @@
     "noDataToExport": "No data to export",
     "exportSuccess": "Export successful",
     "exportFailed": "Export failed",
+    "selectFilterCondition": "Please select at least one filter condition (customer or product)",
     "advancedExport": {
       "title": "Advanced Export Options",
       "notice": "Notice",

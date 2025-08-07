@@ -466,6 +466,7 @@
     "noDataToExport": "暂无数据可导出",
     "exportSuccess": "导出成功",
     "exportFailed": "导出失败",
+    "selectFilterCondition": "请至少选择一个筛选条件（客户或产品）",
     "advancedExport": {
       "title": "高级导出选项",
       "notice": "注意",
