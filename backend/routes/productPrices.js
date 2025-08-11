@@ -2,35 +2,59 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-// 获取产品价格列表
+// 获取产品价格列表（支持分页与筛选）
 router.get('/', (req, res) => {
   const { partner_short_name, product_model, effective_date } = req.query;
-  
-  let sql = 'SELECT * FROM product_prices WHERE 1=1';
-  let params = [];
-  
+  let { page = 1 } = req.query;
+  const limit = 10; // 固定每页10条
+
+  let baseWhere = ' FROM product_prices WHERE 1=1';
+  let whereParams = [];
+
   if (partner_short_name) {
-    sql += ' AND partner_short_name LIKE ?';
-    params.push(`%${partner_short_name}%`);
+    baseWhere += ' AND partner_short_name LIKE ?';
+    whereParams.push(`%${partner_short_name}%`);
   }
   if (product_model) {
-    sql += ' AND product_model LIKE ?';
-    params.push(`%${product_model}%`);
+    baseWhere += ' AND product_model LIKE ?';
+    whereParams.push(`%${product_model}%`);
   }
   if (effective_date) {
-    sql += ' AND effective_date = ?';
-    params.push(effective_date);
+    baseWhere += ' AND effective_date = ?';
+    whereParams.push(effective_date);
   }
-  
-  sql += ' ORDER BY effective_date DESC, partner_short_name, product_model';
-  
-  db.all(sql, params, (err, rows) => {
+
+  const orderBy = ' ORDER BY effective_date DESC, partner_short_name, product_model';
+
+  // 分页
+  const offset = (page - 1) * limit;
+  const listSql = `SELECT *${baseWhere}${orderBy} LIMIT ? OFFSET ?`;
+  const listParams = [...whereParams, limit, parseInt(offset)];
+
+  db.all(listSql, listParams, (err, rows) => {
     if (err) {
       res.status(500).json({ error: err.message });
       return;
     }
-    
-    res.json({ data: rows });
+
+    // 统计总数
+    const countSql = `SELECT COUNT(*) as total${baseWhere}`;
+    db.get(countSql, whereParams, (countErr, countResult) => {
+      if (countErr) {
+        res.status(500).json({ error: countErr.message });
+        return;
+      }
+
+      res.json({
+        data: rows,
+        pagination: {
+          page: parseInt(page),
+          limit,
+          total: countResult.total,
+          pages: Math.ceil(countResult.total / limit)
+        }
+      });
+    });
   });
 });
 
