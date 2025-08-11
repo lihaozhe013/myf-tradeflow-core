@@ -6,15 +6,13 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+dist-ssr
+*.local
+
+# Editor directories and files
 frontend/node_modules
 backend/node_modules
 node_modules
-dist
-dist-ssr
-*.local
-.npmrc
-
-# Editor directories and files
 .idea
 .DS_Store
 *.suo
@@ -25,11 +23,9 @@ dist-ssr
 
 # Data
 data/
-backend/._../data/data.db
-backend/../data/data.db
-backend/python_scripts/exported-files
-frontend/src/config/appConfig.json
-backend/data.db
-
-.vscode/
 frontend/public/logo.svg
+.npmrc
+frontend/src/config/appConfig.json
+
+# Dist
+dist/
