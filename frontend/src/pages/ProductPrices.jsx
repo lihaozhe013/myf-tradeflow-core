@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Table,
@@ -33,28 +33,59 @@ const ProductPrices = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingPrice, setEditingPrice] = useState(null);
   const [form] = Form.useForm();
+  const [filterForm] = Form.useForm();
   const { t } = useTranslation();
 
+  // 搜索与分页状态
+  const [filters, setFilters] = useState({
+    partner_short_name: undefined,
+    product_model: undefined,
+    effective_date: undefined,
+  });
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
+
   // 获取产品价格列表
-  const fetchProductPrices = async () => {
+  const fetchProductPrices = useCallback(async (params = {}) => {
     try {
       setLoading(true);
-      const response = await fetch('/api/product-prices');
+      const page = params.page !== undefined ? params.page : pagination.current;
+      const query = new URLSearchParams({
+        page,
+        partner_short_name: params.partner_short_name !== undefined ? params.partner_short_name : (filters.partner_short_name || ''),
+        product_model: params.product_model !== undefined ? params.product_model : (filters.product_model || ''),
+        effective_date: params.effective_date !== undefined ? params.effective_date : (filters.effective_date || ''),
+      });
+      const response = await fetch(`/api/product-prices?${query.toString()}`);
       if (response.ok) {
         const result = await response.json();
-        // API返回格式为 {data: [...]}
         setProductPrices(Array.isArray(result.data) ? result.data : []);
+        if (result.pagination) {
+          setPagination({
+            current: result.pagination.page,
+            pageSize: result.pagination.limit,
+            total: result.pagination.total,
+          });
+        } else {
+          // 兼容无分页返回
+          setPagination(prev => ({ ...prev, total: Array.isArray(result.data) ? result.data.length : 0 }));
+        }
       } else {
         console.error(t('productPrices.fetchFailed'));
         setProductPrices([]);
+        setPagination(prev => ({ ...prev, total: 0 }));
       }
     } catch (error) {
       console.error(t('productPrices.fetchFailed'), error);
       setProductPrices([]);
+      setPagination(prev => ({ ...prev, total: 0 }));
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, pagination.current, t]);
 
   // 获取合作伙伴列表
   const fetchPartners = async () => {
@@ -96,7 +127,7 @@ const ProductPrices = () => {
     fetchProductPrices();
     fetchPartners();
     fetchProducts();
-  }, []);
+  }, [fetchProductPrices]);
 
   // 新增价格
   const handleAdd = () => {
@@ -289,6 +320,32 @@ const ProductPrices = () => {
     }
   };
 
+  // 过滤提交
+  const handleFilter = () => {
+    const values = filterForm.getFieldsValue();
+    const nextFilters = {
+      partner_short_name: values.partner_short_name,
+      product_model: values.product_model,
+      effective_date: values.effective_date ? values.effective_date.format('YYYY-MM-DD') : undefined,
+    };
+    setFilters(nextFilters);
+    setPagination(prev => ({ ...prev, current: 1 }));
+    fetchProductPrices({ page: 1, ...nextFilters });
+  };
+
+  // 表格分页变化
+  const handleTableChange = (paginationTable) => {
+    const values = filterForm.getFieldsValue();
+    const nextFilters = {
+      partner_short_name: values.partner_short_name,
+      product_model: values.product_model,
+      effective_date: values.effective_date ? values.effective_date.format('YYYY-MM-DD') : undefined,
+    };
+    setFilters(nextFilters);
+    setPagination(prev => ({ ...prev, current: paginationTable.current }));
+    fetchProductPrices({ page: paginationTable.current, ...nextFilters });
+  };
+
   return (
     <div>
       <Card>
@@ -307,6 +364,34 @@ const ProductPrices = () => {
           </Col>
         </Row>
 
+        {/* 筛选区 */}
+        <Form form={filterForm} layout="inline" style={{ marginBottom: 12 }}>
+          <Form.Item name="partner_short_name" label={t('productPrices.partnerShortName')} style={{ minWidth: 260 }}>
+            <Select
+              allowClear
+              showSearch
+              placeholder={t('productPrices.selectPartner')}
+              options={partnerShortNameOptions}
+              filterOption={(input, option) => (option?.label || '').toLowerCase().includes(input.toLowerCase())}
+            />
+          </Form.Item>
+          <Form.Item name="product_model" label={t('productPrices.productModel')} style={{ minWidth: 260 }}>
+            <Select
+              allowClear
+              showSearch
+              placeholder={t('productPrices.selectProductModel')}
+              options={productModelOptions}
+              filterOption={(input, option) => (option?.label || '').toLowerCase().includes(input.toLowerCase())}
+            />
+          </Form.Item>
+          <Form.Item name="effective_date" label={t('productPrices.effectiveDate')}>
+            <DatePicker allowClear format="YYYY-MM-DD" />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" onClick={handleFilter}>{t('common.search') || 'Search'}</Button>
+          </Form.Item>
+        </Form>
+
         <Divider />
 
         <div className="responsive-table">
@@ -315,8 +400,11 @@ const ProductPrices = () => {
             dataSource={productPrices}
             rowKey="id"
             loading={loading}
+            onChange={handleTableChange}
             pagination={{
-              pageSize: 10,
+              current: pagination.current,
+              pageSize: pagination.pageSize,
+              total: pagination.total,
               showQuickJumper: true,
               showTotal: (total, range) =>
                 t('productPrices.paginationTotal', { start: range[0], end: range[1], total }),

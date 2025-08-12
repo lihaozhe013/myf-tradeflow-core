@@ -157,5 +157,88 @@
       { "label": "总价", "key": "total_price" },
       { "label": "发票号码", "key": "invoice_number" }
     ]
+  },
+  "analysis_summary": {
+    "sheetName": "数据分析汇总",
+    "columns": [
+      { "label": "分析项目", "key": "metric_name" },
+      { "label": "金额", "key": "amount" },
+      { "label": "备注", "key": "remark" }
+    ]
+  },
+  "analysis_detail": {
+    "sheetName": "详细分析",
+    "columns": [
+      { "label": "客户代号", "key": "customer_code" },
+      { "label": "客户简称", "key": "customer_name" },
+      { "label": "产品型号", "key": "product_model" },
+      { "label": "销售额", "key": "sales_amount" },
+      { "label": "成本", "key": "cost_amount" },
+      { "label": "利润", "key": "profit_amount" },
+      { "label": "利润率(%)", "key": "profit_rate" }
+    ]
+  },
+  "analysis_customer_summary": {
+    "sheetName": "客户销售汇总",
+    "columns": [
+      { "label": "客户代号", "key": "customer_code" },
+      { "label": "客户简称", "key": "customer_name" },
+      { "label": "销售额", "key": "sales_amount" },
+      { "label": "成本", "key": "cost_amount" },
+      { "label": "利润", "key": "profit_amount" },
+      { "label": "利润率(%)", "key": "profit_rate" }
+    ]
+  },
+  "analysis_customer_detail": {
+    "sheetName": "产品销售明细",
+    "columns": [
+      { "label": "产品型号", "key": "product_model" },
+      { "label": "销售额", "key": "sales_amount" },
+      { "label": "成本", "key": "cost_amount" },
+      { "label": "利润", "key": "profit_amount" },
+      { "label": "利润率(%)", "key": "profit_rate" }
+    ]
+  },
+  "analysis_product_summary": {
+    "sheetName": "产品销售汇总", 
+    "columns": [
+      { "label": "产品型号", "key": "product_model" },
+      { "label": "销售额", "key": "sales_amount" },
+      { "label": "成本", "key": "cost_amount" },
+      { "label": "利润", "key": "profit_amount" },
+      { "label": "利润率(%)", "key": "profit_rate" }
+    ]
+  },
+  "analysis_product_detail": {
+    "sheetName": "客户销售明细",
+    "columns": [
+      { "label": "客户代号", "key": "customer_code" },
+      { "label": "客户简称", "key": "customer_name" },
+      { "label": "销售额", "key": "sales_amount" },
+      { "label": "成本", "key": "cost_amount" },
+      { "label": "利润", "key": "profit_amount" },
+      { "label": "利润率(%)", "key": "profit_rate" }
+    ]
+  },
+  "analysis_detail_by_product": {
+    "sheetName": "按产品分析",
+    "columns": [
+      { "label": "产品型号", "key": "product_model" },
+      { "label": "销售额", "key": "sales_amount" },
+      { "label": "成本", "key": "cost_amount" },
+      { "label": "利润", "key": "profit_amount" },
+      { "label": "利润率(%)", "key": "profit_rate" }
+    ]
+  },
+  "analysis_detail_by_customer": {
+    "sheetName": "按客户分析",
+    "columns": [
+      { "label": "客户代号", "key": "customer_code" },
+      { "label": "客户简称", "key": "customer_name" },
+      { "label": "销售额", "key": "sales_amount" },
+      { "label": "成本", "key": "cost_amount" },
+      { "label": "利润", "key": "profit_amount" },
+      { "label": "利润率(%)", "key": "profit_rate" }
+    ]
   }
 }
