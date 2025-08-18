@@ -13,9 +13,10 @@ const requestLogger = (req, res, next) => {
     timestamp: new Date().toISOString()
   };
 
-  // 在生产环境记录访问日志
+  // 在生产环境记录访问日志（附带用户）
   if (process.env.NODE_ENV === 'production') {
-    accessLogger.info(`${req.method} ${req.originalUrl} - ${requestInfo.ip}`);
+    const userPart = req.user ? ` user=${req.user.username} role=${req.user.role}` : '';
+    accessLogger.info(`${req.method} ${req.originalUrl} - ${requestInfo.ip}${userPart}`);
   }
 
   // 监听响应结束事件
@@ -27,6 +28,11 @@ const requestLogger = (req, res, next) => {
       duration: `${duration}ms`,
       contentLength: res.get('Content-Length') || 0
     };
+
+    // 附带用户信息
+    if (req.user) {
+      responseInfo.user = { username: req.user.username, role: req.user.role };
+    }
 
     // 根据状态码决定日志级别
     if (res.statusCode >= 400) {
@@ -52,6 +58,10 @@ const errorLogger = (err, req, res, next) => {
     params: req.params,
     query: req.query
   };
+
+  if (req.user) {
+    errorInfo.user = { username: req.user.username, role: req.user.role };
+  }
 
   logger.error('API Error', errorInfo);
   next(err);
