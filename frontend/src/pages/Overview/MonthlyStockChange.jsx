@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { 
   Card, Select, Statistic, Row, Col, Spin, Alert, Typography 
 } from 'antd';
@@ -9,6 +9,7 @@ import {
   StockOutlined
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { useSimpleApi, useSimpleApiData } from '../../hooks/useSimpleApi';
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -19,69 +20,61 @@ const { Option } = Select;
  */
 const MonthlyStockChange = () => {
   const { t } = useTranslation();
-  const [loading, setLoading] = useState(false);
-  const [products, setProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [stockData, setStockData] = useState(null);
-  const [error, setError] = useState(null);
+  const [stockLoading, setStockLoading] = useState(false);
+  const [stockError, setStockError] = useState(null);
+  
+  const { get } = useSimpleApi();
+  
+  // 使用useSimpleApiData获取产品列表
+  const {
+    data: productsResponse,
+    loading: productsLoading,
+    error: productsError
+  } = useSimpleApiData('/products');
 
-  const fetchProducts = useCallback(async () => {
-    try {
-      const response = await fetch('/api/products');
-      const result = await response.json();
-      
-      if (result.data && Array.isArray(result.data)) {
-        setProducts(result.data);
-        // 默认选择第一个产品
-        if (result.data.length > 0) {
-          setSelectedProduct(result.data[0].product_model);
-        }
-      } else {
-        console.error('API返回数据格式不正确:', result);
-        setError(t('overview.dataFormatError'));
-      }
-    } catch (err) {
-      console.error(t('overview.productListFailed'), err);
-      setError(t('overview.productListFailed'));
-    }
-  }, [t]);
+  const products = productsResponse?.data || [];
 
-  // 获取产品列表
+  // 当产品列表加载完成时，自动选择第一个产品
   useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+    if (products.length > 0 && !selectedProduct) {
+      setSelectedProduct(products[0].product_model);
+    }
+  }, [products, selectedProduct]);
 
+  // 获取月度库存变化数据
   const fetchMonthlyStockChange = useCallback(async (productModel) => {
     try {
-      setLoading(true);
-      setError(null);
+      setStockLoading(true);
+      setStockError(null);
       
-      const response = await fetch(`/api/overview/monthly-stock-change/${encodeURIComponent(productModel)}`);
-      const result = await response.json();
+      const result = await get(`/overview/monthly-stock-change/${encodeURIComponent(productModel)}`);
       
       if (result.success) {
         setStockData(result.data);
       } else {
-        setError(result.message || result.error || t('overview.stockChangeFailed'));
+        setStockError(result.message || result.error || t('overview.stockChangeFailed'));
       }
     } catch (err) {
       console.error(t('overview.stockChangeFailed'), err);
-      setError(t('overview.stockChangeFailed'));
+      setStockError(t('overview.stockChangeFailed'));
     } finally {
-      setLoading(false);
+      setStockLoading(false);
     }
-  }, [t]);
+  }, [get, t]);
 
-  // 获取选中产品的本月库存变化数据
+  // 当选择的产品改变时，获取库存变化数据
+  const handleProductChange = useCallback((productModel) => {
+    setSelectedProduct(productModel);
+  }, []);
+
+  // 当默认产品设置后，自动加载数据
   useEffect(() => {
     if (selectedProduct) {
       fetchMonthlyStockChange(selectedProduct);
     }
   }, [selectedProduct, fetchMonthlyStockChange]);
-
-  const handleProductChange = (value) => {
-    setSelectedProduct(value);
-  };
 
   // 计算变化趋势图标和颜色
   const getTrendIcon = (change) => {
@@ -98,6 +91,9 @@ const MonthlyStockChange = () => {
     if (change < 0) return '#ff4d4f';
     return '#666';
   };
+
+  const loading = productsLoading || stockLoading;
+  const error = productsError || stockError;
 
   return (
     <Card
