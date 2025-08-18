@@ -13,8 +13,11 @@ import Receivable from './pages/Receivable';
 import Payable from './pages/Payable';
 import Analysis from './pages/Analysis';
 import About from './pages/About';
-import { Menu, Layout, Alert, Select, Space, Avatar } from 'antd';
-import { GlobalOutlined, SettingOutlined } from '@ant-design/icons';
+import { Menu, Layout, Alert, Select, Space, Avatar, Dropdown, Button, Tag } from 'antd';
+import { GlobalOutlined, SettingOutlined, UserOutlined, LogoutOutlined } from '@ant-design/icons';
+import { AuthProvider, useAuth } from './auth/AuthContext';
+import ProtectedRoute from './auth/ProtectedRoute';
+import LoginPage from './auth/LoginPage';
 import './App.css';
 
 const { Header, Content, Footer } = Layout;
@@ -57,6 +60,66 @@ class ErrorBoundary extends React.Component {
   }
 }
 
+// 用户信息和操作菜单组件
+function UserMenu() {
+  const { user, logout } = useAuth();
+  const { t } = useTranslation();
+
+  const handleLogout = () => {
+    logout();
+  };
+
+  const userMenuItems = [
+    {
+      key: 'profile',
+      label: (
+        <Space>
+          <UserOutlined />
+          <span>{user?.display_name || user?.username}</span>
+        </Space>
+      ),
+      disabled: true,
+    },
+    {
+      type: 'divider',
+    },
+    {
+      key: 'logout',
+      label: (
+        <Space>
+          <LogoutOutlined />
+          <span>退出登录</span>
+        </Space>
+      ),
+      onClick: handleLogout,
+    },
+  ];
+
+  const getRoleColor = (role) => {
+    return role === 'editor' ? 'green' : 'blue';
+  };
+
+  const getRoleText = (role) => {
+    return role === 'editor' ? '编辑用户' : '只读用户';
+  };
+
+  return (
+    <Space>
+      <Tag color={getRoleColor(user?.role)}>
+        {getRoleText(user?.role)}
+      </Tag>
+      <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
+        <Button type="text" style={{ color: 'white' }}>
+          <Space>
+            <UserOutlined />
+            <span>{user?.display_name || user?.username}</span>
+          </Space>
+        </Button>
+      </Dropdown>
+    </Space>
+  );
+}
+
 // 语言选择器组件
 function LanguageSelector() {
   const { i18n, t } = useTranslation();
@@ -96,6 +159,11 @@ function LanguageSelector() {
 function AppContent() {
   const location = useLocation();
   const { t } = useTranslation();
+
+  return <AppContentInner location={location} t={t} />;
+}
+
+function AppContentInner({ location, t }) {
 
   // 根据当前路径确定选中的菜单项
   const getSelectedKey = () => {
@@ -176,6 +244,7 @@ function AppContent() {
           />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <UserMenu />
           <Link to="/about">
             <Avatar src="/logo.svg" alt="Icon" style={{ cursor: 'pointer', width: '43px', height: '43px' }} />
           </Link>
@@ -221,7 +290,19 @@ function AppContent() {
 function App() {
   return (
     <Router>
-      <AppContent />
+      <AuthProvider>
+        <Routes>
+          {/* 登录页面 - 独立布局 */}
+          <Route path="/login" element={<LoginPage />} />
+          
+          {/* 主应用 - 需要认证的布局 */}
+          <Route path="/*" element={
+            <ProtectedRoute>
+              <AppContent />
+            </ProtectedRoute>
+          } />
+        </Routes>
+      </AuthProvider>
     </Router>
   )
 }
