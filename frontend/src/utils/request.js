@@ -4,14 +4,15 @@ import { tokenManager } from '../auth/auth';
 const createRequest = (baseURL = '') => {
   const request = async (url, options = {}) => {
     const token = tokenManager.getToken();
+    const { responseType, ...fetchOptions } = options;
     
     // 默认配置
     const config = {
       headers: {
         'Content-Type': 'application/json',
-        ...options.headers,
+        ...fetchOptions.headers,
       },
-      ...options,
+      ...fetchOptions,
     };
 
     // 添加认证头
@@ -46,6 +47,11 @@ const createRequest = (baseURL = '') => {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || `HTTP Error: ${response.status}`);
+      }
+      
+      // 根据responseType处理响应
+      if (responseType === 'blob') {
+        return await response.blob();
       }
       
       // 尝试解析 JSON 响应

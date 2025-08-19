@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Table,
@@ -17,44 +17,30 @@ import {
   Divider
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { useSimpleApi, useSimpleApiData } from '../hooks/useSimpleApi';
 
 const { Title } = Typography;
 const { Option } = Select;
 
 const Partners = () => {
-  const [partners, setPartners] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingPartner, setEditingPartner] = useState(null);
   const [form] = Form.useForm();
-  // 新增：用于联动输入的下拉数据
-  const [partnerOptions, setPartnerOptions] = useState([]);
   const { t } = useTranslation();
 
+  // 使用简化API hooks
+  const { post, put, request } = useSimpleApi();
+  
   // 获取合作伙伴列表
-  const fetchPartners = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/partners');
-      if (response.ok) {
-        const result = await response.json();
-        setPartners(Array.isArray(result.data) ? result.data : []);
-        setPartnerOptions(Array.isArray(result.data) ? result.data : []);
-      } else {
-        setPartners([]);
-        setPartnerOptions([]);
-      }
-    } catch (error) {
-      setPartners([]);
-      setPartnerOptions([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchPartners();
-  }, []);
+  const { 
+    data: partnersResponse, 
+    loading, 
+    refetch: refreshPartners 
+  } = useSimpleApiData('/partners', { data: [] });
+  
+  const partners = partnersResponse?.data || [];
+  // 合作伙伴选项用于联动输入
+  const partnerOptions = partners;
 
   // 新增合作伙伴
   const handleAdd = () => {
@@ -73,46 +59,28 @@ const Partners = () => {
   // 删除合作伙伴
   const handleDelete = async (shortName) => {
     try {
-      const response = await fetch(`/api/partners/${shortName}`, {
-        method: 'DELETE',
-      });
-      if (response.ok) {
-        message.success(t('partners.deleteSuccess'));
-        fetchPartners();
-      } else {
-        message.error(t('partners.deleteFailed'));
-      }
-    } catch (error) {
-      message.error(t('partners.deleteFailed'));
+      await request(`/partners/${shortName}`, { method: 'DELETE' });
+      message.success(t('partners.deleteSuccess'));
+      refreshPartners();
+    } catch {
+      // 错误已经在useSimpleApi中处理
     }
   };
 
   // 保存合作伙伴
   const handleSave = async (values) => {
     try {
-      const url = editingPartner 
-        ? `/api/partners/${editingPartner.short_name}`
-        : '/api/partners';
-      const method = editingPartner ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(values),
-      });
-
-      if (response.ok) {
-        message.success(editingPartner ? t('partners.editSuccess') : t('partners.addSuccess'));
-        setModalVisible(false);
-        fetchPartners();
+      if (editingPartner) {
+        await put(`/partners/${editingPartner.short_name}`, values);
+        message.success(t('partners.editSuccess'));
       } else {
-        const errorData = await response.json();
-        message.error(errorData.error || t('partners.saveFailed'));
+        await post('/partners', values);
+        message.success(t('partners.addSuccess'));
       }
-    } catch (error) {
-      message.error(t('partners.saveFailed'));
+      setModalVisible(false);
+      refreshPartners();
+    } catch {
+      // 错误已经在useSimpleApi中处理
     }
   };
 
@@ -196,7 +164,7 @@ const Partners = () => {
   ];
 
   // 联动输入处理
-  const handlePartnerFieldChange = (changed, all) => {
+  const handlePartnerFieldChange = (changed) => {
     // changed: { code/short_name/full_name: value }
     // all: 所有表单值
     if (changed.code) {
@@ -215,15 +183,6 @@ const Partners = () => {
         form.setFieldsValue({ code: match.code, short_name: match.short_name });
       }
     }
-  };
-
-  // 解析批量输入
-  const parseBatchInput = (text) => {
-    return text.split(/\n|\r/).map(line => {
-      const [code, short_name, full_name] = line.split(',').map(s => s && s.trim());
-      if (code && short_name && full_name) return { code, short_name, full_name };
-      return null;
-    }).filter(Boolean);
   };
 
   return (

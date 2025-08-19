@@ -1,34 +1,37 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Card, Row, Col, Typography, Spin, Alert, Image } from 'antd';
 import { useTranslation } from 'react-i18next';
+import { useSimpleApiData } from '../hooks/useSimpleApi';
 
 const { Title, Paragraph, Text } = Typography;
 
 function About() {
   const { t } = useTranslation();
-  const [aboutData, setAboutData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    fetchAboutData();
-  }, []);
-
-  const fetchAboutData = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/about');
-      if (!response.ok) {
-        throw new Error(t('about.fetchFailed'));
-      }
-      const data = await response.json();
-      setAboutData(data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+  
+  // 使用简化API hook获取关于页面数据
+  const {
+    data: aboutData,
+    loading,
+    error
+  } = useSimpleApiData('/about', {
+    title: '',
+    company: {
+      name: '',
+      description: '',
+      slogan: ''
+    },
+    system: {
+      version: '0.1.0',
+      releaseDate: '2025-01-01',
+      techStack: 'React + Node.js + SQLite',
+      team: ''
+    },
+    contact: {
+      email: 'example@example.com',
+      phone: '+1 xxx-xxx-xxxx',
+      address: ''
     }
-  };
+  });
 
   if (loading) {
     return (

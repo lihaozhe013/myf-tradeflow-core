@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Table,
@@ -21,15 +21,12 @@ import {
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { useSimpleApi, useSimpleApiData } from '../hooks/useSimpleApi';
 
 const { Title } = Typography;
 const { Option } = Select;
 
 const ProductPrices = () => {
-  const [productPrices, setProductPrices] = useState([]);
-  const [partners, setPartners] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingPrice, setEditingPrice] = useState(null);
   const [form] = Form.useForm();
@@ -48,86 +45,53 @@ const ProductPrices = () => {
     total: 0,
   });
 
-  // 获取产品价格列表
-  const fetchProductPrices = useCallback(async (params = {}) => {
-    try {
-      setLoading(true);
-      const page = params.page !== undefined ? params.page : pagination.current;
-      const query = new URLSearchParams({
-        page,
-        partner_short_name: params.partner_short_name !== undefined ? params.partner_short_name : (filters.partner_short_name || ''),
-        product_model: params.product_model !== undefined ? params.product_model : (filters.product_model || ''),
-        effective_date: params.effective_date !== undefined ? params.effective_date : (filters.effective_date || ''),
-      });
-      const response = await fetch(`/api/product-prices?${query.toString()}`);
-      if (response.ok) {
-        const result = await response.json();
-        setProductPrices(Array.isArray(result.data) ? result.data : []);
-        if (result.pagination) {
-          setPagination({
-            current: result.pagination.page,
-            pageSize: result.pagination.limit,
-            total: result.pagination.total,
-          });
-        } else {
-          // 兼容无分页返回
-          setPagination(prev => ({ ...prev, total: Array.isArray(result.data) ? result.data.length : 0 }));
-        }
-      } else {
-        console.error(t('productPrices.fetchFailed'));
-        setProductPrices([]);
-        setPagination(prev => ({ ...prev, total: 0 }));
+  // 使用简化API hooks
+  const { post, put, request } = useSimpleApi();
+  
+  // 构建产品价格查询URL
+  const buildProductPricesUrl = useCallback(() => {
+    const params = new URLSearchParams({
+      page: pagination.current.toString(),
+    });
+    
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) {
+        params.append(key, value);
       }
-    } catch (error) {
-      console.error(t('productPrices.fetchFailed'), error);
-      setProductPrices([]);
-      setPagination(prev => ({ ...prev, total: 0 }));
-    } finally {
-      setLoading(false);
-    }
-  }, [filters, pagination.current, t]);
+    });
+    
+    return `/product-prices?${params}`;
+  }, [filters, pagination.current, pagination.pageSize]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 获取产品价格列表
+  const { 
+    data: productPricesResponse, 
+    loading, 
+    refetch: refreshProductPrices 
+  } = useSimpleApiData(buildProductPricesUrl(), {
+    data: [],
+    pagination: { current: 1, pageSize: 10, total: 0 }
+  });
 
   // 获取合作伙伴列表
-  const fetchPartners = async () => {
-    try {
-      const response = await fetch('/api/partners');
-      if (response.ok) {
-        const result = await response.json();
-        // API返回格式为 {data: [...]}
-        setPartners(Array.isArray(result.data) ? result.data : []);
-      } else {
-        console.error(t('productPrices.fetchPartnersFailed'));
-        setPartners([]);
-      }
-    } catch (error) {
-      console.error(t('productPrices.fetchPartnersFailed'), error);
-      setPartners([]);
-    }
-  };
+  const { data: partnersResponse } = useSimpleApiData('/partners', { data: [] });
+  
+  // 获取产品列表  
+  const { data: productsResponse } = useSimpleApiData('/products', { data: [] });
 
-  // 获取产品列表
-  const fetchProducts = async () => {
-    try {
-      const response = await fetch('/api/products');
-      if (response.ok) {
-        const result = await response.json();
-        // API返回格式为 {data: [...]}
-        setProducts(Array.isArray(result.data) ? result.data : []);
-      } else {
-        console.error(t('productPrices.fetchProductsFailed'));
-        setProducts([]);
-      }
-    } catch (error) {
-      console.error(t('productPrices.fetchProductsFailed'), error);
-      setProducts([]);
-    }
-  };
+  const productPrices = productPricesResponse?.data || [];
+  const partners = partnersResponse?.data || [];
+  const products = productsResponse?.data || [];
 
+  // 当产品价格响应更新时，更新分页信息
   useEffect(() => {
-    fetchProductPrices();
-    fetchPartners();
-    fetchProducts();
-  }, [fetchProductPrices]);
+    if (productPricesResponse?.pagination) {
+      setPagination(prev => ({
+        ...prev,
+        total: productPricesResponse.pagination.total
+      }));
+    }
+  }, [productPricesResponse]);
 
   // 新增价格
   const handleAdd = () => {
@@ -153,17 +117,11 @@ const ProductPrices = () => {
   // 删除价格
   const handleDelete = async (id) => {
     try {
-      const response = await fetch(`/api/product-prices/${id}`, {
-        method: 'DELETE',
-      });
-      if (response.ok) {
-        message.success(t('productPrices.deleteSuccess'));
-        fetchProductPrices();
-      } else {
-        message.error(t('productPrices.deleteFailed'));
-      }
-    } catch (error) {
-      message.error(t('productPrices.deleteFailed'));
+      await request(`/product-prices/${id}`, { method: 'DELETE' });
+      message.success(t('productPrices.deleteSuccess'));
+      refreshProductPrices();
+    } catch {
+      // 错误已经在useSimpleApi中处理
     }
   };
 
@@ -175,29 +133,17 @@ const ProductPrices = () => {
         effective_date: values.effective_date ? values.effective_date.format('YYYY-MM-DD') : null,
       };
 
-      const url = editingPrice 
-        ? `/api/product-prices/${editingPrice.id}`
-        : '/api/product-prices';
-      const method = editingPrice ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formattedValues),
-      });
-
-      if (response.ok) {
-        message.success(editingPrice ? t('productPrices.editSuccess') : t('productPrices.addSuccess'));
-        setModalVisible(false);
-        fetchProductPrices();
+      if (editingPrice) {
+        await put(`/product-prices/${editingPrice.id}`, formattedValues);
+        message.success(t('productPrices.editSuccess'));
       } else {
-        const errorData = await response.json();
-        message.error(errorData.error || t('productPrices.saveFailed'));
+        await post('/product-prices', formattedValues);
+        message.success(t('productPrices.addSuccess'));
       }
-    } catch (error) {
-      message.error(t('productPrices.saveFailed'));
+      setModalVisible(false);
+      refreshProductPrices();
+    } catch {
+      // 错误已经在useSimpleApi中处理
     }
   };
 
@@ -330,20 +276,11 @@ const ProductPrices = () => {
     };
     setFilters(nextFilters);
     setPagination(prev => ({ ...prev, current: 1 }));
-    fetchProductPrices({ page: 1, ...nextFilters });
   };
 
   // 表格分页变化
   const handleTableChange = (paginationTable) => {
-    const values = filterForm.getFieldsValue();
-    const nextFilters = {
-      partner_short_name: values.partner_short_name,
-      product_model: values.product_model,
-      effective_date: values.effective_date ? values.effective_date.format('YYYY-MM-DD') : undefined,
-    };
-    setFilters(nextFilters);
     setPagination(prev => ({ ...prev, current: paginationTable.current }));
-    fetchProductPrices({ page: paginationTable.current, ...nextFilters });
   };
 
   return (

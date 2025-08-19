@@ -128,11 +128,11 @@ const LoginPage = () => {
             </Form.Item>
           </Form>
 
-          <div className="login-footer">
+          {/* <div className="login-footer">
             <p className="login-tips">
               默认账户: adminn / admin123
             </p>
-          </div>
+          </div> */}
         </Card>
       </div>
     </div>

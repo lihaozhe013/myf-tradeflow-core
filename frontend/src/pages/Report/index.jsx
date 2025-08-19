@@ -10,6 +10,7 @@ import {
 } from 'antd';
 import { FileExcelOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { useSimpleApi } from '../../hooks/useSimpleApi';
 import ExportPanel from './components/ExportPanel';
 import { useTranslation } from 'react-i18next';
 
@@ -30,6 +31,7 @@ const Report = () => {
   const [selectedCustomer, setSelectedCustomer] = useState('');
 
   const { t } = useTranslation();
+  const apiInstance = useSimpleApi();
   // 生成文件名
   const generateFilename = (exportType) => {
     const timestamp = dayjs().format('YYYYMMDD_HHmmss');
@@ -50,40 +52,26 @@ const Report = () => {
       setLoading(true);
       message.loading(t('export.generating'), 0.5);
       
-      const response = await fetch(`/api/export/${exportType}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(params)
-      });
+      const blob = await apiInstance.postBlob(`/export/${exportType}`, params);
       
-      if (response.ok) {
-        // 获取文件数据
-        const blob = await response.blob();
-        
-        // 检查文件大小
-        if (blob.size === 0) {
-          message.warning(t('export.emptyFile'));
-          return;
-        }
-        
-        // 创建下载链接
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = generateFilename(exportType);
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-        
-        const fileSizeKB = (blob.size / 1024).toFixed(1);
-        message.success(t('export.success', { size: fileSizeKB }));
-      } else {
-        const error = await response.json();
-        message.error(t('export.failed', { msg: error.message || t('export.unknownError') }));
+      // 检查文件大小
+      if (blob.size === 0) {
+        message.warning(t('export.emptyFile'));
+        return;
       }
+      
+      // 创建下载链接
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = generateFilename(exportType);
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      
+      const fileSizeKB = (blob.size / 1024).toFixed(1);
+      message.success(t('export.success', { size: fileSizeKB }));
     } catch (error) {
       console.error(t('export.failed'), error);
       if (error.name === 'TypeError' && error.message.includes('fetch')) {

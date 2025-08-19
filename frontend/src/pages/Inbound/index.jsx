@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Button, Form, message, Card, Typography, Row, Col, Divider } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { useSimpleApi, useSimpleApiData } from '../../hooks/useSimpleApi';
 import InboundFilter from './components/InboundFilter';
 import InboundTable from './components/InboundTable';
 import InboundModal from './components/InboundModal';
@@ -12,8 +13,6 @@ const { Title } = Typography;
 const Inbound = () => {
   const { t } = useTranslation();
   const [inboundRecords, setInboundRecords] = useState([]);
-  const [partners, setPartners] = useState([]);
-  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
@@ -22,7 +21,7 @@ const Inbound = () => {
   const [filters, setFilters] = useState({
     supplier_short_name: undefined,
     product_model: undefined,
-    dateRange: [],
+    dateRange: [null, null], // 使用 null 而不是空数组
   });
   const [sorter, setSorter] = useState({
     field: undefined,
@@ -35,81 +34,54 @@ const Inbound = () => {
     total: 0,
   });
 
+  // 使用认证API获取数据
+  const apiInstance = useSimpleApi();
+  const { data: partnersData } = useSimpleApiData('/partners', []);
+  const { data: productsData } = useSimpleApiData('/products', []);
+  
+  // 过滤供应商（type=0）
+  const partners = Array.isArray(partnersData) ? partnersData.filter(partner => partner.type === 0) : [];
+  const products = Array.isArray(productsData) ? productsData : [];
+
+  // 提取日期范围以稳定依赖
+  const startDate = filters.dateRange?.[0] || '';
+  const endDate = filters.dateRange?.[1] || '';
+
   // 获取入库记录列表
   const fetchInboundRecords = useCallback(async (params = {}) => {
     try {
       setLoading(true);
-      const page = params.page !== undefined ? params.page : pagination.current;
+      const page = params.page !== undefined ? params.page : 1;
       const query = new URLSearchParams({
         ...params,
         page,
         // limit参数不传，后端已定死10
         supplier_short_name: params.supplier_short_name !== undefined ? params.supplier_short_name : (filters.supplier_short_name || ''),
         product_model: params.product_model !== undefined ? params.product_model : (filters.product_model || ''),
-        start_date: params.start_date !== undefined ? params.start_date : (filters.dateRange[0] ? filters.dateRange[0] : ''),
-        end_date: params.end_date !== undefined ? params.end_date : (filters.dateRange[1] ? filters.dateRange[1] : ''),
+        start_date: params.start_date !== undefined ? params.start_date : startDate,
+        end_date: params.end_date !== undefined ? params.end_date : endDate,
         sort_field: params.sort_field !== undefined ? params.sort_field : (sorter.field || ''),
         sort_order: params.sort_order !== undefined ? params.sort_order : (sorter.order || ''),
       });
-      const response = await fetch(`/api/inbound?${query.toString()}`);
-      if (response.ok) {
-        const result = await response.json();
-        console.log('[Inbound] fetch result:', result);
-        setInboundRecords(Array.isArray(result.data) ? result.data : []);
-        setPagination({
-          current: result.pagination.page,
-          pageSize: result.pagination.limit,
-          total: result.pagination.total,
-        });
-      } else {
-        setInboundRecords([]);
-      }
-    } catch {
+      const result = await apiInstance.get(`/inbound?${query.toString()}`);
+      console.log('[Inbound] fetch result:', result);
+      setInboundRecords(Array.isArray(result.data) ? result.data : []);
+      setPagination({
+        current: result.pagination.page,
+        pageSize: result.pagination.limit,
+        total: result.pagination.total,
+      });
+    } catch (error) {
+      console.error('获取入库记录失败:', error);
       setInboundRecords([]);
     } finally {
       setLoading(false);
     }
-  }, [filters, sorter, pagination.current]);
-
-  // 获取供应商列表
-  const fetchPartners = async () => {
-    try {
-      const response = await fetch('/api/partners');
-      if (response.ok) {
-        const result = await response.json();
-        const partnersArray = Array.isArray(result.data) ? result.data : [];
-        setPartners(partnersArray.filter(partner => partner.type === 0));
-      } else {
-        console.error('获取供应商列表失败');
-        setPartners([]);
-      }
-    } catch (error) {
-      console.error('获取供应商列表失败:', error);
-      setPartners([]);
-    }
-  };
-
-  // 获取产品列表
-  const fetchProducts = async () => {
-    try {
-      const response = await fetch('/api/products');
-      if (response.ok) {
-        const result = await response.json();
-        setProducts(Array.isArray(result.data) ? result.data : []);
-      } else {
-        console.error('获取产品列表失败');
-        setProducts([]);
-      }
-    } catch (error) {
-      console.error('获取产品列表失败:', error);
-      setProducts([]);
-    }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.supplier_short_name, filters.product_model, startDate, endDate, sorter.field, sorter.order]);
 
   useEffect(() => {
-    fetchInboundRecords();
-    fetchPartners();
-    fetchProducts();
+    fetchInboundRecords({ page: 1 });
   }, [fetchInboundRecords]);
 
   // 新增入库记录
@@ -141,16 +113,11 @@ const Inbound = () => {
   // 删除入库记录
   const handleDelete = async (id) => {
     try {
-      const response = await fetch(`/api/inbound/${id}`, {
-        method: 'DELETE',
-      });
-      if (response.ok) {
-        message.success('删除成功');
-        fetchInboundRecords();
-      } else {
-        message.error('删除失败');
-      }
-    } catch {
+      await apiInstance.delete(`/inbound/${id}`);
+      message.success('删除成功');
+      fetchInboundRecords();
+    } catch (error) {
+      console.error('删除失败:', error);
       message.error('删除失败');
     }
   };
@@ -186,28 +153,18 @@ const Inbound = () => {
         total_price: (values.quantity || 0) * (values.unit_price || 0),
       };
 
-      const url = editingRecord 
-        ? `/api/inbound/${editingRecord.id}`
-        : '/api/inbound';
-      const method = editingRecord ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formattedValues),
-      });
-      if (response.ok) {
-        message.success(editingRecord ? '修改成功' : '新增成功');
-        setModalVisible(false);
-        fetchInboundRecords();
+      if (editingRecord) {
+        await apiInstance.put(`/inbound/${editingRecord.id}`, formattedValues);
+        message.success('修改成功');
       } else {
-        const errorData = await response.json();
-        message.error(errorData.error || '保存失败');
+        await apiInstance.post('/inbound', formattedValues);
+        message.success('新增成功');
       }
-    } catch {
-      message.error('保存失败');
+      setModalVisible(false);
+      fetchInboundRecords();
+    } catch (error) {
+      console.error('保存失败:', error);
+      message.error(error.message || '保存失败');
     }
   };
 
@@ -266,12 +223,12 @@ const Inbound = () => {
       const productModel = form.getFieldValue('product_model');
       const inboundDate = form.getFieldValue('inbound_date');
       if (supplierShortName && productModel && inboundDate) {
-        const resp = await fetch(`/api/product-prices/auto?partner_short_name=${supplierShortName}&product_model=${productModel}&date=${inboundDate.format('YYYY-MM-DD')}`);
-        if (resp.ok) {
-          const data = await resp.json();
+        try {
+          const data = await apiInstance.get(`/product-prices/auto?partner_short_name=${supplierShortName}&product_model=${productModel}&date=${inboundDate.format('YYYY-MM-DD')}`);
           form.setFieldsValue({ unit_price: data.unit_price });
           handlePriceOrQuantityChange();
-        } else {
+        } catch (error) {
+          console.error('获取价格失败:', error);
           form.setFieldsValue({ unit_price: 0 });
         }
       }
