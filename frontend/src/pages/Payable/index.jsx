@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button, Form, message, Card, Typography, Row, Col, Divider } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { useSimpleApi, useSimpleApiData } from '../../hooks/useSimpleApi';
 import PayableTable from './components/PayableTable';
 import PayableModal from './components/PayableModal';
 
@@ -11,7 +12,6 @@ const { Title } = Typography;
 const Payable = () => {
   const [payableRecords, setPayableRecords] = useState([]);
   const { t } = useTranslation();
-  const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingPayment, setEditingPayment] = useState(null);
@@ -30,38 +30,43 @@ const Payable = () => {
     order: 'descend',
   });
 
+  // 使用认证API获取数据
+  const apiInstance = useSimpleApi();
+  const { data: suppliersResponse } = useSimpleApiData('/partners?type=0', { data: [] });
+  
+  // 提取 data 字段
+  const suppliers = suppliersResponse?.data || [];
+
+  // 提取稳定的依赖值
+  const supplierShortName = filters.supplier_short_name;
+  const sortField = sorter.field;
+  const sortOrder = sorter.order;
+
   // 获取应付账款列表
-  const fetchPayableRecords = async (params = {}) => {
+  const fetchPayableRecords = useCallback(async (params = {}) => {
     try {
       setLoading(true);
-      const currentPage = params.page || pagination.current;
-      const pageSize = params.limit || pagination.pageSize;
-      const supplierName = params.supplier_short_name !== undefined ? params.supplier_short_name : filters.supplier_short_name;
-      const sortField = params.sort_field || sorter.field || 'balance';
-      const sortOrder = params.sort_order || (sorter.order === 'ascend' ? 'asc' : 'desc');
+      const page = params.page !== undefined ? params.page : pagination.current;
+      const limit = params.limit || pagination.pageSize;
+      const supplierName = params.supplier_short_name !== undefined ? params.supplier_short_name : supplierShortName;
+      const field = params.sort_field || sortField || 'balance';
+      const order = params.sort_order || (sortOrder === 'ascend' ? 'asc' : 'desc');
       
       const query = new URLSearchParams({
-        page: currentPage,
-        limit: pageSize,
+        page,
+        limit,
         supplier_short_name: supplierName || '',
-        sort_field: sortField,
-        sort_order: sortOrder,
+        sort_field: field,
+        sort_order: order,
       });
       
-      const response = await fetch(`/api/payable?${query.toString()}`);
-      if (response.ok) {
-        const result = await response.json();
-        setPayableRecords(Array.isArray(result.data) ? result.data : []);
-        setPagination(prev => ({
-          ...prev,
-          current: result.page || 1,
-          total: result.total || 0,
-        }));
-      } else {
-        const error = await response.json();
-        message.error(t('payable.fetchFailed', { msg: error.error || t('payable.unknownError') }));
-        setPayableRecords([]);
-      }
+      const result = await apiInstance.get(`/payable?${query.toString()}`);
+      setPayableRecords(Array.isArray(result.data) ? result.data : []);
+      setPagination(prev => ({
+        ...prev,
+        current: result.page || 1,
+        total: result.total || 0,
+      }));
     } catch (error) {
       console.error('获取应付账款数据失败:', error);
       message.error(t('payable.fetchFailedNetwork'));
@@ -69,35 +74,20 @@ const Payable = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  // 获取供应商列表
-  const fetchSuppliers = async () => {
-    try {
-      const response = await fetch('/api/partners?type=0');
-      if (response.ok) {
-        const result = await response.json();
-        setSuppliers(Array.isArray(result.data) ? result.data : []);
-      }
-    } catch (error) {
-      console.error('获取供应商列表失败:', error);
-    }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supplierShortName, sortField, sortOrder]);
 
   // 页面加载时获取数据
   useEffect(() => {
-    fetchPayableRecords();
-    fetchSuppliers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    fetchPayableRecords({ page: 1 });
+  }, [fetchPayableRecords]);
 
   // 筛选和排序变化时重新获取数据
   useEffect(() => {
-    if (filters.supplier_short_name !== undefined || sorter.field || sorter.order) {
-      fetchPayableRecords();
+    if (supplierShortName !== undefined || sortField || sortOrder) {
+      fetchPayableRecords({ page: 1 });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.supplier_short_name, sorter.field, sorter.order]);
+  }, [supplierShortName, sortField, sortOrder, fetchPayableRecords]);
 
   // 处理筛选
   const handleFilter = (filterValues) => {
@@ -158,25 +148,15 @@ const Payable = () => {
         pay_date: values.pay_date ? values.pay_date.format('YYYY-MM-DD') : null,
       };
 
-      const url = editingPayment ? `/api/payable/payments/${editingPayment.id}` : '/api/payable/payments';
-      const method = editingPayment ? 'PUT' : 'POST';
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (response.ok) {
-        message.success(t('payable.saveSuccess', { action: editingPayment ? t('payable.editPayment') : t('payable.addPayment') }));
-        setModalVisible(false);
-        fetchPayableRecords(); // 刷新数据
+      if (editingPayment) {
+        await apiInstance.put(`/payable/payments/${editingPayment.id}`, payload);
       } else {
-        const error = await response.json();
-        message.error(t('payable.fetchFailed', { msg: error.error || t('payable.unknownError') }));
+        await apiInstance.post('/payable/payments', payload);
       }
+
+      message.success(t('payable.saveSuccess', { action: editingPayment ? t('payable.editPayment') : t('payable.addPayment') }));
+      setModalVisible(false);
+      fetchPayableRecords(); // 刷新数据
     } catch (error) {
       console.error('保存付款记录失败:', error);
       message.error(t('payable.saveFailed'));
@@ -186,17 +166,9 @@ const Payable = () => {
   // 删除付款记录
   const handleDeletePayment = async (paymentId) => {
     try {
-      const response = await fetch(`/api/payable/payments/${paymentId}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        message.success(t('payable.deleteSuccess'));
-        fetchPayableRecords(); // 刷新数据
-      } else {
-        const error = await response.json();
-        message.error(t('payable.fetchFailed', { msg: error.error || t('payable.unknownError') }));
-      }
+      await apiInstance.delete(`/payable/payments/${paymentId}`);
+      message.success(t('payable.deleteSuccess'));
+      fetchPayableRecords(); // 刷新数据
     } catch (error) {
       console.error('删除付款记录失败:', error);
       message.error(t('payable.deleteFailed'));
@@ -241,6 +213,7 @@ const Payable = () => {
           onAddPayment={handleAddPayment}
           onEditPayment={handleEditPayment}
           onDeletePayment={handleDeletePayment}
+          apiInstance={apiInstance}
         />
 
         <PayableModal

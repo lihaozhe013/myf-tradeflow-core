@@ -1,10 +1,14 @@
 import { useState } from 'react';
 import { message } from 'antd';
 import { useTranslation } from 'react-i18next';
+import { useSimpleApi } from '../../../hooks/useSimpleApi';
 
 const useAnalysisExport = () => {
   const { t } = useTranslation();
   const [exporting, setExporting] = useState(false);
+  
+  // 使用认证API
+  const apiInstance = useSimpleApi();
 
   // 执行普通导出
   const performNormalExport = async (analysisData, detailData, dateRange, selectedCustomer, selectedProduct, customers) => {
@@ -39,21 +43,10 @@ const useAnalysisExport = () => {
         productModel: selectedProduct && selectedProduct !== 'ALL' ? selectedProduct : undefined
       };
 
-      const response = await fetch('/api/export/analysis', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      if (!response.ok) {
-        const errorResult = await response.json();
-        throw new Error(errorResult.message || t('analysis.exportFailed'));
-      }
+      const blob = await apiInstance.postBlob('/export/analysis', requestBody);
 
       // 获取文件名并下载
-      await downloadFile(response, '数据分析导出.xlsx');
+      downloadFile(blob, '数据分析导出.xlsx');
       message.success(t('analysis.exportSuccess'));
     } catch (error) {
       console.error('导出失败:', error);
@@ -74,22 +67,11 @@ const useAnalysisExport = () => {
         endDate: dateRange[1].format('YYYY-MM-DD')
       };
 
-      const response = await fetch('/api/export/analysis/advanced', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      if (!response.ok) {
-        const errorResult = await response.json();
-        throw new Error(errorResult.message || t('analysis.exportFailed'));
-      }
+      const blob = await apiInstance.postBlob('/export/analysis/advanced', requestBody);
 
       // 获取文件名并下载
       const defaultFilename = `高级分析导出_${exportType === 'customer' ? '按客户分类' : '按产品分类'}.xlsx`;
-      await downloadFile(response, defaultFilename);
+      downloadFile(blob, defaultFilename);
       message.success(t('analysis.exportSuccess'));
     } catch (error) {
       console.error('高级导出失败:', error);
@@ -100,23 +82,12 @@ const useAnalysisExport = () => {
   };
 
   // 下载文件的通用函数
-  const downloadFile = async (response, defaultFilename) => {
-    // 获取文件名
-    const contentDisposition = response.headers.get('content-disposition');
-    let filename = defaultFilename;
-    if (contentDisposition) {
-      const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-      if (filenameMatch) {
-        filename = decodeURIComponent(filenameMatch[1].replace(/['"]/g, ''));
-      }
-    }
-
-    // 下载文件
-    const blob = await response.blob();
+  const downloadFile = async (blob, defaultFilename) => {
+    // 创建下载链接
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = filename;
+    link.download = defaultFilename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

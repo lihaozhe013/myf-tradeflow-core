@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Form, message, Card, Typography, Row, Col, Divider } from 'antd';
 import { PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { useSimpleApi, useSimpleApiData } from '../../hooks/useSimpleApi';
 import ReceivableTable from './components/ReceivableTable';
 import ReceivableModal from './components/ReceivableModal';
 
@@ -11,7 +12,6 @@ const { Title } = Typography;
 const Receivable = () => {
   const { t } = useTranslation();
   const [receivableRecords, setReceivableRecords] = useState([]);
-  const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingPayment, setEditingPayment] = useState(null);
@@ -30,38 +30,45 @@ const Receivable = () => {
     order: 'descend',
   });
 
+  // 使用认证API获取数据
+  const apiInstance = useSimpleApi();
+  const { data: customersResponse } = useSimpleApiData('/partners?type=1', { data: [] });
+  
+  // 提取 data 字段
+  const customers = customersResponse?.data || [];
+  
+  // 提取稳定的依赖值
+  const customerShortName = filters.customer_short_name;
+  const sortField = sorter.field;
+  const sortOrder = sorter.order;
+
   // 获取应收账款列表
-  const fetchReceivableRecords = async (params = {}) => {
+  const fetchReceivableRecords = useCallback(async (params = {}) => {
     try {
       setLoading(true);
-      const currentPage = params.page || pagination.current;
-      const pageSize = params.limit || pagination.pageSize;
-      const customerName = params.customer_short_name !== undefined ? params.customer_short_name : filters.customer_short_name;
-      const sortField = params.sort_field || sorter.field || 'balance';
-      const sortOrder = params.sort_order || (sorter.order === 'ascend' ? 'asc' : 'desc');
+      
+      // 使用稳定的参数或传入的参数
+      const page = params.page !== undefined ? params.page : pagination.current;
+      const limit = params.limit || pagination.pageSize;
+      const customerName = params.customer_short_name !== undefined ? params.customer_short_name : customerShortName;
+      const field = params.sort_field || sortField || 'balance';
+      const order = params.sort_order || (sortOrder === 'ascend' ? 'asc' : 'desc');
       
       const query = new URLSearchParams({
-        page: currentPage,
-        limit: pageSize,
+        page,
+        limit,
         customer_short_name: customerName || '',
-        sort_field: sortField,
-        sort_order: sortOrder,
+        sort_field: field,
+        sort_order: order,
       });
       
-      const response = await fetch(`/api/receivable?${query.toString()}`);
-      if (response.ok) {
-        const result = await response.json();
-        setReceivableRecords(Array.isArray(result.data) ? result.data : []);
-        setPagination(prev => ({
-          ...prev,
-          current: result.page || 1,
-          total: result.total || 0,
-        }));
-      } else {
-        const error = await response.json();
-        message.error(t('receivable.fetchFailed', { msg: error.error || t('common.unknownError') }));
-        setReceivableRecords([]);
-      }
+      const result = await apiInstance.get(`/receivable?${query.toString()}`);
+      setReceivableRecords(Array.isArray(result.data) ? result.data : []);
+      setPagination(prev => ({
+        ...prev,
+        current: result.page || 1,
+        total: result.total || 0,
+      }));
     } catch (error) {
       console.error('获取应收账款数据失败:', error);
       message.error(t('receivable.fetchFailedNetwork'));
@@ -69,35 +76,20 @@ const Receivable = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  // 获取客户列表
-  const fetchCustomers = async () => {
-    try {
-      const response = await fetch('/api/partners?type=1');
-      if (response.ok) {
-        const result = await response.json();
-        setCustomers(Array.isArray(result.data) ? result.data : []);
-      }
-    } catch (error) {
-      console.error(t('receivable.fetchFailed', { msg: error?.message || '' }), error);
-    }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customerShortName, sortField, sortOrder]);
 
   // 页面加载时获取数据
   useEffect(() => {
-    fetchReceivableRecords();
-    fetchCustomers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    fetchReceivableRecords({ page: 1 });
+  }, [fetchReceivableRecords]);
 
   // 筛选和排序变化时重新获取数据
   useEffect(() => {
-    if (filters.customer_short_name !== undefined || sorter.field || sorter.order) {
-      fetchReceivableRecords();
+    if (customerShortName !== undefined || sortField || sortOrder) {
+      fetchReceivableRecords({ page: 1 });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.customer_short_name, sorter.field, sorter.order]);
+  }, [customerShortName, sortField, sortOrder, fetchReceivableRecords]);
 
   // 处理筛选
   const handleFilter = (filterValues) => {
@@ -158,25 +150,15 @@ const Receivable = () => {
         pay_date: values.pay_date ? values.pay_date.format('YYYY-MM-DD') : null,
       };
 
-      const url = editingPayment ? `/api/receivable/payments/${editingPayment.id}` : '/api/receivable/payments';
-      const method = editingPayment ? 'PUT' : 'POST';
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (response.ok) {
-      message.success(t('receivable.saveSuccess', { action: editingPayment ? t('common.edit') : t('common.add') }));
-        setModalVisible(false);
-        fetchReceivableRecords(); // 刷新数据
+      if (editingPayment) {
+        await apiInstance.put(`/receivable/payments/${editingPayment.id}`, payload);
       } else {
-        const error = await response.json();
-        message.error(t('receivable.saveFailed'));
+        await apiInstance.post('/receivable/payments', payload);
       }
+
+      message.success(t('receivable.saveSuccess', { action: editingPayment ? t('common.edit') : t('common.add') }));
+      setModalVisible(false);
+      fetchReceivableRecords(); // 刷新数据
     } catch (error) {
       console.error(t('receivable.saveFailed'), error);
       message.error(t('receivable.saveFailed'));
@@ -186,17 +168,9 @@ const Receivable = () => {
   // 删除回款记录
   const handleDeletePayment = async (paymentId) => {
     try {
-      const response = await fetch(`/api/receivable/payments/${paymentId}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        message.success(t('receivable.deleteSuccess'));
-        fetchReceivableRecords(); // 刷新数据
-      } else {
-        const error = await response.json();
-        message.error(t('receivable.deleteFailed'));
-      }
+      await apiInstance.delete(`/receivable/payments/${paymentId}`);
+      message.success(t('receivable.deleteSuccess'));
+      fetchReceivableRecords(); // 刷新数据
     } catch (error) {
       console.error(t('receivable.deleteFailed'), error);
       message.error(t('receivable.deleteFailed'));
@@ -241,6 +215,7 @@ const Receivable = () => {
           onAddPayment={handleAddPayment}
           onEditPayment={handleEditPayment}
           onDeletePayment={handleDeletePayment}
+          apiInstance={apiInstance}
         />
 
         <ReceivableModal

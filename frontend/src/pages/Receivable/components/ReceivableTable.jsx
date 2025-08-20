@@ -16,7 +16,8 @@ const ReceivableTable = ({
   onTableChange,
   onAddPayment,
   onEditPayment,
-  onDeletePayment
+  onDeletePayment,
+  apiInstance // 新增：接收API实例
 }) => {
   const { t } = useTranslation();
   const [detailsVisible, setDetailsVisible] = useState(false);
@@ -73,7 +74,7 @@ const ReceivableTable = ({
     }
   };
 
-  // 获取客户详情数据
+    // 获取客户详情数据
   const fetchCustomerDetails = async (customerCode, paymentPage = 1, outboundPage = 1) => {
     try {
       const query = new URLSearchParams({
@@ -83,29 +84,30 @@ const ReceivableTable = ({
         outbound_limit: 5
       });
       
-      const response = await fetch(`/api/receivable/details/${customerCode}?${query.toString()}`);
-      if (response.ok) {
-        const result = await response.json();
-        setCustomerDetails(result);
-        
-        // 更新分页状态
-        setPaymentPagination({
-          current: result.payment_records.page,
-          pageSize: result.payment_records.limit,
-          total: result.payment_records.total
-        });
-        setOutboundPagination({
-          current: result.outbound_records.page,
-          pageSize: result.outbound_records.limit,
-          total: result.outbound_records.total
-        });
-      } else {
-        const error = await response.json();
-        message.error(t('receivable.fetchFailed', { msg: error.error || t('common.unknownError') }));
-      }
+      const result = await apiInstance.get(`/receivable/details/${customerCode}?${query.toString()}`);
+      setCustomerDetails(result);
+      
+      // 更新分页状态
+      setPaymentPagination({
+        current: result.payment_pagination?.page || 1,
+        pageSize: 5,
+        total: result.payment_pagination?.total || 0
+      });
+      
+      setOutboundPagination({
+        current: result.outbound_pagination?.page || 1,
+        pageSize: 5,
+        total: result.outbound_pagination?.total || 0
+      });
     } catch (error) {
       console.error('获取客户详情失败:', error);
-      message.error(t('receivable.fetchFailedNetwork'));
+      if (error.response && error.response.status !== 200) {
+        message.error(t('receivable.fetchFailed', { msg: error.error || t('common.unknownError') }));
+      } else {
+        setCustomerDetails(null);
+      }
+    } finally {
+      setDetailsLoading(false);
     }
   };
 
