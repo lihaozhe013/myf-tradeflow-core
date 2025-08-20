@@ -1,6 +1,6 @@
-# 认证架构
+# 认证架构设计与实现
 
-## 认证方式
+## 🔐 认证方式
 
 **JWT无状态认证** - 基于JSON Web Token的无状态认证机制
 
@@ -9,42 +9,65 @@
 - 支持分布式部署
 - Token包含用户信息和权限
 - 自动过期管理
+- 前端自动认证集成
 
-## 角色权限体系
+## 👥 角色权限体系
 
 ### 角色定义
 | 角色 | 权限范围 | 说明 |
 |------|----------|------|
-| `admin` | 全部权限 | 系统管理员，可执行所有操作 |
 | `editor` | 读写权限 | 业务操作员，可查看和修改数据 |
-| `viewer` | 只读权限 | 只能查看数据，不能修改 |
+| `reader` | 只读权限 | 只能查看数据和导出，不能修改 |
 
 ### 权限控制
 - **API级别**: 每个接口根据用户角色验证权限
 - **功能级别**: 前端根据角色显示/隐藏操作按钮
 - **数据级别**: 敏感操作记录操作用户信息
 
-## 技术实现
+## 🏗️ 技术实现
 
 ### 后端认证
+
+#### 用户存储
+```json
+// /data/users.json
+{
+  "users": [
+    {
+      "username": "admin",
+      "password_hash": "$argon2id$v=19$m=65536,t=3,p=1$...",
+      "role": "editor",
+      "display_name": "系统管理员",
+      "enabled": true,
+      "last_password_change": "2025-08-20T07:00:00.000Z"
+    }
+  ]
+}
+```
 
 #### JWT配置
 ```javascript
 // JWT密钥配置
-const JWT_SECRET = process.env.JWT_SECRET || 'default-secret';
-const JWT_EXPIRES_IN = '24h'; // Token有效期
+const JWT_SECRET = process.env.JWT_SECRET || readFromFile('/data/jwt-secret.txt');
+const JWT_EXPIRES_IN = '12h'; // Token有效期
 
 // Token生成
 const token = jwt.sign(
-  { username, role },
-  JWT_SECRET,
-  { expiresIn: JWT_EXPIRES_IN }
+  { 
+    sub: username,
+    role: role,
+    name: display_name,
+    pwd_ver: last_password_change,
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + (12 * 3600)
+  },
+  JWT_SECRET
 );
 ```
 
 #### 认证中间件
 ```javascript
-// 位置: backend/middleware/auth.js
+// 位置: backend/utils/auth.js
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -55,21 +78,42 @@ const authenticateToken = (req, res, next) => {
   
   jwt.verify(token, JWT_SECRET, (err, user) => {
     if (err) return res.status(403).json({ error: '令牌无效' });
+    
+    // 检查用户是否仍然存在且启用
+    const currentUser = getUserFromFile(user.sub);
+    if (!currentUser || !currentUser.enabled) {
+      return res.status(401).json({ error: '用户不存在或已禁用' });
+    }
+    
+    // 检查密码是否已更改（软吊销）
+    if (user.pwd_ver < currentUser.last_password_change) {
+      return res.status(401).json({ error: '令牌已失效，请重新登录' });
+    }
+    
     req.user = user;
     next();
   });
 };
 ```
 
-#### 权限验证中间件
+#### 权限验证
 ```javascript
-const requireRole = (roles) => {
+const requireRole = (allowedRoles) => {
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
+    if (!allowedRoles.includes(req.user.role)) {
       return res.status(403).json({ error: '权限不足' });
     }
     next();
   };
+};
+
+// 权限矩阵
+const permissions = {
+  'GET': ['editor', 'reader'],           // 查看数据
+  'POST /api/export/*': ['editor', 'reader'], // 导出功能
+  'POST': ['editor'],                    // 创建数据
+  'PUT': ['editor'],                     // 修改数据
+  'DELETE': ['editor']                   // 删除数据
 };
 ```
 
@@ -84,37 +128,34 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   
-  // 认证状态管理
-  const login = async (credentials) => { ... };
-  const logout = () => { ... };
-  const checkAuth = async () => { ... };
+  const login = async (credentials) => {
+    const response = await apiRequest('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(credentials)
+    });
+    
+    tokenManager.setToken(response.token);
+    setUser(response.user);
+  };
+  
+  const logout = () => {
+    tokenManager.clearToken();
+    setUser(null);
+    window.location.href = '/login';
+  };
   
   return (
-    <AuthContext.Provider value={{ user, login, logout, checkAuth }}>
+    <AuthContext.Provider value={{ user, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
 };
 ```
 
-#### Token管理器
-```javascript
-// 位置: frontend/src/auth/auth.js
-export const tokenManager = {
-  getToken: () => localStorage.getItem('token'),
-  setToken: (token) => localStorage.setItem('token', token),
-  clearToken: () => localStorage.removeItem('token'),
-  isTokenValid: () => {
-    const token = tokenManager.getToken();
-    // 检查token有效性
-  }
-};
-```
-
-#### 请求拦截器
+#### 自动认证请求
 ```javascript
 // 位置: frontend/src/utils/request.js
-const createRequest = (baseURL = '') => {
+const createRequest = () => {
   const request = async (url, options = {}) => {
     const token = tokenManager.getToken();
     
@@ -131,177 +172,208 @@ const createRequest = (baseURL = '') => {
       config.headers.Authorization = `Bearer ${token}`;
     }
     
-    const response = await fetch(`${baseURL}${url}`, config);
+    // 自动添加/api前缀
+    const fullUrl = url.startsWith('/api') ? url : `/api${url}`;
+    const response = await fetch(fullUrl, config);
     
-    // 处理401错误
+    // 处理认证错误
     if (response.status === 401) {
       tokenManager.clearToken();
       window.location.href = '/login';
       throw new Error('认证失败，请重新登录');
     }
     
-    return response;
+    if (response.status === 403) {
+      throw new Error('权限不足');
+    }
+    
+    return await response.json();
   };
   
   return request;
 };
 ```
 
-## 安全机制
+#### 认证Hooks
+```javascript
+// 位置: frontend/src/hooks/useSimpleApi.js
+export const useSimpleApi = () => {
+  const [loading, setLoading] = useState(false);
+  
+  const request = useCallback(async (url, options = {}) => {
+    try {
+      setLoading(true);
+      return await apiRequest(url, options);
+    } catch (err) {
+      message.error(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  
+  const get = useCallback((url) => request(url, { method: 'GET' }), [request]);
+  const post = useCallback((url, data) => request(url, { 
+    method: 'POST', 
+    body: JSON.stringify(data) 
+  }), [request]);
+  
+  return { loading, get, post, put, delete: del, postBlob };
+};
+
+export const useSimpleApiData = (url, defaultData) => {
+  const [data, setData] = useState(defaultData);
+  const [loading, setLoading] = useState(false);
+  
+  const fetchData = useCallback(async () => {
+    if (!url) return;
+    try {
+      setLoading(true);
+      const response = await apiRequest(url);
+      setData(response || defaultData);
+    } catch (err) {
+      console.error('数据获取失败:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [url, defaultData]);
+  
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+  
+  return { data, loading, refetch: fetchData };
+};
+```
+
+## 🔒 安全机制
 
 ### 密码安全
-- **加密算法**: Argon2 (抗彩虹表攻击)
+- **加密算法**: Argon2id (抗彩虹表攻击)
 - **盐值**: 自动生成随机盐值
 - **加密强度**: 高强度配置
 
-```javascript
-const argon2 = require('argon2');
-
-// 密码加密
-const hashPassword = async (password) => {
-  return await argon2.hash(password);
-};
-
-// 密码验证
-const verifyPassword = async (password, hash) => {
-  return await argon2.verify(hash, password);
-};
-```
-
 ### Token安全
 - **签名验证**: HMAC-SHA256签名
-- **过期控制**: 24小时自动过期
+- **过期控制**: 12小时自动过期
+- **软吊销**: 密码变更后旧Token失效
 - **传输安全**: HTTPS传输(生产环境)
 
-### 前端安全
-- **自动登出**: Token过期自动跳转登录
-- **路由守卫**: 未认证用户自动重定向
-- **敏感信息**: 不在localStorage存储敏感信息
+### 登录安全
+- **防暴力破解**: 5分钟内最多20次尝试
+- **错误信息**: 统一提示"用户名或密码错误"
+- **账号锁定**: enabled字段控制账号启用状态
 
-## API认证集成
+## 📚 API接口
 
-### 后端路由保护
+### 认证接口
 ```javascript
-// 需要认证的路由
-router.use('/api/inbound', authenticateToken, inboundRoutes);
-router.use('/api/outbound', authenticateToken, outboundRoutes);
-
-// 需要特定权限的路由
-router.delete('/api/inbound/:id', 
-  authenticateToken, 
-  requireRole(['admin', 'editor']), 
-  deleteInboundRecord
-);
-```
-
-### 前端API调用
-```javascript
-// 使用认证钩子
-import { useApi } from '../hooks/useApi';
-
-const MyComponent = () => {
-  const { get, post, loading, error } = useApi();
-  
-  const fetchData = async () => {
-    try {
-      const result = await get('/api/inbound');
-      // 自动处理认证
-    } catch (err) {
-      // 自动处理401错误
-    }
-  };
-};
-```
-
-## 用户管理
-
-### 默认用户
-- **用户名**: `admin`
-- **密码**: `123456`
-- **角色**: `admin`
-
-### 用户操作
-- **创建用户**: 管理员权限
-- **修改密码**: 用户自己或管理员
-- **用户禁用**: 管理员权限
-- **角色变更**: 管理员权限
-
-## 会话管理
-
-### Token生命周期
-1. **登录**: 生成Token并返回给前端
-2. **存储**: 前端存储在localStorage
-3. **使用**: 每次请求自动携带Token
-4. **验证**: 后端验证Token有效性
-5. **过期**: 24小时后自动过期
-6. **刷新**: 需要重新登录获取新Token
-
-### 自动登出机制
-- Token过期自动登出
-- API返回401时自动登出
-- 浏览器关闭时清除会话(可选)
-
-## 开发指南
-
-### 新增需认证的API
-```javascript
-// 1. 添加认证中间件
-router.use('/api/new-module', authenticateToken, newModuleRoutes);
-
-// 2. 可选: 添加权限验证
-router.delete('/api/new-module/:id', 
-  authenticateToken,
-  requireRole(['admin']),
-  deleteHandler
-);
-
-// 3. 在处理函数中可访问用户信息
-const handler = (req, res) => {
-  const { username, role } = req.user;
-  // 业务逻辑
-};
-```
-
-### 前端受保护页面
-```javascript
-import { useAuth } from '../auth/AuthContext';
-
-const ProtectedPage = () => {
-  const { user } = useAuth();
-  
-  if (!user) {
-    return <div>请先登录</div>;
+// POST /api/auth/login
+{
+  "username": "admin",
+  "password": "123456"
+}
+// 响应
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "expires_in": 43200,
+  "user": {
+    "username": "admin",
+    "role": "editor",
+    "display_name": "系统管理员"
   }
-  
-  return (
-    <div>
-      {user.role === 'admin' && <AdminButton />}
-      <Content />
-    </div>
-  );
-};
+}
+
+// GET /api/auth/me - 获取当前用户信息
+// POST /api/auth/logout - 登出(可选实现)
 ```
 
-## 部署考虑
+## 🛠️ 部署配置
 
 ### 环境变量
 ```bash
 # JWT密钥(生产环境必须设置)
-JWT_SECRET=your-very-secure-secret-key
+JWT_SECRET=your-very-secure-secret-key-at-least-64-chars
+
+# 认证开关
+AUTH_ENABLED=true
 
 # Token有效期
-JWT_EXPIRES_IN=24h
-
-# 是否启用HTTPS
-ENABLE_HTTPS=true
+JWT_EXPIRES_IN=12h
 ```
 
-### 安全配置
-- 生产环境必须使用HTTPS
-- JWT密钥必须足够复杂且定期更换
-- 启用CORS保护
-- 配置安全请求头
+### 配置文件
+```json
+// data/appConfig.json
+{
+  "auth": {
+    "enabled": true,
+    "tokenExpiresInHours": 12,
+    "loginRateLimit": {
+      "windowMinutes": 5,
+      "maxAttempts": 20
+    },
+    "allowExportsForReader": true
+  }
+}
+```
+
+## 👤 用户管理
+
+### 默认用户
+```json
+{
+  "username": "admin",
+  "password": "123456",
+  "role": "editor"
+}
+```
+
+### 手动管理用户
+```bash
+# 1. 生成密码哈希
+node backend/gen-hash.js "new-password"
+
+# 2. 编辑 /data/users.json
+{
+  "users": [
+    {
+      "username": "new-user",
+      "password_hash": "生成的哈希值",
+      "role": "reader",
+      "display_name": "新用户",
+      "enabled": true,
+      "last_password_change": "2025-08-20T10:00:00.000Z"
+    }
+  ]
+}
+
+# 3. 重启服务生效
+```
+
+## ✅ 实施状态
+
+### 已完成页面
+- [x] Overview - 总览
+- [x] Stock - 库存管理
+- [x] Products - 产品管理
+- [x] Partners - 合作伙伴管理
+- [x] ProductPrices - 产品价格管理
+- [x] Inbound - 入库管理
+- [x] Outbound - 出库管理
+- [x] Payable - 应付账款管理
+- [x] Receivable - 应收账款管理
+- [x] Analysis - 数据分析
+
+### 认证特性
+- [x] JWT无状态认证
+- [x] 角色权限控制
+- [x] 自动认证集成
+- [x] 错误处理机制
+- [x] 安全防护措施
 
 ---
 
-*本文档最后更新: 2025年8月*
+**文档版本**: 1.0  
+**最后更新**: 2025年8月20日  
+**实施状态**: 生产就绪
