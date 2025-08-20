@@ -36,8 +36,12 @@ const Inbound = () => {
 
   // 使用认证API获取数据
   const apiInstance = useSimpleApi();
-  const { data: partnersData } = useSimpleApiData('/partners', []);
-  const { data: productsData } = useSimpleApiData('/products', []);
+  const { data: partnersResponse } = useSimpleApiData('/partners', { data: [] });
+  const { data: productsResponse } = useSimpleApiData('/products', { data: [] });
+  
+  // 提取 data 字段
+  const partnersData = partnersResponse?.data || [];
+  const productsData = productsResponse?.data || [];
   
   // 过滤供应商（type=0）
   const partners = Array.isArray(partnersData) ? partnersData.filter(partner => partner.type === 0) : [];
@@ -64,7 +68,6 @@ const Inbound = () => {
         sort_order: params.sort_order !== undefined ? params.sort_order : (sorter.order || ''),
       });
       const result = await apiInstance.get(`/inbound?${query.toString()}`);
-      console.log('[Inbound] fetch result:', result);
       setInboundRecords(Array.isArray(result.data) ? result.data : []);
       setPagination({
         current: result.pagination.page,
@@ -222,6 +225,7 @@ const Inbound = () => {
       const supplierShortName = form.getFieldValue('supplier_short_name');
       const productModel = form.getFieldValue('product_model');
       const inboundDate = form.getFieldValue('inbound_date');
+      
       if (supplierShortName && productModel && inboundDate) {
         try {
           const data = await apiInstance.get(`/product-prices/auto?partner_short_name=${supplierShortName}&product_model=${productModel}&date=${inboundDate.format('YYYY-MM-DD')}`);
@@ -329,7 +333,6 @@ const Inbound = () => {
             showTotal: (total, range) => t('outbound.paginationTotal', { start: range[0], end: range[1], total }),
           }}
         />
-        {console.log('[Inbound] render: records.length', inboundRecords.length, 'pagination', pagination)}
       </Card>
 
       <InboundModal

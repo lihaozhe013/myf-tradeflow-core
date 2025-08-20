@@ -35,8 +35,12 @@ const Outbound = () => {
 
   // 使用认证API获取数据
   const apiInstance = useSimpleApi();
-  const { data: partnersData } = useSimpleApiData('/partners', []);
-  const { data: productsData } = useSimpleApiData('/products', []);
+  const { data: partnersResponse } = useSimpleApiData('/partners', { data: [] });
+  const { data: productsResponse } = useSimpleApiData('/products', { data: [] });
+  
+  // 提取 data 字段
+  const partnersData = partnersResponse?.data || [];
+  const productsData = productsResponse?.data || [];
   
   // 过滤客户（type=1）
   const partners = Array.isArray(partnersData) ? partnersData.filter(partner => partner.type === 1) : [];
@@ -62,7 +66,6 @@ const Outbound = () => {
         sort_order: params.sort_order !== undefined ? params.sort_order : (sorter.order || ''),
       });
       const result = await apiInstance.get(`/outbound?${query.toString()}`);
-      console.log('[Outbound] fetch result:', result);
       setOutboundRecords(Array.isArray(result.data) ? result.data : []);
       setPagination({
         current: result.pagination.page,
@@ -220,6 +223,7 @@ const Outbound = () => {
       const customerShortName = form.getFieldValue('customer_short_name');
       const productModel = form.getFieldValue('product_model');
       const outboundDate = form.getFieldValue('outbound_date');
+      
       if (customerShortName && productModel && outboundDate) {
         try {
           const data = await apiInstance.get(`/product-prices/auto?partner_short_name=${customerShortName}&product_model=${productModel}&date=${outboundDate.format('YYYY-MM-DD')}`);
