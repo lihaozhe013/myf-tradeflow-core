@@ -163,6 +163,56 @@ function authorize(roles = ['editor', 'reader']) {
   };
 }
 
+// 检查只读用户的写操作权限
+function checkWritePermission(req, res, next) {
+  if (!req.user) {
+    return res.status(401).json({ success: false, message: 'Unauthorized' });
+  }
+
+  const method = req.method.toUpperCase();
+  const { allowExportsForReader } = getAuthConfig();
+  
+  // 如果是编辑者角色，允许所有操作
+  if (req.user.role === 'editor') {
+    return next();
+  }
+  
+  // 如果是只读用户
+  if (req.user.role === 'reader') {
+    // 允许GET请求
+    if (method === 'GET') {
+      return next();
+    }
+    
+    // 如果配置允许，reader可以使用导出功能的POST请求
+    if (allowExportsForReader && method === 'POST' && req.originalUrl.includes('/api/export')) {
+      return next();
+    }
+    
+    // 拒绝其他写操作
+    if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+      logger.warn('只读用户尝试执行写操作', {
+        username: req.user.username,
+        method: method,
+        url: req.originalUrl,
+        ip: req.ip
+      });
+      return res.status(403).json({ 
+        success: false, 
+        message: '只读用户无权执行此操作',
+        error_code: 'READ_ONLY_ACCESS_DENIED'
+      });
+    }
+  }
+  
+  // 对于其他未知角色，拒绝访问
+  return res.status(403).json({ 
+    success: false, 
+    message: '权限不足',
+    error_code: 'INSUFFICIENT_PERMISSIONS'
+  });
+}
+
 module.exports = {
   getAuthConfig,
   ensureJwtSecret,
@@ -174,4 +224,5 @@ module.exports = {
   loginRateLimiter,
   authenticateToken,
   authorize,
+  checkWritePermission,
 };

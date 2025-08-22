@@ -117,6 +117,31 @@ const permissions = {
 };
 ```
 
+### 只读用户（reader）后端写权限控制
+
+实现说明：
+- 后端在认证中间件（`backend/utils/auth.js` 中的 `authenticateToken`）之后，增加了一个写权限检查中间件 `checkWritePermission`。
+- `checkWritePermission` 会根据请求方法和当前 `req.user.role` 决定是否允许访问：
+  - 如果角色是 `editor`：允许所有请求（读/写）。
+  - 如果角色是 `reader`：仅允许 `GET` 请求和部分导出相关的 `POST`（见下文）；对 `POST`、`PUT`、`PATCH`、`DELETE` 等写操作统一拒绝。
+
+导出例外：
+- 为了支持只读用户导出数据（前端不需要修改），新增了配置项 `auth.allowExportsForReader`（见 `data/appConfig.json`）。
+- 当该配置为 `true` 时，`reader` 角色仍然可以对 `/api/export` 路径发起 `POST` 请求以触发导出。默认仓库配置为 `true`。
+
+错误返回与日志：
+- 当 `reader` 触发被禁止的写操作时，后端会返回 HTTP 403，响应示例：
+
+```json
+{
+  "success": false,
+  "message": "只读用户无权执行此操作",
+  "error_code": "READ_ONLY_ACCESS_DENIED"
+}
+```
+
+- 同时会在后端日志中记录一条警告，包含用户名、请求方法、URL 与客户端 IP，便于审计与排查。
+
 ### 前端认证
 
 #### 认证上下文
