@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Form, Input, Button, Card, Alert, Spin } from 'antd';
 import { UserOutlined, LockOutlined, LoginOutlined } from '@ant-design/icons';
-import { useAuth } from './AuthContext';
+import { useAuth } from './useAuth';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './LoginPage.css';
+import { useTranslation } from 'react-i18next';
 
 const LoginPage = () => {
   const [form] = Form.useForm();
@@ -11,6 +12,7 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [loginLoading, setLoginLoading] = useState(false);
+  const { t } = useTranslation();
 
   // 获取重定向路径
   const from = location.state?.from?.pathname || '/';
@@ -26,8 +28,6 @@ const LoginPage = () => {
         // 登录成功，重定向到之前的页面或首页
         navigate(from, { replace: true });
       }
-    } catch (err) {
-      // 错误已经在 AuthContext 中处理
     } finally {
       setLoginLoading(false);
     }
@@ -45,7 +45,7 @@ const LoginPage = () => {
       <div className="login-container">
         <div className="login-loading">
           <Spin size="large" />
-          <p>正在验证登录状态...</p>
+          <p>{t('auth.verifying')}</p>
         </div>
       </div>
     );
@@ -59,8 +59,8 @@ const LoginPage = () => {
             <div className="login-logo">
               <img src="/logo.svg" alt="Logo" className="logo-image" />
             </div>
-            <h1 className="login-title">轻量级 ERP 系统</h1>
-            <p className="login-subtitle">请登录您的账户</p>
+            <h1 className="login-title">{t('auth.title')}</h1>
+            <p className="login-subtitle">{t('auth.subtitle')}</p>
           </div>
 
           {error && (
@@ -86,13 +86,13 @@ const LoginPage = () => {
               rules={[
                 {
                   required: true,
-                  message: '请输入用户名',
+                  message: t('auth.usernameRequired'),
                 },
               ]}
             >
               <Input
                 prefix={<UserOutlined />}
-                placeholder="用户名"
+                placeholder={t('auth.username')}
                 onChange={handleUsernameChange}
                 autoComplete="username"
               />
@@ -103,13 +103,13 @@ const LoginPage = () => {
               rules={[
                 {
                   required: true,
-                  message: '请输入密码',
+                  message: t('auth.passwordRequired'),
                 },
               ]}
             >
               <Input.Password
                 prefix={<LockOutlined />}
-                placeholder="密码"
+                placeholder={t('auth.password')}
                 autoComplete="current-password"
               />
             </Form.Item>
@@ -123,7 +123,7 @@ const LoginPage = () => {
                 icon={<LoginOutlined />}
                 block
               >
-                {loginLoading ? '登录中...' : '登录'}
+                {loginLoading ? t('auth.loggingIn') : t('auth.login')}
               </Button>
             </Form.Item>
           </Form>

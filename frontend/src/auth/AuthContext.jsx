@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useReducer, useEffect } from 'react';
 import { tokenManager, userManager, authAPI } from './auth';
+import { useTranslation } from 'react-i18next';
 
 // 初始状态
 const initialState = {
@@ -84,6 +85,7 @@ const AuthContext = createContext(null);
 // AuthProvider 组件
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
+  const { t } = useTranslation();
 
   // 初始化时检查本地存储的认证信息
   useEffect(() => {
@@ -108,7 +110,7 @@ export const AuthProvider = ({ children }) => {
             userManager.setUser(null);
             dispatch({ type: AUTH_ACTIONS.LOGOUT });
           }
-        } catch (error) {
+        } catch {
           // Token验证失败，清除本地存储
           tokenManager.clearToken();
           userManager.setUser(null);
@@ -145,7 +147,7 @@ export const AuthProvider = ({ children }) => {
         
         return { success: true };
       } else {
-        throw new Error(response.message || '登录失败');
+        throw new Error(response.message || t('auth.loginFailed'));
       }
     } catch (error) {
       dispatch({
@@ -195,11 +197,5 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// useAuth hook
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+// 导出 AuthContext 以便在其他文件中使用
+export default AuthContext;
