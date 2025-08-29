@@ -16,7 +16,8 @@ const PayableTable = ({
   onTableChange,
   onAddPayment,
   onEditPayment,
-  onDeletePayment
+  onDeletePayment,
+  apiInstance // 新增：接收API实例
 }) => {
   const [detailsVisible, setDetailsVisible] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
@@ -83,26 +84,20 @@ const PayableTable = ({
         inbound_limit: 5
       });
       
-      const response = await fetch(`/api/payable/details/${supplierCode}?${query.toString()}`);
-      if (response.ok) {
-        const result = await response.json();
-        setSupplierDetails(result);
-        
-        // 更新分页状态
-        setPaymentPagination({
-          current: result.payment_records.page,
-          pageSize: result.payment_records.limit,
-          total: result.payment_records.total
-        });
-        setInboundPagination({
-          current: result.inbound_records.page,
-          pageSize: result.inbound_records.limit,
-          total: result.inbound_records.total
-        });
-      } else {
-        const error = await response.json();
-        message.error(t('payable.fetchFailed', { msg: error.error || t('payable.unknownError') }));
-      }
+      const result = await apiInstance.get(`/payable/details/${supplierCode}?${query.toString()}`);
+      setSupplierDetails(result);
+      
+      // 更新分页状态
+      setPaymentPagination({
+        current: result.payment_records.page,
+        pageSize: result.payment_records.limit,
+        total: result.payment_records.total
+      });
+      setInboundPagination({
+        current: result.inbound_records.page,
+        pageSize: result.inbound_records.limit,
+        total: result.inbound_records.total
+      });
     } catch (error) {
       console.error('获取供应商详情失败:', error);
       message.error(t('payable.fetchFailedNetwork'));

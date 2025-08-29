@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { message } from 'antd';
 import { useTranslation } from 'react-i18next';
+import { useSimpleApi } from '../../../hooks/useSimpleApi';
 
 const useAnalysisData = () => {
   const { t } = useTranslation();
@@ -11,12 +12,14 @@ const useAnalysisData = () => {
   const [analysisData, setAnalysisData] = useState(null);
   const [detailData, setDetailData] = useState([]);
 
+  // 使用认证API
+  const apiInstance = useSimpleApi();
+
   // 获取筛选选项
-  const fetchFilterOptions = async () => {
+  const fetchFilterOptions = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/analysis/filter-options');
-      const result = await response.json();
+      const result = await apiInstance.get('/analysis/filter-options');
       
       if (result.success) {
         setCustomers(result.customers);
@@ -30,10 +33,11 @@ const useAnalysisData = () => {
     } finally {
       setLoading(false);
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // 获取分析数据
-  const fetchAnalysisData = async (dateRange, selectedCustomer, selectedProduct) => {
+  const fetchAnalysisData = useCallback(async (dateRange, selectedCustomer, selectedProduct) => {
     if (!dateRange || !dateRange[0] || !dateRange[1]) {
       message.warning(t('analysis.selectTimeRange'));
       return;
@@ -64,15 +68,14 @@ const useAnalysisData = () => {
       }
 
       // 获取基本分析数据
-      const response = await fetch(`/api/analysis/data?${params}`);
-      const result = await response.json();
+      const result = await apiInstance.get(`/analysis/data?${params}`);
       
       if (result.success) {
         setAnalysisData(result.data);
       } else {
         // 数据未生成，需要刷新
         setAnalysisData(null);
-        if (response.status === 503) {
+        if (result.status === 503) {
           message.info(t('analysis.dataNotGenerated'));
         } else {
           message.error(result.message || t('analysis.getAnalysisDataFailed'));
@@ -80,8 +83,7 @@ const useAnalysisData = () => {
       }
 
       // 获取详细分析数据
-      const detailResponse = await fetch(`/api/analysis/detail?${params}`);
-      const detailResult = await detailResponse.json();
+      const detailResult = await apiInstance.get(`/analysis/detail?${params}`);
       
       if (detailResult.success) {
         setDetailData(detailResult.data.detail_data || []);
@@ -96,10 +98,11 @@ const useAnalysisData = () => {
     } finally {
       setLoading(false);
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // 刷新分析数据
-  const refreshAnalysisData = async (dateRange, selectedCustomer, selectedProduct) => {
+  const refreshAnalysisData = useCallback(async (dateRange, selectedCustomer, selectedProduct) => {
     if (!dateRange || !dateRange[0] || !dateRange[1]) {
       message.warning(t('analysis.selectTimeRange'));
       return;
@@ -127,15 +130,7 @@ const useAnalysisData = () => {
         requestBody.product_model = selectedProduct;
       }
 
-      const response = await fetch('/api/analysis/refresh', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
-      
-      const result = await response.json();
+      const result = await apiInstance.post('/analysis/refresh', requestBody);
       
       if (result.success) {
         setAnalysisData(result.data);
@@ -152,12 +147,13 @@ const useAnalysisData = () => {
     } finally {
       setRefreshing(false);
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchAnalysisData]);
 
   // 组件挂载时获取筛选选项
   useEffect(() => {
     fetchFilterOptions();
-  }, []);
+  }, [fetchFilterOptions]);
 
   return {
     loading,

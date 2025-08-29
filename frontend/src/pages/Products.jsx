@@ -18,46 +18,33 @@ import {
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { PRODUCT_CATEGORIES } from '../config/index.js';
+import { useSimpleApi, useSimpleApiData } from '../hooks/useSimpleApi';
 
 const { Title } = Typography;
 const { Option } = Select;
 
 const Products = () => {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [form] = Form.useForm();
-  // 新增：用于联动输入的下拉数据
-  const [productOptions, setProductOptions] = useState([]);
   const { t } = useTranslation();
 
+  // 使用简化API hooks
+  const { post, put, request } = useSimpleApi();
+  
   // 获取产品列表
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/products');
-      if (response.ok) {
-        const result = await response.json();
-        setProducts(Array.isArray(result.data) ? result.data : []);
-        setProductOptions(Array.isArray(result.data) ? result.data : []);
-      } else {
-        setProducts([]);
-        setProductOptions([]);
-      }
-    } catch {
-      setProducts([]);
-      setProductOptions([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { 
+    data: productsResponse, 
+    loading, 
+    refetch: refreshProducts 
+  } = useSimpleApiData('/products', { data: [] });
+  
+  const products = productsResponse?.data || [];
+  // 产品选项用于联动输入
+  const productOptions = products;
 
   useEffect(() => {
-    // 调试日志：检查配置导入
-    // eslint-disable-next-line no-console
     console.log('PRODUCT_CATEGORIES:', PRODUCT_CATEGORIES, Array.isArray(PRODUCT_CATEGORIES));
-    fetchProducts();
   }, []);
 
   // 新增产品
@@ -77,45 +64,28 @@ const Products = () => {
   // 删除产品
   const handleDelete = async (code) => {
     try {
-      const response = await fetch(`/api/products/${code}`, {
-        method: 'DELETE',
-      });
-      if (response.ok) {
-        message.success(t('products.deleteSuccess'));
-        fetchProducts();
-      } else {
-        message.error(t('products.deleteFailed'));
-      }
+      await request(`/products/${code}`, { method: 'DELETE' });
+      message.success(t('products.deleteSuccess'));
+      refreshProducts();
     } catch {
-      message.error(t('products.deleteFailed'));
+      // 错误已经在useSimpleApi中处理
     }
   };
 
   // 保存产品
   const handleSave = async (values) => {
     try {
-      const url = editingProduct
-        ? `/api/products/${editingProduct.code}`
-        : '/api/products';
-      const method = editingProduct ? 'PUT' : 'POST';
-      const body = { ...values };
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-      });
-      if (response.ok) {
-        message.success(editingProduct ? t('products.editSuccess') : t('products.addSuccess'));
-        setModalVisible(false);
-        fetchProducts();
+      if (editingProduct) {
+        await put(`/products/${editingProduct.code}`, values);
+        message.success(t('products.editSuccess'));
       } else {
-        const errorData = await response.json();
-        message.error(errorData.error || t('products.saveFailed'));
+        await post('/products', values);
+        message.success(t('products.addSuccess'));
       }
+      setModalVisible(false);
+      refreshProducts();
     } catch {
-      message.error(t('products.saveFailed'));
+      // 错误已经在useSimpleApi中处理
     }
   };
 

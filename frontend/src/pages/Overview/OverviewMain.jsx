@@ -11,6 +11,7 @@ import {
   ExportOutlined
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { useSimpleApi, useSimpleApiData } from '../../hooks/useSimpleApi';
 
 import MonthlyStockChange from './MonthlyStockChange';
 import OutOfStockModal from './OutOfStockModal';
@@ -20,52 +21,33 @@ const { Title, Text } = Typography;
 
 const OverviewMain = () => {
   const { t } = useTranslation();
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({});
-  const [error, setError] = useState(null);
+  const { post } = useSimpleApi();
+  
+  // 使用简化版Hook获取统计数据
+  const {
+    data: stats,
+    loading,
+    error,
+    refetch
+  } = useSimpleApiData('/overview/stats', {
+    overview: {},
+    out_of_stock_products: []
+  });
 
-
-  const fetchStats = useCallback(async (autoCreate = true) => {
+  // 刷新统计数据
+  const refreshStats = useCallback(async () => {
     try {
-      setLoading(true);
-      const response = await fetch('/api/overview/stats');
-      if (response.status === 503 && autoCreate) {
-        // 自动刷新并重试
-        await fetch('/api/overview/stats', { method: 'POST' });
-        return await fetchStats(false);
-      }
-      if (!response.ok) throw new Error(t('overview.dataGenerationFailed'));
-      const result = await response.json();
-      setStats(result);
-      setError(null);
+      await post('/overview/stats', {});
+      await refetch();
     } catch (err) {
-      setError(t('overview.fetchDataFailed') + ': ' + err.message);
-    } finally {
-      setLoading(false);
+      console.error('刷新统计数据失败:', err);
     }
-  }, [t]);
+  }, [post, refetch]);
 
-  useEffect(() => {
-    fetchStats();
-  }, [fetchStats]);
-
-  // 刷新统计数据（POST，刷新后再GET）
-  const refreshStats = async () => {
-    try {
-      setLoading(true);
-      await fetch('/api/overview/stats', { method: 'POST' });
-      await fetchStats();
-    } catch (err) {
-      setError(t('overview.refreshFailed') + ': ' + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 处理数据格式
-  const overview = stats.overview || {};
-  const outOfStockCount = Array.isArray(stats.out_of_stock_products) ? stats.out_of_stock_products.length : 0;
-  const outOfStockProducts = Array.isArray(stats.out_of_stock_products)
+  // 处理数据格式，确保安全访问
+  const overview = (stats && stats.overview) || {};
+  const outOfStockCount = Array.isArray(stats?.out_of_stock_products) ? stats.out_of_stock_products.length : 0;
+  const outOfStockProducts = Array.isArray(stats?.out_of_stock_products)
     ? stats.out_of_stock_products.map(item => ({ product_model: item.product_model }))
     : [];
   const [modalVisible, setModalVisible] = useState(false);

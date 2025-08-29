@@ -1,41 +1,28 @@
-import { useEffect, useState } from 'react';
 import { Card, Spin, Alert } from 'antd';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { useTranslation } from 'react-i18next';
+import { useSimpleApiData } from '../../hooks/useSimpleApi';
 
 const TopSalesPieChart = () => {
   const { t } = useTranslation();
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   // 预定义颜色数组
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF7C7C', '#8DD1E1', '#D084D0', '#D9D9D9'];
 
-  useEffect(() => {
-    fetch('/api/overview/top-sales-products')
-      .then(res => res.json())
-      .then(res => {
-        if (res.success) {
-          setData(res.data.map(item => ({
-            name: item.product_model,
-            value: item.total_sales
-          })));
-          setError(null);
-        } else {
-          setError(res.error || t('overview.dataFetchFailed'));
-        }
-      })
-      .catch(e => setError(t('overview.requestFailed') + ': ' + e.message))
-      .finally(() => setLoading(false));
-  }, [t]);
+  // 使用useSimpleApiData获取销售数据
+  const {
+    data: salesResponse,
+    loading,
+    error
+  } = useSimpleApiData('/overview/top-sales-products');
 
-  if (loading) {
-    return <Card style={{ minHeight: 280, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Spin /></Card>;
-  }
-  if (error) {
-    return <Alert type="error" message={error} style={{ minHeight: 280 }} />;
-  }
+  // 处理数据格式
+  const data = salesResponse?.success 
+    ? salesResponse.data.map(item => ({
+        name: item.product_model,
+        value: item.total_sales
+      }))
+    : [];
 
   // 自定义标签渲染函数
   const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
@@ -52,6 +39,13 @@ const TopSalesPieChart = () => {
       </text>
     );
   };
+
+  if (loading) {
+    return <Card style={{ minHeight: 280, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Spin /></Card>;
+  }
+  if (error) {
+    return <Alert type="error" message={error} style={{ minHeight: 280 }} />;
+  }
 
   return (
     <Card

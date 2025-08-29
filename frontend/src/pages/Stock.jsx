@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   Table,
   Card,
@@ -14,15 +14,12 @@ import {
 } from "antd";
 import { SearchOutlined, ReloadOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
+import { useSimpleApi, useSimpleApiData } from "../hooks/useSimpleApi";
 
 const { Title } = Typography;
 
 const Stock = () => {
-  const [stockData, setStockData] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [productFilter, setProductFilter] = useState("");
-  const [refreshing, setRefreshing] = useState(false);
-  const [totalCostEstimate, setTotalCostEstimate] = useState(0);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -30,75 +27,59 @@ const Stock = () => {
     pages: 0,
   });
   const { t } = useTranslation();
-
-  // 获取库存数据
-  const fetchStockData = useCallback(
-    async (page = 1, productModelFilter = productFilter) => {
-      setLoading(true);
-      try {
-        const params = new URLSearchParams({
-          page: page.toString(),
-          limit: pagination.limit.toString(),
-        });
-        if (productModelFilter) {
-          params.append("product_model", productModelFilter);
-        }
-        const response = await fetch(`/api/stock?${params}`);
-        const result = await response.json();
-        if (response.ok && result.data) {
-          setStockData(result.data);
-          setPagination(result.pagination);
-        } else {
-          message.error(result.error || t("stock.fetchFailed"));
-        }
-      } catch (error) {
-        console.error("获取库存数据失败:", error);
-        message.error(t("stock.fetchFailed"));
-      } finally {
-        setLoading(false);
-      }
-    },
-    [pagination.limit, productFilter]
-  );
-
-  // 获取总成本估算
-  const fetchTotalCostEstimate = useCallback(async () => {
-    try {
-      const response = await fetch("/api/stock/total-cost-estimate");
-      const result = await response.json();
-      if (response.ok) {
-        setTotalCostEstimate(result.total_cost_estimate || 0);
-      }
-    } catch (error) {
-      console.error("获取总成本估算失败:", error);
+  
+  // 使用简化API hooks
+  const { post, loading: actionLoading } = useSimpleApi();
+  
+  // 构建库存数据URL
+  const buildStockUrl = useCallback(() => {
+    const params = new URLSearchParams({
+      page: pagination.page.toString(),
+      limit: pagination.limit.toString(),
+    });
+    if (productFilter) {
+      params.append("product_model", productFilter);
     }
-  }, []);
+    return `/stock?${params}`;
+  }, [pagination.page, pagination.limit, productFilter]);
+  
+  // 获取库存数据
+  const { 
+    data: stockResponse, 
+    loading, 
+    refetch: refreshStock 
+  } = useSimpleApiData(buildStockUrl(), {
+    data: [],
+    pagination: { page: 1, limit: 10, total: 0, pages: 0 }
+  });
+  
+  // 获取总成本估算
+  const { 
+    data: totalCostResponse, 
+    refetch: refreshTotalCost 
+  } = useSimpleApiData("/stock/total-cost-estimate", {
+    total_cost_estimate: 0
+  });
+  
+  const stockData = stockResponse?.data || [];
+  const totalCostEstimate = totalCostResponse?.total_cost_estimate || 0;
 
+  // 当库存响应更新时，更新分页信息
   useEffect(() => {
-    fetchStockData(1);
-    fetchTotalCostEstimate();
-  }, [fetchStockData, fetchTotalCostEstimate]);
+    if (stockResponse?.pagination) {
+      setPagination(stockResponse.pagination);
+    }
+  }, [stockResponse]);
 
   // 刷新库存缓存
   const handleRefreshCache = async () => {
-    setRefreshing(true);
     try {
-      const response = await fetch("/api/stock/refresh", {
-        method: "POST",
-      });
-      const result = await response.json();
-      if (response.ok) {
-        message.success(t("stock.recalculated"));
-        fetchStockData(1);
-        fetchTotalCostEstimate();
-      } else {
-        message.error(t("stock.recalculateFailed"));
-      }
-    } catch (error) {
-      console.error("库存缓存刷新失败:", error);
-      message.error(t("stock.refreshCacheFailed"));
-    } finally {
-      setRefreshing(false);
+      await post('/stock/refresh', {});
+      message.success(t("stock.recalculated"));
+      refreshStock();
+      refreshTotalCost();
+    } catch {
+      // 错误已经在useSimpleApi中处理
     }
   };
 
@@ -106,7 +87,11 @@ const Stock = () => {
   const handleProductFilterChange = (value) => {
     setProductFilter(value);
     setPagination((prev) => ({ ...prev, page: 1 }));
-    fetchStockData(1, value);
+  };
+
+  // 处理分页变化
+  const handlePaginationChange = (page) => {
+    setPagination((prev) => ({ ...prev, page }));
   };
 
   // 库存明细表格列定义
@@ -180,9 +165,9 @@ const Stock = () => {
               />
               <Button
                 type="primary"
-                icon={<ReloadOutlined spin={refreshing} />}
+                icon={<ReloadOutlined spin={actionLoading} />}
                 onClick={handleRefreshCache}
-                loading={refreshing}
+                loading={actionLoading}
               >
                 {t("stock.recalculate")}
               </Button>
@@ -238,10 +223,7 @@ const Stock = () => {
                   end: range[1],
                   total,
                 }),
-              onChange: (page) => {
-                setPagination((prev) => ({ ...prev, page }));
-                fetchStockData(page);
-              },
+              onChange: handlePaginationChange,
             }}
             scroll={{ x: 600 }}
           />

@@ -32,6 +32,7 @@ const OutboundModal = ({
   onPriceOrQuantityChange
 }) => {
   const { t } = useTranslation();
+  
   return (
     <Modal
       title={editingRecord ? t('outbound.editOutboundRecord') : t('outbound.addOutboundRecord')}

@@ -5,6 +5,7 @@ const db = require('./db');
 const { ensureAllTablesAndColumns } = require('./utils/dbUpgrade');
 const { logger } = require('./utils/logger');
 const { requestLogger, errorLogger } = require('./utils/loggerMiddleware');
+const { authenticateToken, getAuthConfig, checkWritePermission } = require('./utils/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -47,6 +48,22 @@ if (process.env.NODE_ENV !== 'production') {
 // =============================================================================
 // API 路由注册
 // =============================================================================
+
+// 导入认证路由（优先注册登录接口）
+const authRoutes = require('./routes/auth');
+app.use('/api/auth', authRoutes);
+
+// 鉴权中间件（登录接口除外）
+app.use((req, res, next) => authenticateToken(req, res, next));
+
+// 写权限检查中间件（在认证中间件之后）
+app.use('/api', (req, res, next) => {
+  // 跳过登录相关接口
+  if (req.path.startsWith('/auth/')) {
+    return next();
+  }
+  return checkWritePermission(req, res, next);
+});
 
 // 导入所有路由模块
 const overviewRoutes = require('./routes/overview');               // 总览接口
