@@ -1,4 +1,24 @@
 {
+  "auth": {
+    "title": "轻量级 ERP 系统",
+    "subtitle": "请登录您的账户",
+    "verifying": "正在验证登录状态...",
+    "username": "用户名",
+    "usernameRequired": "请输入用户名",
+    "password": "密码",
+    "passwordRequired": "请输入密码",
+    "login": "登录",
+    "loggingIn": "登录中...",
+    "loginFailed": "登录失败",
+    "back": "返回上一页",
+    "roles": { "reader": "只读用户", "editor": "编辑用户" },
+    "permission": {
+      "deniedTitle": "权限不足",
+      "deniedSubTitle": "抱歉，您需要{{action}}权限才能访问此页面。当前角色：{{role}}",
+      "view": "查看",
+      "needPermission": "需要{{action}}权限"
+    }
+  },
   "nav": {
     "overview": "总览",
     "inbound": "入库",

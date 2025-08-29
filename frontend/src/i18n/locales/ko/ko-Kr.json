@@ -1,4 +1,27 @@
 {
+  "auth": {
+    "title": "경량 ERP 시스템",
+    "subtitle": "계정에 로그인하세요",
+    "verifying": "로그인 상태를 확인하는 중...",
+    "username": "사용자 이름",
+    "usernameRequired": "사용자 이름을 입력하세요",
+    "password": "비밀번호",
+    "passwordRequired": "비밀번호를 입력하세요",
+    "login": "로그인",
+    "loggingIn": "로그인 중...",
+    "loginFailed": "로그인 실패",
+    "back": "이전 페이지로 돌아가기",
+    "roles": {
+      "reader": "읽기 전용 사용자",
+      "editor": "편집 사용자"
+    },
+    "permission": {
+      "deniedTitle": "권한 부족",
+      "deniedSubTitle": "죄송합니다. 이 페이지에 액세스하려면 '{{action}}' 권한이 필요합니다. 현재 역할: {{role}}",
+      "view": "보기",
+      "needPermission": "'{{action}}' 권한이 필요합니다"
+    }
+  },
   "nav": {
     "overview": "개요",
     "inbound": "입고",

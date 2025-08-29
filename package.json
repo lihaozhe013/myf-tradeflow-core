@@ -1,27 +1,17 @@
 {
-  "name": "myf-db-systool",
+  "name": "myf-lightweight-erp-system",
   "private": true,
   "version": "0.0.0",
-  "description": "a small scale ERP System",
+  "description": "a lightweight ERP System",
   "scripts": {
     "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:frontend": "cd frontend && npm run dev",
     "dev:backend": "cd backend && npm run dev",
     "build": "node \"backend/utils/initCopyCfg.js\" && cd frontend && npm run build",
-    "start:backend": "cd backend && cross-env NODE_ENV=production npm start",
-    "start": "concurrently \"cd backend && cross-env NODE_ENV=production npm start\" \"cd frontend && npm start\"",
-    "start:browser": "concurrently \"npm start\" \"start http://localhost:8080\"",
-    "preview": "cd frontend && npm run preview",
-    "lint": "cd frontend && npm run lint",
-    "clean": "rm -rf frontend/dist backend/dist node_modules frontend/node_modules backend/node_modules",
-    "clean:build": "rm -rf frontend/dist backend/dist",
-    "clean:logs": "rm -rf data/log/*.log",
-    "test": "cd backend && npm test && cd ../frontend && npm test",
-    "setup": "npm run install:all && npm run build",
-    "logs:view": "tail -f data/log/app.log",
-    "logs:error": "tail -f data/log/error.log",
-    "logs:access": "tail -f data/log/access.log"
+    "start": "cd backend && cross-env NODE_ENV=production npm start",
+    "start:legacy": "concurrently \"cd backend && cross-env NODE_ENV=production npm start\" \"cd frontend && npm start\"",
+    "lint": "cd frontend && npm run lint"
   },
   "dependencies": {
     "concurrently": "^9.2.0",

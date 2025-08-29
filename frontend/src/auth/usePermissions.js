@@ -1,4 +1,5 @@
-import { useAuth } from './AuthContext';
+import { useAuth } from './useAuth';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 权限管理Hook
@@ -6,6 +7,7 @@ import { useAuth } from './AuthContext';
  */
 export const usePermissions = () => {
   const { user, hasPermission } = useAuth();
+  const { t } = useTranslation();
 
   return {
     // 当前用户信息
@@ -34,9 +36,11 @@ export const usePermissions = () => {
     // 权限相关的按钮属性
     getButtonProps: (requiredRole = 'editor') => ({
       disabled: !hasPermission(requiredRole),
-      title: hasPermission(requiredRole) 
-        ? '' 
-        : `需要${requiredRole === 'editor' ? '编辑' : '查看'}权限`
+      title: hasPermission(requiredRole)
+        ? ''
+        : t('auth.permission.needPermission', {
+            action: requiredRole === 'editor' ? t('common.edit') : t('auth.permission.view')
+          })
     })
   };
 };

@@ -1,4 +1,27 @@
 {
+  "auth": {
+    "title": "Lightweight ERP System",
+    "subtitle": "Please log in to your account",
+    "verifying": "Verifying login status...",
+    "username": "Username",
+    "usernameRequired": "Please enter your username",
+    "password": "Password",
+    "passwordRequired": "Please enter your password",
+    "login": "Log In",
+    "loggingIn": "Logging in...",
+    "loginFailed": "Login failed",
+    "back": "Back to previous page",
+    "roles": {
+      "reader": "Read-only User",
+      "editor": "Editor User"
+    },
+    "permission": {
+      "deniedTitle": "Insufficient Permissions",
+      "deniedSubTitle": "Sorry, you need '{{action}}' permission to access this page. Current role: {{role}}",
+      "view": "view",
+      "needPermission": "requires '{{action}}' permission"
+    }
+  },
   "nav": {
     "overview": "Overview",
     "inbound": "Inbound",

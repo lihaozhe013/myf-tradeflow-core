@@ -15,7 +15,8 @@ import Analysis from './pages/Analysis';
 import About from './pages/About';
 import { Menu, Layout, Alert, Select, Space, Avatar, Dropdown, Button, Tag } from 'antd';
 import { GlobalOutlined, SettingOutlined, UserOutlined, LogoutOutlined } from '@ant-design/icons';
-import { AuthProvider, useAuth } from './auth/AuthContext';
+import { AuthProvider } from './auth/AuthContext';
+import { useAuth } from './auth/useAuth';
 import ProtectedRoute from './auth/ProtectedRoute';
 import LoginPage from './auth/LoginPage';
 import './App.css';
@@ -63,7 +64,6 @@ class ErrorBoundary extends React.Component {
 // 用户信息和操作菜单组件
 function UserMenu() {
   const { user, logout } = useAuth();
-  const { t } = useTranslation();
 
   const handleLogout = () => {
     logout();

@@ -1,7 +1,8 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { Result, Button, Spin } from 'antd';
-import { useAuth } from './AuthContext';
+import { useAuth } from './useAuth';
+import { useTranslation } from 'react-i18next';
 
 const ProtectedRoute = ({ 
   children, 
@@ -10,6 +11,7 @@ const ProtectedRoute = ({
 }) => {
   const { isAuthenticated, isLoading, hasPermission, user } = useAuth();
   const location = useLocation();
+  const { t } = useTranslation();
 
   // 正在加载认证状态
   if (isLoading) {
@@ -35,11 +37,14 @@ const ProtectedRoute = ({
     return (
       <Result
         status="403"
-        title="权限不足"
-        subTitle={`抱歉，您需要 ${requireRole === 'editor' ? '编辑' : '查看'} 权限才能访问此页面。当前角色：${user?.role === 'reader' ? '只读用户' : user?.role}`}
+        title={t('auth.permission.deniedTitle')}
+        subTitle={t('auth.permission.deniedSubTitle', {
+          action: requireRole === 'editor' ? t('common.edit') : t('auth.permission.view'),
+          role: user?.role === 'reader' ? t('auth.roles.reader') : t('auth.roles.editor')
+        })}
         extra={
           <Button type="primary" onClick={() => window.history.back()}>
-            返回上一页
+            {t('auth.back')}
           </Button>
         }
       />
