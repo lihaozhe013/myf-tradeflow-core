@@ -11,11 +11,17 @@
     "build": "node \"backend/utils/initCopyCfg.js\" && cd frontend && npm run build",
     "start": "cd backend && cross-env NODE_ENV=production npm start",
     "start:legacy": "concurrently \"cd backend && cross-env NODE_ENV=production npm start\" \"cd frontend && npm start\"",
+    "start:pm2": "pm2 start scripts/production/ecosystem.config.json",
+    "stop:pm2": "pm2 stop scripts/production/ecosystem.config.json",
+    "restart:pm2": "pm2 restart scripts/production/ecosystem.config.json",
+    "logs:pm2": "pm2 logs myf-erp-backend",
+    "monit:pm2": "pm2 monit",
     "lint": "cd frontend && npm run lint"
   },
   "dependencies": {
     "concurrently": "^9.2.0",
-    "fs-extra": "^11.3.0"
+    "fs-extra": "^11.3.0",
+    "pm2": "^5.4.2"
   },
   "devDependencies": {
     "cross-env": "^7.0.3"
