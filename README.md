@@ -26,6 +26,20 @@ The system was developed in a Chinese-language environment and extensively utili
 - **Logging**: Winston logging system
 - **Precise Calculations**: Decimal.js for precise numerical calculations
 
+## Demo
+This is the detailed page for my demo link:
+[My DEMO](https://lihaozhe013.github.io/my-site/project/simple-erp-system.html)
+
+![1.png](./docs/images/1.png)
+
+![2.png](./docs/images/2.png)
+
+![3.png](./docs/images/3.png)
+
+![4.png](./docs/images/4.png)
+
+![5.png](./docs/images/5.png)
+
 ## ⚡ Quick Start
 
 ### Prerequisites
