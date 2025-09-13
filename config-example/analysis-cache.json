@@ -1,0 +1,126 @@
+{
+  "2025-07-01_2025-07-31_All_All": {
+    "sales_amount": 216395.1,
+    "cost_amount": 174777.7,
+    "profit_amount": 41617.4,
+    "profit_rate": 19.23,
+    "query_params": {
+      "start_date": "2025-07-01",
+      "end_date": "2025-07-31",
+      "customer_code": "All",
+      "product_model": "All"
+    },
+    "last_updated": "2025-08-22T09:30:32.102Z"
+  },
+  "detail_2025-07-01_2025-07-31_All_All": {
+    "detail_data": [],
+    "last_updated": "2025-08-22T09:30:32.102Z"
+  },
+  "2025-08-01_2025-08-28_All_All": {
+    "sales_amount": 100356.19,
+    "cost_amount": 81382.2,
+    "profit_amount": 18973.99,
+    "profit_rate": 18.91,
+    "query_params": {
+      "start_date": "2025-08-01",
+      "end_date": "2025-08-28",
+      "customer_code": "All",
+      "product_model": "All"
+    },
+    "last_updated": "2025-08-28T13:26:05.552Z"
+  },
+  "detail_2025-08-01_2025-08-28_All_All": {
+    "detail_data": [],
+    "last_updated": "2025-08-28T13:26:05.552Z"
+  },
+  "2025-07-01_2025-07-31_hzmk_All": {
+    "sales_amount": 109235.78,
+    "cost_amount": 88297.2,
+    "profit_amount": 20938.58,
+    "profit_rate": 19.17,
+    "query_params": {
+      "start_date": "2025-07-01",
+      "end_date": "2025-07-31",
+      "customer_code": "hzmk",
+      "product_model": "All"
+    },
+    "last_updated": "2025-08-28T19:42:16.296Z"
+  },
+  "detail_2025-07-01_2025-07-31_hzmk_All": {
+    "detail_data": [
+      {
+        "group_key": "BZT52C15V (WJ) SOD-123",
+        "customer_code": "hzmk",
+        "product_model": "BZT52C15V (WJ) SOD-123",
+        "sales_amount": 96,
+        "cost_amount": 75,
+        "profit_amount": 21,
+        "profit_rate": 21.88
+      },
+      {
+        "group_key": "BZT52C3V3 (W3) SOD-123",
+        "customer_code": "hzmk",
+        "product_model": "BZT52C3V3 (W3) SOD-123",
+        "sales_amount": 96,
+        "cost_amount": 75,
+        "profit_amount": 21,
+        "profit_rate": 21.88
+      },
+      {
+        "group_key": "BZT52C5V1 (W8) SOD-123",
+        "customer_code": "hzmk",
+        "product_model": "BZT52C5V1 (W8) SOD-123",
+        "sales_amount": 96,
+        "cost_amount": 75,
+        "profit_amount": 21,
+        "profit_rate": 21.88
+      },
+      {
+        "group_key": "IN4148 (XTJ) SOD-123",
+        "customer_code": "hzmk",
+        "product_model": "IN4148 (XTJ) SOD-123",
+        "sales_amount": 38880,
+        "cost_amount": 32805,
+        "profit_amount": 6075,
+        "profit_rate": 15.63
+      },
+      {
+        "group_key": "MMBT5401 (2L) SOT-23",
+        "customer_code": "hzmk",
+        "product_model": "MMBT5401 (2L) SOT-23",
+        "sales_amount": 14100,
+        "cost_amount": 10500,
+        "profit_amount": 3600,
+        "profit_rate": 25.53
+      },
+      {
+        "group_key": "MMBT5551 (G1) SOT-23",
+        "customer_code": "hzmk",
+        "product_model": "MMBT5551 (G1) SOT-23",
+        "sales_amount": 30456,
+        "cost_amount": 22680,
+        "profit_amount": 7776,
+        "profit_rate": 25.53
+      },
+      {
+        "group_key": "SS8050 (Y1) SOT-23",
+        "customer_code": "hzmk",
+        "product_model": "SS8050 (Y1) SOT-23",
+        "sales_amount": 24252,
+        "cost_amount": 19092,
+        "profit_amount": 5160,
+        "profit_rate": 21.28
+      },
+      {
+        "group_key": "SS8550 (Y2) SOT-23",
+        "customer_code": "hzmk",
+        "product_model": "SS8550 (Y2) SOT-23",
+        "sales_amount": 3666,
+        "cost_amount": 2995.2,
+        "profit_amount": 670.8,
+        "profit_rate": 18.3
+      }
+    ],
+    "last_updated": "2025-08-28T19:42:16.308Z"
+  }
+}
