@@ -100,7 +100,7 @@ function UserMenu() {
   };
 
   const getRoleText = (role) => {
-    return role === 'editor' ? '编辑用户' : '只读用户';
+    return role === 'editor' ? 'Editor' : 'Viewer';
   };
 
   return (
