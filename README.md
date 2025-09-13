@@ -81,6 +81,23 @@ The application will be available at the following addresses:
   - Frontend: http://localhost:5173
   - Backend API: http://localhost:3000
 
+## 🚀 Production Deployment
+
+For production deployment with PM2 cluster mode:
+
+```bash
+# One-click production deployment
+./scripts/production/start-prod.sh
+```
+
+This will:
+- Install PM2 globally (if not installed)
+- Build the frontend application
+- Start backend services with cluster mode (max instances)
+- Configure logging and auto-restart
+
+See [PM2 Deployment Guide](docs/pm2-deployment.md) for detailed instructions.
+
 ## 📁 Project Structure
 
 ```
@@ -91,6 +108,8 @@ myf-lightweight-ERP-system/
 ├── frontend/           # React frontend application
 │   ├── src/            # Source code
 │   └── public/         # Static assets
+├── scripts/            # Deployment and automation scripts
+│   └── production/     # Production deployment scripts (PM2)
 ├── data/               # Database and configuration files
 ├── config-example/     # Example configuration files
 └── docs/               # Project documentation
@@ -112,6 +131,7 @@ Complete project documentation can be found in the `docs/` directory:
   - **[Data Export](https://www.google.com/search?q=docs/export-features.md)** - Excel export functionality and template system
   - **[Logging Management](https://www.google.com/search?q=docs/logging.md)** - Logging and monitoring system
   - **[Development Tools](https://www.google.com/search?q=docs/development-tools.md)** - Development environment and workflow
+  - **[PM2 Production Deployment](https://www.google.com/search?q=docs/pm2-deployment.md)** - Production deployment with PM2 cluster mode
 
 ## ⚙️ Configuration Management
 
