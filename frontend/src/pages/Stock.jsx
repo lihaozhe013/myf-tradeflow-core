@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import {
   Table,
   Card,
@@ -21,10 +21,9 @@ const { Title } = Typography;
 const Stock = () => {
   const [productFilter, setProductFilter] = useState("");
   const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 10,
+    current: 1,
+    pageSize: 10,
     total: 0,
-    pages: 0,
   });
   const { t } = useTranslation();
   
@@ -34,14 +33,13 @@ const Stock = () => {
   // 构建库存数据URL
   const buildStockUrl = useCallback(() => {
     const params = new URLSearchParams({
-      page: pagination.page.toString(),
-      limit: pagination.limit.toString(),
+      page: pagination.current.toString(),
     });
     if (productFilter) {
       params.append("product_model", productFilter);
     }
     return `/stock?${params}`;
-  }, [pagination.page, pagination.limit, productFilter]);
+  }, [productFilter, pagination.current]); // eslint-disable-line react-hooks/exhaustive-deps
   
   // 获取库存数据
   const { 
@@ -50,7 +48,7 @@ const Stock = () => {
     refetch: refreshStock 
   } = useSimpleApiData(buildStockUrl(), {
     data: [],
-    pagination: { page: 1, limit: 10, total: 0, pages: 0 }
+    pagination: { current: 1, pageSize: 10, total: 0 }
   });
   
   // 获取总成本估算
@@ -61,15 +59,25 @@ const Stock = () => {
     total_cost_estimate: 0
   });
   
-  const stockData = stockResponse?.data || [];
+  // 安全地获取数据
+  const stockData = useMemo(() => {
+    return stockResponse?.data || [];
+  }, [stockResponse?.data]);
+  
   const totalCostEstimate = totalCostResponse?.total_cost_estimate || 0;
 
-  // 当库存响应更新时，更新分页信息
+  // 当库存响应更新时，更新分页信息（参考ProductPrices的方式）
   useEffect(() => {
     if (stockResponse?.pagination) {
-      setPagination(stockResponse.pagination);
+      setPagination(prev => ({
+        ...prev,
+        total: stockResponse.pagination.total
+      }));
     }
   }, [stockResponse]);
+
+  // 当库存响应更新时，不需要手动更新分页信息，直接使用API返回的数据
+  // useEffect已移除，因为我们直接使用paginationInfo
 
   // 刷新库存缓存
   const handleRefreshCache = async () => {
@@ -86,12 +94,12 @@ const Stock = () => {
   // 处理产品筛选变化
   const handleProductFilterChange = (value) => {
     setProductFilter(value);
-    setPagination((prev) => ({ ...prev, page: 1 }));
+    setPagination(prev => ({ ...prev, current: 1 })); // 重置到第一页
   };
 
-  // 处理分页变化
-  const handlePaginationChange = (page) => {
-    setPagination((prev) => ({ ...prev, page }));
+  // 处理分页变化（参考ProductPrices的方式）
+  const handleTableChange = (paginationTable) => {
+    setPagination(prev => ({ ...prev, current: paginationTable.current }));
   };
 
   // 库存明细表格列定义
@@ -212,9 +220,10 @@ const Stock = () => {
             dataSource={stockData}
             rowKey="product_model"
             loading={loading}
+            onChange={handleTableChange}
             pagination={{
-              current: pagination.page,
-              pageSize: pagination.limit,
+              current: pagination.current,
+              pageSize: pagination.pageSize,
               total: pagination.total,
               showQuickJumper: true,
               showTotal: (total, range) =>
@@ -223,7 +232,6 @@ const Stock = () => {
                   end: range[1],
                   total,
                 }),
-              onChange: handlePaginationChange,
             }}
             scroll={{ x: 600 }}
           />
