@@ -46,8 +46,8 @@ if [ ! -d "../../frontend/node_modules" ]; then
 fi
 
 # 构建前端
-echo "🏗️ 构建前端..."
-cd ../../ && npm run build && cd scripts/production
+# echo "🏗️ 构建前端..."
+# cd ../../ && npm run build && cd scripts/production
 
 # 使用PM2启动后端服务，使用max实例数
 echo "🚀 使用PM2启动后端服务 (max instances)..."

@@ -25,8 +25,8 @@ if pm2 list | grep -q "myf-tradeflow-backend"; then
 fi
 
 # 构建项目
-echo "🏗️ 构建项目..."
-cd ../../ && npm run build && cd scripts/production
+# echo "🏗️ 构建项目..."
+# cd ../../ && npm run build && cd scripts/production
 
 # 使用配置文件启动
 echo "🚀 启动服务..."
