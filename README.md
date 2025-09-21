@@ -1,6 +1,6 @@
-# MyF Lightweight ERP System
+# MYF Tradeflow Core
 
-A lightweight Enterprise Resource Planning (ERP) system designed for small businesses, built with React, Node.js, and SQLite.
+A lightweight tradeflow system designed for small businesses, built with React, Node.js, and SQLite.
 
 Originally developed for a relative’s family business (myf), it is now open‑sourced on GitHub.
 
@@ -28,7 +28,7 @@ The system was developed in a Chinese-language environment and extensively utili
 
 ## Demo
 This is the detailed page for my demo link:
-[My DEMO](https://lihaozhe013.github.io/my-site/project/simple-erp-system.html)
+[My DEMO](https://lihaozhe013.github.io/my-site/project/tradeflow-core.html)
 
 ![1.png](./docs/images/1.png)
 
@@ -52,8 +52,8 @@ This is the detailed page for my demo link:
 1.  **Clone the project**:
 
 ```bash
-git clone [https://github.com/lihaozhe013/myf-lightweight-ERP-system.git](https://github.com/lihaozhe013/myf-lightweight-ERP-system.git)
-cd myf-lightweight-ERP-system
+git clone [https://github.com/lihaozhe013/myf-tradeflow-core.git](https://github.com/lihaozhe013/myf-tradeflow-core.git)
+cd myf-tradeflow-core
 ```
 
 2.  **Install dependencies**:
@@ -110,7 +110,7 @@ See [PM2 Deployment Guide](docs/pm2-deployment.md) for detailed instructions.
 ## Project Structure
 
 ```
-myf-lightweight-ERP-system/
+myf-tradeflow-core/
 ├── backend/            # Node.js backend server
 │   ├── routes/         # API routes
 │   └── utils/          # Utility functions and middleware

@@ -1,6 +1,6 @@
 {
   "auth": {
-    "title": "Lightweight ERP System",
+    "title": "Lightweight TradeFlow System",
     "subtitle": "Please log in to your account",
     "verifying": "Verifying login status...",
     "username": "Username",
@@ -503,8 +503,8 @@
     "phone": "Phone",
     "address": "Address",
     "defaultAddress": "Mars",
-    "systemName": "ERP System",
-    "systemSlogan": "Custom ERP System",
+    "systemName": "TradeFlow System",
+    "systemSlogan": "Custom TradeFlow System",
     "fetchFailed": "Failed to fetch about information",
     "loadFailed": "Load Failed"
   }

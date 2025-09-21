@@ -1,6 +1,6 @@
 # PM2 生产环境部署指南
 
-本文档介绍如何使用PM2在生产环境中部署和管理MYF轻量级ERP系统。
+本文档介绍如何使用PM2在生产环境中部署和管理MYF轻量级tradeflow系统。
 
 ## 🚀 快速开始
 
@@ -55,20 +55,20 @@ pm2 list
 pm2 status
 
 # 查看日志
-pm2 logs myf-erp-backend
-pm2 logs myf-erp-backend --lines 100
+pm2 logs myf-tradeflow-backend
+pm2 logs myf-tradeflow-backend --lines 100
 
 # 重启服务
-pm2 restart myf-erp-backend
-pm2 reload myf-erp-backend    # 0秒停机重启
+pm2 restart myf-tradeflow-backend
+pm2 reload myf-tradeflow-backend    # 0秒停机重启
 
 # 停止/删除服务
-pm2 stop myf-erp-backend
-pm2 delete myf-erp-backend
+pm2 stop myf-tradeflow-backend
+pm2 delete myf-tradeflow-backend
 
 # 监控
 pm2 monit                     # 实时监控面板
-pm2 show myf-erp-backend      # 显示详细信息
+pm2 show myf-tradeflow-backend      # 显示详细信息
 
 # 保存配置
 pm2 save                      # 保存当前进程列表
@@ -124,7 +124,7 @@ netstat -tulnp | grep :3000
 ### 4. 服务无法启动
 ```bash
 # 查看详细错误日志
-pm2 logs myf-erp-backend --err
+pm2 logs myf-tradeflow-backend --err
 # 检查依赖是否完整安装
 npm run install:all
 # 或调整ecosystem.config.json中的max_memory_restart值
@@ -151,4 +151,4 @@ npm run install:all
 - 启动: `./scripts/production/start-prod.sh`
 - 停止: `./scripts/production/stop-pm2.sh` 
 - 状态: `pm2 list`
-- 日志: `pm2 logs myf-erp-backend`
+- 日志: `pm2 logs myf-tradeflow-backend`

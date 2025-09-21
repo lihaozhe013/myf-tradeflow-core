@@ -30,7 +30,7 @@ LOG_LEVEL=debug
 
 # frontend/.env
 VITE_API_BASE_URL=http://localhost:8080
-VITE_APP_TITLE=MyF ERP System
+VITE_APP_TITLE="MYF TRADEFLOW CORE"
 ```
 
 *本文档最后更新: 2025年8月*

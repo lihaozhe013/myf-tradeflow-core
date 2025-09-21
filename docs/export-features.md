@@ -69,7 +69,7 @@ const generateExcel = (templateConfig, data, options = {}) => {
   const workbook = new ExcelJS.Workbook();
   
   // 设置工作簿属性
-  workbook.creator = 'MyF ERP System';
+  workbook.creator = 'MYF TradeFlow System';
   workbook.created = new Date();
   
   // 创建工作表

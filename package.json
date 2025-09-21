@@ -1,8 +1,8 @@
 {
-  "name": "myf-lightweight-erp-system",
+  "name": "myf-tradeflow-system",
   "private": true,
   "version": "0.0.0",
-  "description": "a lightweight ERP System",
+  "description": "a lightweight tradeflow System",
   "scripts": {
     "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
@@ -14,7 +14,7 @@
     "start:pm2": "pm2 start scripts/production/ecosystem.config.json",
     "stop:pm2": "pm2 stop scripts/production/ecosystem.config.json",
     "restart:pm2": "pm2 restart scripts/production/ecosystem.config.json",
-    "logs:pm2": "pm2 logs myf-erp-backend",
+    "logs:pm2": "pm2 logs myf-tradeflow-backend",
     "monit:pm2": "pm2 monit",
     "lint": "cd frontend && npm run lint"
   },
