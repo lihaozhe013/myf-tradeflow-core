@@ -18,10 +18,10 @@ fi
 
 # 检查是否已有进程在运行，如果有则停止
 echo "🔍 检查现有PM2进程..."
-if pm2 list | grep -q "myf-erp-backend"; then
+if pm2 list | grep -q "myf-tradeflow-backend"; then
     echo "🛑 停止现有的后端进程..."
-    pm2 stop myf-erp-backend
-    pm2 delete myf-erp-backend
+    pm2 stop myf-tradeflow-backend
+    pm2 delete myf-tradeflow-backend
 fi
 
 # 生成PM2配置文件
@@ -70,10 +70,10 @@ pm2 list
 echo ""
 echo "📋 常用PM2命令:"
 echo "  查看进程状态: pm2 list"
-echo "  查看日志:     pm2 logs myf-erp-backend"
-echo "  重启服务:     pm2 restart myf-erp-backend"
-echo "  停止服务:     pm2 stop myf-erp-backend"
-echo "  删除进程:     pm2 delete myf-erp-backend"
+echo "  查看日志:     pm2 logs myf-tradeflow-backend"
+echo "  重启服务:     pm2 restart myf-tradeflow-backend"
+echo "  停止服务:     pm2 stop myf-tradeflow-backend"
+echo "  删除进程:     pm2 delete myf-tradeflow-backend"
 echo "  监控面板:     pm2 monit"
 echo ""
 echo "🌐 应用程序应该已经在后台运行"

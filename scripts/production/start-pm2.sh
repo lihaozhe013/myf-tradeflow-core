@@ -18,7 +18,7 @@ echo "🔧 根据appConfig.json生成PM2配置..."
 node generate-pm2-config.js
 
 # 停止现有进程
-if pm2 list | grep -q "myf-erp-backend"; then
+if pm2 list | grep -q "myf-tradeflow-backend"; then
     echo "🛑 停止现有进程..."
     pm2 stop ecosystem.config.json
     pm2 delete ecosystem.config.json

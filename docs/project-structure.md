@@ -12,7 +12,7 @@
 ## 项目目录结构
 
 ```
-myf-lightweight-ERP-system/
+myf-tradeflow-system/
 ├── backend/                 # 后端服务
 │   ├── server.js           # Express服务器入口
 │   ├── db.js               # SQLite数据库连接

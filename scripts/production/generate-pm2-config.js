@@ -47,7 +47,7 @@ function generateEcosystemConfig(appConfig) {
     const ecosystemConfig = {
         "apps": [
             {
-                "name": "myf-erp-backend",
+                "name": "myf-tradeflow-backend",
                 "script": "server.js",
                 "cwd": "../../backend",
                 "instances": "max",

@@ -1,6 +1,6 @@
 {
   "auth": {
-    "title": "轻量级 ERP 系统",
+    "title": "轻量级 TradeFlow 系统",
     "subtitle": "请登录您的账户",
     "verifying": "正在验证登录状态...",
     "username": "用户名",
@@ -523,8 +523,8 @@
     "phone": "电话",
     "address": "地址",
     "defaultAddress": "火星",
-    "systemName": "ERP System",
-    "systemSlogan": "定制ERP系统",
+    "systemName": "TradeFlow System",
+    "systemSlogan": "定制 TradeFlow 系统",
     "fetchFailed": "获取关于信息失败",
     "loadFailed": "加载失败"
   }

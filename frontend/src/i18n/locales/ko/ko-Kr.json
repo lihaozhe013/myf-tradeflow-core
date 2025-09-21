@@ -1,6 +1,6 @@
 {
   "auth": {
-    "title": "경량 ERP 시스템",
+    "title": "경량 TradeFlow 시스템",
     "subtitle": "계정에 로그인하세요",
     "verifying": "로그인 상태를 확인하는 중...",
     "username": "사용자 이름",
@@ -504,8 +504,8 @@
     "phone": "전화번호",
     "address": "주소",
     "defaultAddress": "화성",
-    "systemName": "ERP 시스템",
-    "systemSlogan": "맞춤형 ERP 시스템",
+    "systemName": "TradeFlow 시스템",
+    "systemSlogan": "맞춤형 TradeFlow 시스템",
     "fetchFailed": "정보 가져오기 실패",
     "loadFailed": "로드 실패"
   }

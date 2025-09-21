@@ -72,7 +72,7 @@ const logger = winston.createLogger({
   
   // 默认元数据
   defaultMeta: { 
-    service: 'myf-erp',
+    service: 'myf-tradeflow',
     version: process.env.npm_package_version || '1.0.0'
   },
   
@@ -401,7 +401,7 @@ const authenticateToken = (req, res, next) => {
   "timestamp": "2025-01-18 14:30:25",
   "level": "info",
   "message": "Stock updated successfully",
-  "service": "myf-erp",
+  "service": "myf-tradeflow",
   "version": "1.0.0",
   "productModel": "iPhone 15",
   "oldStock": 100,
@@ -423,7 +423,7 @@ const authenticateToken = (req, res, next) => {
   "timestamp": "2025-01-18 14:30:25",
   "level": "error",
   "message": "Database query failed",
-  "service": "myf-erp",
+  "service": "myf-tradeflow",
   "error": {
     "message": "SQLITE_ERROR: no such table: invalid_table",
     "stack": "Error: SQLITE_ERROR...\n    at Database.prepare...",
