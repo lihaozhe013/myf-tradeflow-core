@@ -28,7 +28,7 @@ The system was developed in a Chinese-language environment and extensively utili
 
 ## Demo
 This is the detailed page for my demo link:
-[My DEMO](https://lihaozhe013.github.io/my-site/project/simple-erp-system.html)
+[My DEMO](https://lihaozhe013.github.io/my-site/project/tradeflow-core.html)
 
 ![1.png](./docs/images/1.png)
 
