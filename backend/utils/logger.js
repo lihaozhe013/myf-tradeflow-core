@@ -79,9 +79,12 @@ if (process.env.NODE_ENV === 'production') {
     tailable: true
   }));
 } else {
-  // 开发环境不记录访问日志
+  // 开发环境输出访问日志到控制台
   accessLogger.add(new winston.transports.Console({
-    silent: true // 静默模式，不输出
+    format: winston.format.combine(
+      winston.format.colorize(),
+      winston.format.simple()
+    )
   }));
 }
 

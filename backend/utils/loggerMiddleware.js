@@ -36,8 +36,13 @@ const shouldLogRequest = (url, method) => {
   const isIgnoredPath = IGNORE_PATHS.some(path => url.toLowerCase().includes(path.toLowerCase()));
   if (isIgnoredPath) return false;
   
-  // 只记录API请求和重要的页面请求
-  return url.startsWith('/api/') || url === '/' || url.startsWith('/login') || url.startsWith('/dashboard');
+  // 记录所有API请求（包括GET和POST）
+  if (url.startsWith('/api/')) return true;
+  
+  // 记录重要的页面请求（根据前端路由）
+  if (url === '/' || url.startsWith('/login')) return true;
+  
+  return false;
 };
 
 // 请求日志中间件
@@ -55,12 +60,6 @@ const requestLogger = (req, res, next) => {
 
   // 检查是否应该记录
   const shouldLog = shouldLogRequest(req.originalUrl, req.method);
-
-  // 在生产环境记录访问日志（仅API请求）
-  if (process.env.NODE_ENV === 'production' && shouldLog) {
-    const userPart = req.user ? ` user=${req.user.username} role=${req.user.role}` : '';
-    accessLogger.info(`${req.method} ${req.originalUrl}${userPart}`);
-  }
 
   // 监听响应结束事件
   res.on('finish', () => {
@@ -80,11 +79,15 @@ const requestLogger = (req, res, next) => {
       responseInfo.user = { username: req.user.username, role: req.user.role };
     }
 
+    // 记录访问日志（带用户信息）
+    const userPart = req.user ? ` user=${req.user.username} role=${req.user.role}` : ' user=anonymous';
+    accessLogger.info(`${req.method} ${req.originalUrl} ${res.statusCode}${userPart}`);
+
     // 根据状态码决定日志级别
     if (res.statusCode >= 400) {
       logger.warn('HTTP Request', responseInfo);
-    } else if (req.originalUrl.startsWith('/api/')) {
-      // 只记录API请求的成功信息，减少日志量
+    } else {
+      // 记录所有成功的API请求，包括POST操作
       logger.info('API Request', {
         method: req.method,
         url: req.originalUrl,
