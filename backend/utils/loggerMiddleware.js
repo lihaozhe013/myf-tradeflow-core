@@ -1,5 +1,50 @@
 const { logger, accessLogger } = require('./logger');
 
+// 静态文件扩展名过滤
+const STATIC_EXTENSIONS = ['.js', '.css', '.map', '.ico', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.woff', '.woff2', '.ttf', '.eot'];
+
+// 无关紧要的路径过滤 (扫描器、爬虫等)
+const IGNORE_PATHS = [
+  '/plugin.php',
+  '/mag/',
+  '/robots.txt',
+  '/favicon.ico',
+  '/.well-known',
+  '/sitemap',
+  '/xmlrpc.php',
+  '/wp-',
+  '/admin',
+  '/phpmyadmin',
+  '/mysql',
+  '/sql',
+  '/test',
+  '/backup',
+  '/tmp',
+  '057707.com',
+  '.php',
+  '.asp',
+  '.jsp'
+];
+
+// 判断是否应该记录该请求
+const shouldLogRequest = (url, method) => {
+  // 静态文件过滤
+  const hasStaticExtension = STATIC_EXTENSIONS.some(ext => url.toLowerCase().includes(ext));
+  if (hasStaticExtension) return false;
+  
+  // 无关路径过滤
+  const isIgnoredPath = IGNORE_PATHS.some(path => url.toLowerCase().includes(path.toLowerCase()));
+  if (isIgnoredPath) return false;
+  
+  // 记录所有API请求（包括GET和POST）
+  if (url.startsWith('/api/')) return true;
+  
+  // 记录重要的页面请求（根据前端路由）
+  if (url === '/' || url.startsWith('/login')) return true;
+  
+  return false;
+};
+
 // 请求日志中间件
 const requestLogger = (req, res, next) => {
   const start = Date.now();
@@ -13,14 +58,14 @@ const requestLogger = (req, res, next) => {
     timestamp: new Date().toISOString()
   };
 
-  // 在生产环境记录访问日志（附带用户）
-  if (process.env.NODE_ENV === 'production') {
-    const userPart = req.user ? ` user=${req.user.username} role=${req.user.role}` : '';
-    accessLogger.info(`${req.method} ${req.originalUrl} - ${requestInfo.ip}${userPart}`);
-  }
+  // 检查是否应该记录
+  const shouldLog = shouldLogRequest(req.originalUrl, req.method);
 
   // 监听响应结束事件
   res.on('finish', () => {
+    // 只记录需要关注的请求
+    if (!shouldLog) return;
+    
     const duration = Date.now() - start;
     const responseInfo = {
       ...requestInfo,
@@ -34,11 +79,22 @@ const requestLogger = (req, res, next) => {
       responseInfo.user = { username: req.user.username, role: req.user.role };
     }
 
+    // 记录访问日志（带用户信息）
+    const userPart = req.user ? ` user=${req.user.username} role=${req.user.role}` : ' user=anonymous';
+    accessLogger.info(`${req.method} ${req.originalUrl} ${res.statusCode}${userPart}`);
+
     // 根据状态码决定日志级别
     if (res.statusCode >= 400) {
       logger.warn('HTTP Request', responseInfo);
     } else {
-      logger.info('HTTP Request', responseInfo);
+      // 记录所有成功的API请求，包括POST操作
+      logger.info('API Request', {
+        method: req.method,
+        url: req.originalUrl,
+        statusCode: res.statusCode,
+        duration: `${duration}ms`,
+        user: req.user ? req.user.username : 'anonymous'
+      });
     }
   });
 
