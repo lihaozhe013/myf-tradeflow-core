@@ -1,7 +1,5 @@
 const { logger, accessLogger } = require('./logger');
 
-const { logger, accessLogger } = require('./logger');
-
 // 静态文件扩展名过滤
 const STATIC_EXTENSIONS = ['.js', '.css', '.map', '.ico', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.woff', '.woff2', '.ttf', '.eot'];
 
