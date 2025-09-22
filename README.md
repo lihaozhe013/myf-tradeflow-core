@@ -27,8 +27,9 @@ The system was developed in a Chinese-language environment and extensively utili
 - **Precise Calculations**: Decimal.js for precise numerical calculations
 
 ## Demo
+
 This is the detailed page for my demo link:
-[My DEMO](https://lihaozhe013.github.io/my-site/project/tradeflow-core.html)
+[My Demo](https://lihaozhe013.github.io/lihaozhe-website/posts/tradeflow-core/)
 
 ![1.png](./docs/images/1.png)
 
