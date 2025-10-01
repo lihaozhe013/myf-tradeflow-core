@@ -1,6 +1,6 @@
 {
   "auth": {
-    "title": "轻量级 TradeFlow 系统",
+    "title": "MYF TradeFlow 系统",
     "subtitle": "请登录您的账户",
     "verifying": "正在验证登录状态...",
     "username": "用户名",
@@ -33,6 +33,7 @@
     "analysis": "数据分析"
   },
   "common": {
+    "logout": "退出登录",
     "language": "语言",
     "chinese": "中文",
     "english": "English",

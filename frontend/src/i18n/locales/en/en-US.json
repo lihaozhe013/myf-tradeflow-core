@@ -1,12 +1,12 @@
 {
   "auth": {
-    "title": "Lightweight TradeFlow System",
-    "subtitle": "Please log in to your account",
+    "title": "MYF TradeFlow System",
+    "subtitle": "Login to your account",
     "verifying": "Verifying login status...",
     "username": "Username",
-    "usernameRequired": "Please enter your username",
+    "usernameRequired": "Enter username",
     "password": "Password",
-    "passwordRequired": "Please enter your password",
+    "passwordRequired": "Enter password",
     "login": "Log In",
     "loggingIn": "Logging in...",
     "loginFailed": "Login failed",
@@ -36,6 +36,7 @@
     "analysis": "Data Analysis"
   },
   "common": {
+    "logout": "Log Out",
     "language": "Language",
     "chinese": "中文",
     "english": "English",
@@ -80,7 +81,9 @@
     "increase": "(Increase)",
     "salesAmount": "Sales Amount",
     "noChange": "No Change",
-    "decrease": "(Decrease)"
+    "decrease": "(Decrease)",
+    "outOfStockDetails": "Out-of-Stock Product List",
+    "stockNormal": "No out-of-stock items"
   },
   "inbound": {
     "id": "ID",
@@ -438,8 +441,8 @@
     "endDate": "End Date",
     "customer": "Customer",
     "product": "Product",
-    "selectCustomer": "Please select customer",
-    "selectProduct": "Please select product",
+    "selectCustomer": "Select customer",
+    "selectProduct": "Select product",
     "refreshData": "Refresh Data",
     "exportData": "Export Data",
     "allCustomers": "All Customers",
@@ -452,12 +455,12 @@
     "profit": "Profit",
     "profitRate": "Profit Rate",
     "noAnalysisData": "No Analysis Data",
-    "noAnalysisDataDesc": "Please select filter conditions and click refresh button to generate analysis data",
+    "noAnalysisDataDesc": "Select filter conditions and click refresh button to generate analysis data",
     "dataUpdateTime": "Data Update Time",
     "getFilterOptionsFailed": "Failed to get filter options",
-    "selectTimeRange": "Please select time range",
+    "selectTimeRange": "Select time range",
     "getAnalysisDataFailed": "Failed to get analysis data",
-    "dataNotGenerated": "Data not generated, please click refresh button to calculate data",
+    "dataNotGenerated": "Data not generated, click refresh button to calculate data",
     "refreshSuccess": "Data refresh successful",
     "refreshFailed": "Failed to refresh data",
     "customerProductDetail": "Product Sales Detail for {{customer}}",
@@ -466,7 +469,7 @@
     "noDataToExport": "No data to export",
     "exportSuccess": "Export successful",
     "exportFailed": "Export failed",
-    "selectFilterCondition": "Please select at least one filter condition (customer or product)",
+    "selectFilterCondition": "Select at least one filter condition (customer or product)",
     "advancedExport": {
       "title": "Advanced Export Options",
       "notice": "Notice",
@@ -485,7 +488,7 @@
       "cancel": "Cancel",
       "exporting": "Generating report...",
       "warning": "Warning",
-      "warningDescription": "Please be aware that this operation may take a long time and consume a large amount of memory. If you are using the Electron App version, your computer may freeze. Please ensure you back up all data before starting the operation and that your system has sufficient resources to handle this operation."
+      "warningDescription": "Be aware that this operation may take a long time and consume a large amount of memory. If you are using the Electron App version, your computer may freeze. Ensure you back up all data before starting the operation and that your system has sufficient resources to handle this operation."
     }
   },
   "about": {

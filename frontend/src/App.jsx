@@ -63,6 +63,7 @@ class ErrorBoundary extends React.Component {
 
 // 用户信息和操作菜单组件
 function UserMenu() {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
 
   const handleLogout = () => {
@@ -88,7 +89,7 @@ function UserMenu() {
       label: (
         <Space>
           <LogoutOutlined />
-          <span>退出登录</span>
+          <span>{t('common.logout')}</span>
         </Space>
       ),
       onClick: handleLogout,

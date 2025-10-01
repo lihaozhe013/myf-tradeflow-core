@@ -1,6 +1,6 @@
 {
   "auth": {
-    "title": "경량 TradeFlow 시스템",
+    "title": "MYF TradeFlow 시스템",
     "subtitle": "계정에 로그인하세요",
     "verifying": "로그인 상태를 확인하는 중...",
     "username": "사용자 이름",
@@ -36,6 +36,7 @@
     "analysis": "데이터 분석"
   },
   "common": {
+    "logout": "로그아웃",
     "language": "언어",
     "chinese": "中文",
     "english": "English",
@@ -78,7 +79,9 @@
     "increase": "(증가)",
     "salesAmount": "판매 금액",
     "noChange": "변동 없음",
-    "decrease": "(감소)"
+    "decrease": "(감소)",
+    "outOfStockDetails": "품절 제품 목록",
+    "stockNormal": "품절 없음"
   },
   "inbound": {
     "id": "ID",
