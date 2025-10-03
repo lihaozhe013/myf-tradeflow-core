@@ -34,12 +34,35 @@ def rm_file(DIR, relative_path):
 
 def clean_frontend_src(DIR):
     frontend_path = os.path.join(DIR, "frontend")
-    frontend_temp_path = os.path.join(DIR, "frontend_temp")
+    dist_path = os.path.join(frontend_path, "dist")
+    frontend_temp_relative = "frontend_temp"
+    frontend_temp_path = os.path.join(DIR, frontend_temp_relative)
 
-    os.rename(frontend_path, frontend_temp_path)
-    os.makedirs(frontend_path)
-    shutil.move(os.path.join(frontend_temp_path, "dist"), os.path.join(frontend_path, "dist"))
-    rm_dir(frontend_temp_path)
+    if not os.path.isdir(frontend_path):
+        print(f"Frontend directory not found at {frontend_path}. Skipping frontend cleanup.")
+        return
+
+    if not os.path.isdir(dist_path):
+        print(f"No build artifacts found at {dist_path}. Skipping frontend cleanup.")
+        return
+
+    # Ensure temp directory is clean before proceeding
+    rm_dir(DIR, frontend_temp_relative)
+
+    try:
+        os.rename(frontend_path, frontend_temp_path)
+        os.makedirs(frontend_path, exist_ok=True)
+        shutil.move(os.path.join(frontend_temp_path, "dist"), dist_path)
+        print("Frontend source cleaned; dist preserved.")
+    except Exception as exc:
+        print(f"Failed to clean frontend source: {exc}", file=sys.stderr)
+        if not os.path.isdir(frontend_path) and os.path.isdir(frontend_temp_path):
+            try:
+                os.rename(frontend_temp_path, frontend_path)
+            except OSError:
+                pass
+    finally:
+        rm_dir(DIR, frontend_temp_relative)
 
 # -------------- DevOps Steps ---------------
 
