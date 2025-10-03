@@ -282,7 +282,7 @@ export const useSimpleApiData = (url, defaultData) => {
 - **签名验证**: HMAC-SHA256签名
 - **过期控制**: 12小时自动过期
 - **软吊销**: 密码变更后旧Token失效
-- **传输安全**: HTTPS传输(生产环境)
+- **传输安全**: 通过Nginx代理实现HTTPS传输
 
 ### 登录安全
 - **防暴力破解**: 5分钟内最多20次尝试

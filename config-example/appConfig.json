@@ -35,17 +35,7 @@
     "allowExportsForReader": true
   },
   "server": {
-    "httpPort": 8080,
-    "httpsPort": 443
-  },
-  "https": {
-    "enabled": false,
-    "port": 443,
-    "domain": "example.com",
-    "certPath": "./data/https_certificates/example.com.pem",
-    "keyPath": "./data/https_certificates/example.com.key",
-    "forceHttps": true,
-    "redirectHttp": false
+    "httpPort": 8080
   },
   "frontend": {
     "hostByBackend": true,
