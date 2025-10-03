@@ -10,7 +10,14 @@ export interface User {
 }
 
 export interface LoginResponse {
+  success: boolean;
   token: string;
+  user: User;
+  message?: string;
+}
+
+export interface GetCurrentUserResponse {
+  success: boolean;
   user: User;
 }
 
@@ -27,7 +34,7 @@ export interface UserManager {
 
 export interface AuthAPI {
   login(username: string, password: string): Promise<LoginResponse>;
-  getCurrentUser(): Promise<User>;
+  getCurrentUser(): Promise<GetCurrentUserResponse>;
   logout(): void;
 }
 
