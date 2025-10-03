@@ -10,14 +10,14 @@ def rm_dir(DIR, relative_path):
     path = os.path.join(DIR, relative_path)
     print("Checking Path: \"" + path + "\"")
     if os.path.exists(path):
-        print("Path Found!")
+        print("Path Found")
         try:
             shutil.rmtree(path)
             print("Removed: " + path)
         except:
             print("Cannot Remove \"" + path + "\"")
     else:
-        print("Path not found!")
+        print("Path not found, skipped removal.")
 
 def rm_file(DIR, relative_path):
     path = os.path.join(DIR, relative_path)
@@ -30,7 +30,7 @@ def rm_file(DIR, relative_path):
         except:
             print("Cannot Remove \"" + path + "\"")
     else:
-        print("Path not found!")
+        print("Path not found, skipped removal.")
 
 def clean_frontend_src(DIR):
     frontend_path = os.path.join(DIR, "frontend")
@@ -67,6 +67,7 @@ def clean_frontend_src(DIR):
 # -------------- DevOps Steps ---------------
 
 def change2current_dir():
+    print("------------------------------")
     print("Executing: Get path and change to project dir...")
     try:
         SCRIPT_DIR = Path(__file__).resolve().parent
@@ -78,6 +79,7 @@ def change2current_dir():
     return DIR
     
 def clean_build(DIR):
+    print("------------------------------")
     print("Executing: Clean build...")
     rm_dir(DIR, "data/log")
     rm_dir(DIR, "node_modules")
@@ -87,6 +89,7 @@ def clean_build(DIR):
     rm_dir(DIR, "frontend/dist")
 
 def install_dependencies_and_build(DIR):
+    print("------------------------------")
     print("Executing: Install Dependencies and Build...")
     os.chdir(DIR)
     npm_path = shutil.which("npm")
@@ -111,6 +114,7 @@ def install_dependencies_and_build(DIR):
         print("Failed to Install Dependencies and Build.")
 
 def clean_src(DIR):
+    print("------------------------------")
     print("Executing: Cleaning Source Code...")
     rm_dir(DIR, ".git")
     rm_dir(DIR, "docs")
@@ -122,4 +126,5 @@ DIR = change2current_dir()
 clean_build(DIR)
 install_dependencies_and_build(DIR)
 clean_src(DIR)
+print("Build Process Completed.")
 
