@@ -29,19 +29,10 @@ function loadAppConfig() {
 }
 
 function generateEcosystemConfig(appConfig) {
-    // 根据HTTPS配置决定端口
-    let port;
-    let protocol;
+    // 使用配置中的HTTP端口
+    const port = appConfig.server.httpPort || 8080;
     
-    if (appConfig.https && appConfig.https.enabled) {
-        port = appConfig.https.port || appConfig.server.httpsPort || 443;
-        protocol = 'HTTPS';
-    } else {
-        port = appConfig.server.httpPort || 8080;
-        protocol = 'HTTP';
-    }
-    
-    console.log(`📡 检测到配置: ${protocol} 端口 ${port}`);
+    console.log(`📡 检测到配置: HTTP 端口 ${port}`);
     
     // PM2配置模板
     const ecosystemConfig = {
@@ -54,8 +45,7 @@ function generateEcosystemConfig(appConfig) {
                 "exec_mode": "cluster",
                 "env": {
                     "NODE_ENV": "production",
-                    "PORT": port.toString(),
-                    "HTTPS_ENABLED": appConfig.https && appConfig.https.enabled ? "true" : "false"
+                    "PORT": port.toString()
                 },
                 "max_memory_restart": "500M",
                 "log_date_format": "YYYY-MM-DD HH:mm:ss Z",
@@ -85,7 +75,6 @@ function saveEcosystemConfig(config) {
         console.log(`✅ PM2配置文件已生成: ${ECOSYSTEM_CONFIG_PATH}`);
         console.log(`🔧 配置详情:`);
         console.log(`   - 端口: ${config.apps[0].env.PORT}`);
-        console.log(`   - HTTPS: ${config.apps[0].env.HTTPS_ENABLED}`);
         console.log(`   - 实例数: ${config.apps[0].instances}`);
         console.log(`   - 模式: ${config.apps[0].exec_mode}`);
     } catch (error) {

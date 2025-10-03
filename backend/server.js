@@ -1,5 +1,4 @@
 const express = require('express');
-const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
@@ -16,7 +15,6 @@ const config = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../data/appCo
 
 // 端口配置
 const PORT = process.env.PORT || (config.server && config.server.httpPort) || 8080;
-const HTTPS_PORT = process.env.HTTPS_PORT || (config.server && config.server.httpsPort) || 8443;
 
 // =============================================================================
 // 数据库初始化
@@ -38,41 +36,21 @@ try {
 // 请求日志中间件 (在其他中间件之前)
 app.use(requestLogger);
 
-// 生产环境HTTPS重定向中间件
-if (process.env.NODE_ENV === 'production' && config.https && config.https.enabled && config.https.redirectHttp) {
-  app.use((req, res, next) => {
-    if (req.header('x-forwarded-proto') !== 'https') {
-      const httpsPort = config.https.port === 443 ? '' : `:${config.https.port}`;
-      res.redirect(`https://${req.header('host')}${httpsPort}${req.url}`);
-      return;
-    }
-    next();
-  });
-}
-
 // JSON 解析中间件
 app.use(express.json());
 
 // CORS 配置 (开发模式)
 if (process.env.NODE_ENV !== 'production') {
-  const httpsPort = config.https && config.https.enabled ? config.https.port : 3443;
-  const httpsUrl = `https://localhost:${httpsPort}`;
-  const domainUrl = config.https && config.https.domain ? 
-    `https://${config.https.domain}:${httpsPort}` : 
-    'https://myfadminconsole.top:3443';
-
   app.use(cors({
     origin: [
       'http://localhost:5173',
       `http://localhost:${PORT}`,
-      'http://127.0.0.1:5173',
-      httpsUrl,
-      domainUrl
+      'http://127.0.0.1:5173'
     ],
     credentials: true
   }));
-  console.log('开发模式：已启用 CORS 跨域支持 (包含HTTPS)');
-  logger.info('开发模式：已启用 CORS 跨域支持 (包含HTTPS)');
+  console.log('开发模式：已启用 CORS 跨域支持');
+  logger.info('开发模式：已启用 CORS 跨域支持');
 }
 
 // =============================================================================
@@ -187,142 +165,50 @@ if (shouldHostFrontend) {
 }
 
 // =============================================================================
-// HTTPS 配置
-// =============================================================================
-
-// HTTPS 证书配置
-const httpsOptions = (() => {
-  // 检查配置文件中是否启用了HTTPS
-  if (!config.https || !config.https.enabled) {
-    logger.info('HTTPS未在配置中启用');
-    return null;
-  }
-
-  try {
-    const keyPath = path.resolve(__dirname, '..', config.https.keyPath);
-    const certPath = path.resolve(__dirname, '..', config.https.certPath);
-    
-    if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
-      logger.info(`正在加载HTTPS证书: ${certPath}`);
-      return {
-        key: fs.readFileSync(keyPath),
-        cert: fs.readFileSync(certPath)
-      };
-    } else {
-      logger.warn(`HTTPS证书文件未找到: ${keyPath} 或 ${certPath}`);
-      return null;
-    }
-  } catch (error) {
-    logger.error('读取HTTPS证书失败', { error: error.message });
-    return null;
-  }
-})();
-
-// =============================================================================
 // 服务器启动
 // =============================================================================
 
-// HTTP服务器 (用于开发或HTTP重定向)
 app.listen(PORT, () => {
-  console.log('HTTP服务器启动成功！');
+  console.log('服务器启动成功！');
   if (shouldHostFrontend) {
-    console.log(`HTTP 集成服务: http://localhost:${PORT}`);
+    console.log(`集成服务: http://localhost:${PORT}`);
   } else {
-    console.log(`HTTP API服务: http://localhost:${PORT}`);
+    console.log(`API服务: http://localhost:${PORT}`);
   }
   
-  logger.info('HTTP服务器启动成功', { 
+  logger.info('服务器启动成功', { 
     port: PORT, 
     environment: process.env.NODE_ENV || 'development',
     pid: process.pid,
     frontend_hosted: shouldHostFrontend
   });
-});
-
-// HTTPS服务器 (生产环境主要服务)
-if (httpsOptions) {
-  const httpsServer = https.createServer(httpsOptions, app);
-  
-  httpsServer.listen(HTTPS_PORT, () => {
-    console.log('HTTPS服务器启动成功！');
-    console.log(`HTTPS API服务: https://localhost:${HTTPS_PORT}`);
-    if (config.https && config.https.domain) {
-      console.log(`域名访问: https://${config.https.domain}:${HTTPS_PORT}`);
-    }
-    
-    logger.info('HTTPS服务器启动成功', { 
-      port: HTTPS_PORT, 
-      environment: process.env.NODE_ENV || 'development',
-      pid: process.pid,
-      domain: config.https && config.https.domain || 'localhost'
-    });
-    
-    if (process.env.NODE_ENV === 'production') {
-      console.log('📦 生产环境运行中 (HTTPS)');
-      const domain = config.https && config.https.domain || 'localhost';
-      if (shouldHostFrontend) {
-        console.log(`🌐 集成前端服务: https://${domain}:${HTTPS_PORT}`);
-        logger.info('生产环境运行中 (HTTPS) - 集成前端托管', { 
-          frontend_url: `https://${domain}:${HTTPS_PORT}`,
-          frontend_hosted: true
-        });
-      } else {
-        console.log(`🌐 API服务: https://${domain}:${HTTPS_PORT}`);
-        logger.info('生产环境运行中 (HTTPS) - 仅API服务', { 
-          api_url: `https://${domain}:${HTTPS_PORT}`,
-          frontend_hosted: false
-        });
-      }
-    } else {
-      console.log('🔧 开发模式运行中 (HTTPS)');
-      if (shouldHostFrontend) {
-        console.log(`🌐 集成前端服务: https://localhost:${HTTPS_PORT}`);
-        console.log('💡 提示: 开发模式建议使用 http://localhost:5173');
-      } else {
-        console.log('🌐 前端开发服务器: http://localhost:5173');
-      }
-      logger.info('开发模式运行中 (HTTPS)', { 
-        frontend_url: shouldHostFrontend ? 
-          `https://localhost:${HTTPS_PORT}` : 'http://localhost:5173',
-        https_api: `https://localhost:${HTTPS_PORT}`
-      });
-    }
-  });
-  
-  httpsServer.on('error', (err) => {
-    logger.error('HTTPS服务器启动失败', { error: err.message });
-    console.error('HTTPS服务器启动失败:', err.message);
-  });
-} else {
-  console.log('⚠️  HTTPS证书未配置，仅运行HTTP服务器');
-  logger.warn('HTTPS证书未配置，仅运行HTTP服务器');
   
   if (process.env.NODE_ENV === 'production') {
-    console.log('📦 生产环境运行中 (HTTP)');
+    console.log('📦 生产环境运行中');
     if (shouldHostFrontend) {
       console.log(`🌐 集成前端服务: http://localhost:${PORT}`);
-      logger.info('生产环境运行中 (HTTP) - 集成前端托管', { 
+      logger.info('生产环境运行中 - 集成前端托管', { 
         frontend_url: `http://localhost:${PORT}`,
         frontend_hosted: true
       });
     } else {
       console.log(`🌐 API服务: http://localhost:${PORT}`);
-      logger.info('生产环境运行中 (HTTP) - 仅API服务', { 
+      logger.info('生产环境运行中 - 仅API服务', { 
         api_url: `http://localhost:${PORT}`,
         frontend_hosted: false
       });
     }
   } else {
-    console.log('🔧 开发模式运行中 (HTTP)');
+    console.log('🔧 开发模式运行中');
     if (shouldHostFrontend) {
       console.log(`🌐 集成前端服务: http://localhost:${PORT}`);
       console.log('💡 提示: 开发模式建议使用 http://localhost:5173');
     } else {
       console.log('🌐 前端开发服务器: http://localhost:5173');
     }
-    logger.info('开发模式运行中 (HTTP)', { 
+    logger.info('开发模式运行中', { 
       frontend_url: shouldHostFrontend ? 
         `http://localhost:${PORT}` : 'http://localhost:5173'
     });
   }
-}
+});
