@@ -92,7 +92,7 @@ def config_check(DIR):
     print("Executing: Config Check...")
     config_example_path = os.path.join(DIR, "config-example")
     data_path = os.path.join(DIR, "data")
-    if not os.path.exists(config_example_path):
+    if not os.path.exists(data_path):
         try:
             os.rename(config_example_path, data_path)
             print(f"Created missing data directory at {data_path}.")
@@ -100,7 +100,7 @@ def config_check(DIR):
             print("Failed to create data directory.")
             sys.exit(1)
     else:
-        print(f"Data directory exists at {data_path}.")
+        print(f"Data directory already exists at {data_path}.")
     print("Config Check Completed.")
 
 def install_dependencies_and_build(DIR):
