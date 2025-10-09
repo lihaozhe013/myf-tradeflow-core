@@ -1,41 +1,60 @@
 import { Card, Spin, Alert } from 'antd';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import type { PieLabelRenderProps } from 'recharts';
 import { useTranslation } from 'react-i18next';
 import { useSimpleApiData } from '../../hooks/useSimpleApi';
+import { DEFAULT_TOP_SALES_RESPONSE } from './types';
+import type { TopSalesResponse } from './types';
 
 const TopSalesPieChart = () => {
   const { t } = useTranslation();
 
   // 预定义颜色数组
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF7C7C', '#8DD1E1', '#D084D0', '#D9D9D9'];
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF7C7C', '#8DD1E1', '#D084D0', '#D9D9D9'] as const;
 
   // 使用useSimpleApiData获取销售数据
   const {
     data: salesResponse,
     loading,
     error
-  } = useSimpleApiData('/overview/top-sales-products');
+  } = useSimpleApiData<TopSalesResponse>('/overview/top-sales-products', DEFAULT_TOP_SALES_RESPONSE);
+
+  const resolvedResponse = salesResponse ?? DEFAULT_TOP_SALES_RESPONSE;
 
   // 处理数据格式
-  const data = salesResponse?.success 
-    ? salesResponse.data.map(item => ({
+  const chartData = resolvedResponse.success
+    ? resolvedResponse.data.map(item => ({
         name: item.product_model,
-        value: item.total_sales
+        value: item.total_sales,
       }))
     : [];
 
-  // 自定义标签渲染函数
-  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
-    const RADIAN = Math.PI / 180;
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+  const RADIAN = Math.PI / 180;
 
+  // 自定义标签渲染函数
+  const renderCustomizedLabel = ({
+    cx = 0,
+    cy = 0,
+    midAngle = 0,
+    innerRadius = 0,
+    outerRadius = 0,
+    percent = 0,
+  }: PieLabelRenderProps) => {
     if (percent < 0.05) return null; // 小于5%不显示标签
 
+  const inner = Number(innerRadius);
+  const outer = Number(outerRadius);
+  const angle = Number(midAngle);
+  const centerX = Number(cx);
+  const centerY = Number(cy);
+
+  const radius = inner + (outer - inner) * 0.5;
+  const x = centerX + radius * Math.cos(-angle * RADIAN);
+  const y = centerY + radius * Math.sin(-angle * RADIAN);
+
     return (
-      <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={12}>
-        {`${(percent * 100).toFixed(0)}%`}
+      <text x={x} y={y} fill="white" textAnchor={x > centerX ? 'start' : 'end'} dominantBaseline="central" fontSize={12}>
+        {`${Math.round(percent * 100)}%`}
       </text>
     );
   };
@@ -56,7 +75,7 @@ const TopSalesPieChart = () => {
       <ResponsiveContainer width="100%" height={500}>
         <PieChart>
           <Pie
-            data={data}
+            data={chartData}
             cx="50%"
             cy="50%"
             labelLine={false}
@@ -66,7 +85,7 @@ const TopSalesPieChart = () => {
             fill="#8884d8"
             dataKey="value"
           >
-            {data.map((entry, index) => (
+            {chartData.map((entry, index) => (
               <Cell 
                 key={`cell-${index}`} 
                 fill={entry.name === t('overview.other') ? '#d9d9d9' : COLORS[index % COLORS.length]} 
@@ -74,8 +93,8 @@ const TopSalesPieChart = () => {
             ))}
           </Pie>
           <Tooltip 
-            formatter={(value) => [value, t('overview.salesAmount')]}
-            labelFormatter={(label) => `${t('overview.product')}: ${label}`}
+            formatter={(value: number) => [value, t('overview.salesAmount')]}
+            labelFormatter={(label: string) => `${t('overview.product')}: ${label}`}
           />
           <Legend 
             wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}

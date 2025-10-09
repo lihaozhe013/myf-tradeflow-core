@@ -1,10 +1,16 @@
-import React from 'react';
 import { Modal, List, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
+import type { OutOfStockProduct } from './types';
 
 const { Text } = Typography;
 
-const OutOfStockModal = ({ visible, onClose, products }) => {
+type OutOfStockModalProps = {
+  visible: boolean;
+  onClose: () => void;
+  products: OutOfStockProduct[];
+};
+
+const OutOfStockModal = ({ visible, onClose, products }: OutOfStockModalProps) => {
   const { t } = useTranslation();
 
   return (
@@ -16,7 +22,7 @@ const OutOfStockModal = ({ visible, onClose, products }) => {
       width={480}
     >
       {products && products.length > 0 ? (
-        <List
+        <List<OutOfStockProduct>
           dataSource={products}
           renderItem={item => (
             <List.Item>
