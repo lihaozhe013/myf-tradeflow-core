@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { 
   Card, Row, Col, Spin, Alert, Typography, Button, Space, Statistic, List, Avatar
 } from 'antd';
@@ -16,6 +16,8 @@ import { useSimpleApi, useSimpleApiData } from '../../hooks/useSimpleApi';
 import MonthlyStockChange from './MonthlyStockChange';
 import OutOfStockModal from './OutOfStockModal';
 import TopSalesPieChart from './TopSalesPieChart';
+import { DEFAULT_OVERVIEW_STATS } from './types';
+import type { OverviewStatsResponse } from './types';
 
 const { Title, Text } = Typography;
 
@@ -29,10 +31,7 @@ const OverviewMain = () => {
     loading,
     error,
     refetch
-  } = useSimpleApiData('/overview/stats', {
-    overview: {},
-    out_of_stock_products: []
-  });
+  } = useSimpleApiData<OverviewStatsResponse>('/overview/stats', DEFAULT_OVERVIEW_STATS);
 
   // 刷新统计数据
   const refreshStats = useCallback(async () => {
@@ -45,11 +44,10 @@ const OverviewMain = () => {
   }, [post, refetch]);
 
   // 处理数据格式，确保安全访问
-  const overview = (stats && stats.overview) || {};
-  const outOfStockCount = Array.isArray(stats?.out_of_stock_products) ? stats.out_of_stock_products.length : 0;
-  const outOfStockProducts = Array.isArray(stats?.out_of_stock_products)
-    ? stats.out_of_stock_products.map(item => ({ product_model: item.product_model }))
-    : [];
+  const resolvedStats = stats ?? DEFAULT_OVERVIEW_STATS;
+  const overview = resolvedStats.overview;
+  const outOfStockProducts = resolvedStats.out_of_stock_products;
+  const outOfStockCount = outOfStockProducts.length;
   const [modalVisible, setModalVisible] = useState(false);
 
   // 快速操作函数
@@ -64,10 +62,10 @@ const OverviewMain = () => {
 
   // 计算利润率（基于已售商品成本）
   const calculateProfitMargin = () => {
-    const soldGoodsCost = overview.sold_goods_cost || 0;
-    const sales = overview.total_sales_amount || 0;
-    if (soldGoodsCost === 0) return 0;
-    return ((sales - soldGoodsCost) / sales * 100).toFixed(2);
+    const soldGoodsCost = overview.sold_goods_cost ?? 0;
+    const sales = overview.total_sales_amount ?? 0;
+    if (sales === 0) return '0.00';
+    return (((sales - soldGoodsCost) / sales) * 100).toFixed(2);
   };
 
   if (loading) {
@@ -287,7 +285,7 @@ const OverviewMain = () => {
                     renderItem={item => (
                       <List.Item style={{ padding: '4px 0', alignItems: 'center' }}>
                         <List.Item.Meta
-                          avatar={<Avatar style={{ backgroundColor: '#e6f4ff', color: '#1677ff', fontWeight: 600 }} size={24}>{item.product_model?.[0] || '?'}</Avatar>}
+                          avatar={<Avatar style={{ backgroundColor: '#e6f4ff', color: '#1677ff', fontWeight: 600 }} size={24}>{item.product_model?.[0] ?? '?'}</Avatar>}
                           title={<span style={{ fontSize: 14, color: '#333' }}>{item.product_model}</span>}
                         />
                       </List.Item>
