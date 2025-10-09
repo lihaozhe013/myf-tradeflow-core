@@ -1,9 +1,40 @@
-import React, { createContext, useReducer, useEffect } from 'react';
+import React, { createContext, useReducer, useEffect, type ReactNode } from 'react';
 import { tokenManager, userManager, authAPI } from './auth';
 import { useTranslation } from 'react-i18next';
+import type { User } from './auth';
+import type { AuthContextValue, LoginResult } from './useAuth.d';
+
+/**
+ * 认证状态接口
+ */
+interface AuthState {
+  user: User | null;
+  token: string | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  error: string | null;
+}
+
+/**
+ * Action 类型
+ */
+type AuthAction =
+  | { type: 'SET_LOADING'; payload: boolean }
+  | { type: 'LOGIN_SUCCESS'; payload: { user: User; token: string } }
+  | { type: 'LOGIN_FAILURE'; payload: string }
+  | { type: 'LOGOUT' }
+  | { type: 'CLEAR_ERROR' }
+  | { type: 'SET_USER'; payload: User | null };
+
+/**
+ * AuthProvider Props
+ */
+interface AuthProviderProps {
+  children: ReactNode;
+}
 
 // 初始状态
-const initialState = {
+const initialState: AuthState = {
   user: null,
   token: null,
   isAuthenticated: false,
@@ -11,26 +42,18 @@ const initialState = {
   error: null,
 };
 
-// Action types
-const AUTH_ACTIONS = {
-  SET_LOADING: 'SET_LOADING',
-  LOGIN_SUCCESS: 'LOGIN_SUCCESS',
-  LOGIN_FAILURE: 'LOGIN_FAILURE',
-  LOGOUT: 'LOGOUT',
-  CLEAR_ERROR: 'CLEAR_ERROR',
-  SET_USER: 'SET_USER',
-};
-
-// Reducer
-const authReducer = (state, action) => {
+/**
+ * Reducer 函数
+ */
+const authReducer = (state: AuthState, action: AuthAction): AuthState => {
   switch (action.type) {
-    case AUTH_ACTIONS.SET_LOADING:
+    case 'SET_LOADING':
       return {
         ...state,
         isLoading: action.payload,
       };
-    
-    case AUTH_ACTIONS.LOGIN_SUCCESS:
+
+    case 'LOGIN_SUCCESS':
       return {
         ...state,
         user: action.payload.user,
@@ -39,8 +62,8 @@ const authReducer = (state, action) => {
         isLoading: false,
         error: null,
       };
-    
-    case AUTH_ACTIONS.LOGIN_FAILURE:
+
+    case 'LOGIN_FAILURE':
       return {
         ...state,
         user: null,
@@ -49,8 +72,8 @@ const authReducer = (state, action) => {
         isLoading: false,
         error: action.payload,
       };
-    
-    case AUTH_ACTIONS.LOGOUT:
+
+    case 'LOGOUT':
       return {
         ...state,
         user: null,
@@ -59,31 +82,42 @@ const authReducer = (state, action) => {
         isLoading: false,
         error: null,
       };
-    
-    case AUTH_ACTIONS.CLEAR_ERROR:
+
+    case 'CLEAR_ERROR':
       return {
         ...state,
         error: null,
       };
-    
-    case AUTH_ACTIONS.SET_USER:
+
+    case 'SET_USER':
       return {
         ...state,
         user: action.payload,
         isAuthenticated: !!action.payload,
         isLoading: false,
       };
-    
+
     default:
       return state;
   }
 };
 
 // 创建 Context
-const AuthContext = createContext(null);
+const AuthContext = createContext<AuthContextValue | null>(null);
 
-// AuthProvider 组件
-export const AuthProvider = ({ children }) => {
+/**
+ * AuthProvider 组件
+ * 
+ * 提供认证上下文，管理用户认证状态
+ * 
+ * @example
+ * ```tsx
+ * <AuthProvider>
+ *   <App />
+ * </AuthProvider>
+ * ```
+ */
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
   const { t } = useTranslation();
 
@@ -92,87 +126,96 @@ export const AuthProvider = ({ children }) => {
     const initAuth = async () => {
       const token = tokenManager.getToken();
       const user = userManager.getUser();
-      
+
       if (token && user) {
         try {
-          // 验证token是否仍然有效
+          // 验证 token 是否仍然有效
           const response = await authAPI.getCurrentUser();
           if (response.success) {
             dispatch({
-              type: AUTH_ACTIONS.LOGIN_SUCCESS,
-              payload: { user: response.user, token }
+              type: 'LOGIN_SUCCESS',
+              payload: { user: response.user, token },
             });
             tokenManager.setToken(token);
             userManager.setUser(response.user);
           } else {
-            // Token无效，清除本地存储
+            // Token 无效，清除本地存储
             tokenManager.clearToken();
             userManager.setUser(null);
-            dispatch({ type: AUTH_ACTIONS.LOGOUT });
+            dispatch({ type: 'LOGOUT' });
           }
         } catch {
-          // Token验证失败，清除本地存储
+          // Token 验证失败，清除本地存储
           tokenManager.clearToken();
           userManager.setUser(null);
-          dispatch({ type: AUTH_ACTIONS.LOGOUT });
+          dispatch({ type: 'LOGOUT' });
         }
       } else {
-        dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: false });
+        dispatch({ type: 'SET_LOADING', payload: false });
       }
     };
 
     initAuth();
   }, []);
 
-  // 登录函数
-  const login = async (username, password) => {
-    dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
-    dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
-    
+  /**
+   * 登录函数
+   */
+  const login = async (username: string, password: string): Promise<LoginResult> => {
+    dispatch({ type: 'SET_LOADING', payload: true });
+    dispatch({ type: 'CLEAR_ERROR' });
+
     try {
       const response = await authAPI.login(username, password);
-      
+
       if (response.success) {
         const { token, user } = response;
-        
+
         // 保存到本地存储
         tokenManager.setToken(token);
         userManager.setUser(user);
-        
+
         // 更新状态
         dispatch({
-          type: AUTH_ACTIONS.LOGIN_SUCCESS,
-          payload: { user, token }
+          type: 'LOGIN_SUCCESS',
+          payload: { user, token },
         });
-        
+
         return { success: true };
       } else {
-        throw new Error(response.message || t('auth.loginFailed'));
+        throw new Error(response.message ?? t('auth.loginFailed'));
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : t('auth.loginFailed');
       dispatch({
-        type: AUTH_ACTIONS.LOGIN_FAILURE,
-        payload: error.message
+        type: 'LOGIN_FAILURE',
+        payload: errorMessage,
       });
-      return { success: false, error: error.message };
+      return { success: false, error: errorMessage };
     }
   };
 
-  // 登出函数
-  const logout = () => {
+  /**
+   * 登出函数
+   */
+  const logout = (): void => {
     authAPI.logout();
-    dispatch({ type: AUTH_ACTIONS.LOGOUT });
+    dispatch({ type: 'LOGOUT' });
   };
 
-  // 清除错误
-  const clearError = () => {
-    dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
+  /**
+   * 清除错误
+   */
+  const clearError = (): void => {
+    dispatch({ type: 'CLEAR_ERROR' });
   };
 
-  // 检查权限
-  const hasPermission = (requiredRole) => {
+  /**
+   * 检查权限
+   */
+  const hasPermission = (requiredRole: 'reader' | 'editor'): boolean => {
     if (!state.user) return false;
-    
+
     if (requiredRole === 'reader') {
       return state.user.role === 'reader' || state.user.role === 'editor';
     }
@@ -182,7 +225,7 @@ export const AuthProvider = ({ children }) => {
     return false;
   };
 
-  const value = {
+  const value: AuthContextValue = {
     ...state,
     login,
     logout,
@@ -190,11 +233,7 @@ export const AuthProvider = ({ children }) => {
     hasPermission,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 // 导出 AuthContext 以便在其他文件中使用

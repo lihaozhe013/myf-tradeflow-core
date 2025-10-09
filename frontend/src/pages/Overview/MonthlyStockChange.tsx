@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { useMemo } from 'react';
 import { 
   Card, Select, Statistic, Row, Col, Spin, Alert, Typography 
 } from 'antd';
@@ -18,43 +19,63 @@ const { Option } = Select;
  * 本月库存变化量组件
  * 用户可以选择产品，查看该产品本月的库存变化信息
  */
+type MonthlyStockChangeData = {
+  product_model: string;
+  month_start_stock: number;
+  current_stock: number;
+  monthly_change: number;
+  query_date: string;
+};
+
+type MonthlyStockChangeResponse = {
+  success: boolean;
+  data?: MonthlyStockChangeData;
+  message?: string;
+  error?: string;
+};
+
 const MonthlyStockChange = () => {
   const { t } = useTranslation();
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [stockData, setStockData] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
+  const [stockData, setStockData] = useState<MonthlyStockChangeData | null>(null);
   const [stockLoading, setStockLoading] = useState(false);
-  const [stockError, setStockError] = useState(null);
+  const [stockError, setStockError] = useState<string | null>(null);
   
   const { get } = useSimpleApi();
   
   // 使用useSimpleApiData获取产品列表
+  type Product = { product_model: string };
+  type ProductsResponse = { data?: Product[] };
   const {
     data: productsResponse,
     loading: productsLoading,
     error: productsError
-  } = useSimpleApiData('/products');
+  } = useSimpleApiData<ProductsResponse>('/products');
 
-  const products = productsResponse?.data || [];
+  const products = useMemo(() => productsResponse?.data ?? [], [productsResponse]);
 
   // 当产品列表加载完成时，自动选择第一个产品
   useEffect(() => {
     if (products.length > 0 && !selectedProduct) {
-      setSelectedProduct(products[0].product_model);
+      setSelectedProduct(products[0]?.product_model ?? null);
     }
   }, [products, selectedProduct]);
 
   // 获取月度库存变化数据
-  const fetchMonthlyStockChange = useCallback(async (productModel) => {
+  const fetchMonthlyStockChange = useCallback(async (productModel: string) => {
     try {
       setStockLoading(true);
       setStockError(null);
       
-      const result = await get(`/overview/monthly-stock-change/${encodeURIComponent(productModel)}`);
+      const result = await get<MonthlyStockChangeResponse>(
+        `/overview/monthly-stock-change/${encodeURIComponent(productModel)}`
+      );
       
-      if (result.success) {
+      if (result.success && result.data) {
         setStockData(result.data);
       } else {
-        setStockError(result.message || result.error || t('overview.stockChangeFailed'));
+  setStockData(null);
+  setStockError((result.message ?? result.error) ?? t('overview.stockChangeFailed'));
       }
     } catch (err) {
       console.error(t('overview.stockChangeFailed'), err);
@@ -65,7 +86,7 @@ const MonthlyStockChange = () => {
   }, [get, t]);
 
   // 当选择的产品改变时，获取库存变化数据
-  const handleProductChange = useCallback((productModel) => {
+  const handleProductChange = useCallback((productModel: string) => {
     setSelectedProduct(productModel);
   }, []);
 
@@ -77,7 +98,7 @@ const MonthlyStockChange = () => {
   }, [selectedProduct, fetchMonthlyStockChange]);
 
   // 计算变化趋势图标和颜色
-  const getTrendIcon = (change) => {
+  const getTrendIcon = (change: number) => {
     if (change > 0) {
       return <ArrowUpOutlined style={{ color: '#52c41a' }} />;
     } else if (change < 0) {
@@ -86,14 +107,14 @@ const MonthlyStockChange = () => {
     return <StockOutlined style={{ color: '#666' }} />;
   };
 
-  const getTrendColor = (change) => {
+  const getTrendColor = (change: number) => {
     if (change > 0) return '#52c41a';
     if (change < 0) return '#ff4d4f';
     return '#666';
   };
 
   const loading = productsLoading || stockLoading;
-  const error = productsError || stockError;
+  const error = productsError ?? stockError;
 
   return (
     <Card
@@ -108,7 +129,9 @@ const MonthlyStockChange = () => {
           placeholder={t('overview.selectProduct')}
           showSearch
           filterOption={(input, option) =>
-            option.children.toLowerCase().includes(input.toLowerCase())
+            String(option?.children ?? '')
+              .toLowerCase()
+              .includes(input.toLowerCase())
           }
         >
           {products.map(product => (
