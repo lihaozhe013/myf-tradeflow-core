@@ -40,7 +40,13 @@ const TopSalesPieChart = () => {
     outerRadius = 0,
     percent = 0,
   }: PieLabelRenderProps) => {
-    if (percent < 0.05) return null; // 小于5%不显示标签
+    const percentNumber = typeof percent === 'number'
+      ? percent
+      : typeof percent === 'string'
+        ? parseFloat(percent)
+        : 0;
+
+    if (Number.isNaN(percentNumber) || percentNumber < 0.05) return null; // 小于5%不显示标签
 
   const inner = Number(innerRadius);
   const outer = Number(outerRadius);
@@ -54,7 +60,7 @@ const TopSalesPieChart = () => {
 
     return (
       <text x={x} y={y} fill="white" textAnchor={x > centerX ? 'start' : 'end'} dominantBaseline="central" fontSize={12}>
-        {`${Math.round(percent * 100)}%`}
+        {`${Math.round(percentNumber * 100)}%`}
       </text>
     );
   };
