@@ -1,4 +1,3 @@
-import React from 'react';
 import { Card, Row, Col, Typography, Spin, Alert, Image } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useSimpleApiData } from '../hooks/useSimpleApi';
@@ -58,15 +57,15 @@ function About() {
       <Row gutter={[32, 32]} align="middle">
         <Col xs={24} md={16}>
           <Title level={1} style={{ color: '#1890ff', marginBottom: '24px' }}>
-            {aboutData?.title || t('about.title')}
+            {aboutData?.title ?? t('about.title')}
           </Title>
           
           <div style={{ marginBottom: '32px' }}>
             <Title level={3} style={{ color: '#333' }}>
-              {aboutData?.company?.name || t('about.companyProfile')}
+              {aboutData?.company?.name ?? t('about.companyProfile')}
             </Title>
             <Paragraph style={{ fontSize: '16px', lineHeight: '1.8', color: '#555' }}>
-              {aboutData?.company?.description || t('about.defaultDescription')}
+              {aboutData?.company?.description ?? t('about.defaultDescription')}
             </Paragraph>
           </div>
 
@@ -76,20 +75,20 @@ function About() {
             </Title>
             <Row gutter={[16, 16]}>
               <Col span={12}>
-                <Text strong>{t('about.systemVersion')}：</Text>
-                <Text>{aboutData?.system?.version || '0.1.0'}</Text>
+                <Text strong>{t('about.systemVersion')}: </Text>
+                <Text>{aboutData?.system?.version ?? '0.1.0'}</Text>
               </Col>
               <Col span={12}>
-                <Text strong>{t('about.releaseDate')}：</Text>
-                <Text>{aboutData?.system?.releaseDate || '2025-01-01'}</Text>
+                <Text strong>{t('about.releaseDate')}: </Text>
+                <Text>{aboutData?.system?.releaseDate ?? '2025-01-01'}</Text>
               </Col>
               <Col span={12}>
-                <Text strong>{t('about.techStack')}：</Text>
-                <Text>{aboutData?.system?.techStack || 'React + Node.js + SQLite'}</Text>
+                <Text strong>{t('about.techStack')}: </Text>
+                <Text>{aboutData?.system?.techStack ?? 'React + Node.js + SQLite'}</Text>
               </Col>
               <Col span={12}>
-                <Text strong>{t('about.development')}：</Text>
-                <Text>{aboutData?.system?.team || t('about.devTeam')}</Text>
+                <Text strong>{t('about.development')}: </Text>
+                <Text>{aboutData?.system?.team ?? t('about.devTeam')}</Text>
               </Col>
             </Row>
           </div>
@@ -99,9 +98,9 @@ function About() {
               {t('about.contact')}
             </Title>
             <Paragraph style={{ fontSize: '16px', lineHeight: '1.8', color: '#555' }}>
-              <Text strong>{t('about.email')}：</Text>{aboutData?.contact?.email || 'example@example.com'}<br />
-              <Text strong>{t('about.phone')}：</Text>{aboutData?.contact?.phone || '+1 xxx-xxx-xxxx'}<br />
-              <Text strong>{t('about.address')}：</Text>{aboutData?.contact?.address || t('about.defaultAddress')}
+              <Text strong>{t('about.email')}: </Text>{aboutData?.contact?.email ?? 'example@example.com'}<br />
+              <Text strong>{t('about.phone')}: </Text>{aboutData?.contact?.phone ?? '+1 xxx-xxx-xxxx'}<br />
+              <Text strong>{t('about.address')}: </Text>{aboutData?.contact?.address ?? t('about.defaultAddress')}
             </Paragraph>
           </div>
         </Col>
@@ -133,10 +132,10 @@ function About() {
                 textAlign: 'center' 
               }}
             >
-              {aboutData?.company?.name || t('about.systemName')}
+              {aboutData?.company?.name ?? t('about.systemName')}
             </Title>
             <Paragraph style={{ color: '#f0f0f0', textAlign: 'center' }}>
-              {aboutData?.company?.slogan || t('about.systemSlogan')}
+              {aboutData?.company?.slogan ?? t('about.systemSlogan')}
             </Paragraph>
           </Card>
         </Col>
