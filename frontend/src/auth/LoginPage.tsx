@@ -6,8 +6,26 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import './LoginPage.css';
 import { useTranslation } from 'react-i18next';
 
-const LoginPage = () => {
-  const [form] = Form.useForm();
+/**
+ * 登录表单值接口
+ */
+interface LoginFormValues {
+  username: string;
+  password: string;
+}
+
+/**
+ * 登录页面组件
+ * 
+ * 提供用户登录界面和认证功能
+ * 
+ * @example
+ * ```tsx
+ * <Route path="/login" element={<LoginPage />} />
+ * ```
+ */
+const LoginPage: React.FC = () => {
+  const [form] = Form.useForm<LoginFormValues>();
   const { login, isLoading, error, clearError } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -15,15 +33,18 @@ const LoginPage = () => {
   const { t } = useTranslation();
 
   // 获取重定向路径
-  const from = location.state?.from?.pathname || '/';
+  const from = (location.state as { from?: { pathname?: string } } | undefined)?.from?.pathname ?? '/';
 
-  const handleSubmit = async (values) => {
+  /**
+   * 处理表单提交
+   */
+  const handleSubmit = async (values: LoginFormValues): Promise<void> => {
     setLoginLoading(true);
     clearError();
-    
+
     try {
       const result = await login(values.username, values.password);
-      
+
       if (result.success) {
         // 登录成功，重定向到之前的页面或首页
         navigate(from, { replace: true });
@@ -33,7 +54,10 @@ const LoginPage = () => {
     }
   };
 
-  const handleUsernameChange = () => {
+  /**
+   * 处理用户名输入变化
+   */
+  const handleUsernameChange = (): void => {
     // 清除错误信息当用户开始输入时
     if (error) {
       clearError();
@@ -74,7 +98,7 @@ const LoginPage = () => {
             />
           )}
 
-          <Form
+          <Form<LoginFormValues>
             form={form}
             name="login"
             onFinish={handleSubmit}
