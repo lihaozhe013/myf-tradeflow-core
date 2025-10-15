@@ -29,7 +29,7 @@ The system was developed in a Chinese-language environment and extensively utili
 ## Demo
 
 This is the detailed page for my demo link:
-[My Demo](https://lihaozhe013.github.io/lihaozhe-website/posts/tradeflow-core/)
+[My Demo](https://lihaozhe013.github.io/lihaozhe-website/posts/tradeflow-system/)
 
 ![1.png](./docs/images/1.png)
 
