@@ -25,17 +25,16 @@
     "noUncheckedIndexedAccess": true,
 
     /* Path mapping */
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@/components/*": ["src/components/*"],
-      "@/pages/*": ["src/pages/*"],
-      "@/hooks/*": ["src/hooks/*"],
-      "@/utils/*": ["src/utils/*"],
-      "@/auth/*": ["src/auth/*"],
-      "@/config/*": ["src/config/*"],
-      "@/i18n/*": ["src/i18n/*"],
-      "@/types/*": ["src/types/*"]
+      "@/*": ["./src/*"],
+      "@/components/*": ["./src/components/*"],
+      "@/pages/*": ["./src/pages/*"],
+      "@/hooks/*": ["./src/hooks/*"],
+      "@/utils/*": ["./src/utils/*"],
+      "@/auth/*": ["./src/auth/*"],
+      "@/config/*": ["./src/config/*"],
+      "@/i18n/*": ["./src/i18n/*"],
+      "@/types/*": ["./src/types/*"]
     },
 
     /* Additional settings for React */
