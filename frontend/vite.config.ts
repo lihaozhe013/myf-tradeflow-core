@@ -50,6 +50,7 @@ export default defineConfig({
         },
       },
     },
+    chunkSizeWarningLimit: 2000,
   },
   preview: {
     host: '0.0.0.0',
