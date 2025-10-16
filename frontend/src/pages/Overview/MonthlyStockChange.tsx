@@ -10,7 +10,7 @@ import {
   StockOutlined
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useSimpleApi, useSimpleApiData } from '../../hooks/useSimpleApi';
+import { useSimpleApi, useSimpleApiData } from '@/hooks/useSimpleApi';
 
 const { Text } = Typography;
 const { Option } = Select;

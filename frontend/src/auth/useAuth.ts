@@ -1,6 +1,6 @@
 import { useContext } from 'react';
-import AuthContext from './AuthContext';
-import type { AuthContextValue } from './useAuth.d';
+import AuthContext from '@/auth/AuthContext';
+import type { AuthContextValue } from '@/auth/useAuth.d';
 
 /**
  * 认证 Hook

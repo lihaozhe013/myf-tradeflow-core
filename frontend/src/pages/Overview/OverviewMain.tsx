@@ -11,13 +11,13 @@ import {
   ExportOutlined
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useSimpleApi, useSimpleApiData } from '../../hooks/useSimpleApi';
+import { useSimpleApi, useSimpleApiData } from '@/hooks/useSimpleApi';
 
-import MonthlyStockChange from './MonthlyStockChange';
-import OutOfStockModal from './OutOfStockModal';
-import TopSalesPieChart from './TopSalesPieChart';
-import { DEFAULT_OVERVIEW_STATS } from './types';
-import type { OverviewStatsResponse } from './types';
+import MonthlyStockChange from '@/pages/Overview/MonthlyStockChange';
+import OutOfStockModal from '@/pages/Overview/OutOfStockModal';
+import TopSalesPieChart from '@/pages/Overview/TopSalesPieChart';
+import { DEFAULT_OVERVIEW_STATS } from '@/pages/Overview/types';
+import type { OverviewStatsResponse } from '@/pages/Overview/types';
 
 const { Title, Text } = Typography;
 

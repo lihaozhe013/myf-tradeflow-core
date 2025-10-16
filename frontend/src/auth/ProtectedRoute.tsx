@@ -1,7 +1,7 @@
 import React, { type ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { Result, Button, Spin } from 'antd';
-import { useAuth } from './useAuth';
+import { useAuth } from '@/auth/useAuth';
 import { useTranslation } from 'react-i18next';
 
 /**
