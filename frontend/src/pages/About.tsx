@@ -108,7 +108,7 @@ function About() {
         <Col xs={24} md={8} style={{ textAlign: 'center' }}>
           <Card
             style={{ 
-              background: 'linear-gradient(135deg, rgba(109, 118, 248, 1) 0%, #2e017bff 100%)',
+              background: 'linear-gradient(135deg, rgba(223, 218, 215, 0.2) 0%, rgba(223, 218, 215, 0.2) 100%)',
               border: 'none',
               borderRadius: '12px',
               padding: '20px'
@@ -127,14 +127,14 @@ function About() {
             <Title 
               level={4} 
               style={{ 
-                color: '#fff', 
+                color: '#000000ff', 
                 marginTop: '20px',
                 textAlign: 'center' 
               }}
             >
               {aboutData?.company?.name ?? t('about.systemName')}
             </Title>
-            <Paragraph style={{ color: '#f0f0f0', textAlign: 'center' }}>
+            <Paragraph style={{ color: '#000000ff', textAlign: 'center' }}>
               {aboutData?.company?.slogan ?? t('about.systemSlogan')}
             </Paragraph>
           </Card>
