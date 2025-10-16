@@ -5,14 +5,14 @@
  */
 
 // 导出组件
-export { AuthProvider } from './AuthContext';
-export { default as AuthContext } from './AuthContext';
-export { default as LoginPage } from './LoginPage';
-export { default as ProtectedRoute } from './ProtectedRoute';
+export { AuthProvider } from '@/auth/AuthContext';
+export { default as AuthContext } from '@/auth/AuthContext';
+export { default as LoginPage } from '@/auth/LoginPage';
+export { default as ProtectedRoute } from '@/auth/ProtectedRoute';
 
 // 导出 Hooks
-export { useAuth } from './useAuth';
-export { usePermissions } from './usePermissions';
+export { useAuth } from '@/auth/useAuth';
+export { usePermissions } from '@/auth/usePermissions';
 
 // 导出类型
 export type {
@@ -22,18 +22,18 @@ export type {
   TokenManager,
   UserManager,
   AuthAPI,
-} from './auth';
+} from '@/auth/auth';
 
 export type {
   AuthContextState,
   LoginResult,
   AuthContextValue,
-} from './useAuth.d';
+} from '@/auth/useAuth.d';
 
-export type { UsePermissionsReturn } from './usePermissions';
+export type { UsePermissionsReturn } from '@/auth/usePermissions';
 
 // 导出认证工具（从 auth.js）
-export { tokenManager, userManager, authAPI, isAuthenticated, hasRole } from './auth';
+export { tokenManager, userManager, authAPI, isAuthenticated, hasRole } from '@/auth/auth';
 
 /**
  * 使用示例:

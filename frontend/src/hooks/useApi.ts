@@ -8,7 +8,7 @@ import type {
   UseApiDataReturn,
   UseApiDataOptions,
   ApiRequestOptions,
-} from './types';
+} from '@/hooks/types';
 
 /**
  * 通用 API 请求 Hook

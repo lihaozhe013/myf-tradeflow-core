@@ -242,8 +242,7 @@ type MenuKey =
   | 'receivable'
   | 'payable'
   | 'analysis'
-  | 'report'
-  | 'about';
+  | 'report';
 
 interface AppContentInnerProps {
   readonly location: Location;
@@ -263,8 +262,7 @@ function AppContentInner({ location, t }: AppContentInnerProps): React.ReactElem
     if (path === '/receivable') return 'receivable';
     if (path === '/payable') return 'payable';
     if (path === '/analysis') return 'analysis';
-    if (path === '/report') return 'report';
-    if (path === '/about') return 'about';
+    if (path === '/report' || path === '/about') return 'report';
     return 'overview';
   };
 
@@ -354,14 +352,6 @@ function AppContentInner({ location, t }: AppContentInnerProps): React.ReactElem
       label: (
         <Link to="/report" style={{ fontWeight: 'bold' }}>
           {t('nav.report')}
-        </Link>
-      ),
-    },
-    {
-      key: 'about',
-      label: (
-        <Link to="/about" style={{ fontWeight: 'bold' }}>
-          {t('nav.about')}
         </Link>
       ),
     },

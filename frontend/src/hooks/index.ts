@@ -5,8 +5,8 @@
  */
 
 // 导出 Hooks
-export { useApi, useApiData } from './useApi';
-export { useSimpleApi, useSimpleApiData } from './useSimpleApi';
+export { useApi, useApiData } from '@/hooks/useApi';
+export { useSimpleApi, useSimpleApiData } from '@/hooks/useSimpleApi';
 
 // 导出类型
 export type {
@@ -16,7 +16,7 @@ export type {
   UseApiDataOptions,
   UseSimpleApiReturn,
   UseSimpleApiDataReturn,
-} from './types';
+} from '@/hooks/types';
 
 /**
  * 使用示例:

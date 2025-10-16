@@ -1,6 +1,6 @@
 import { Card, Row, Col, Typography, Spin, Alert, Image } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { useSimpleApiData } from '../hooks/useSimpleApi';
+import { useSimpleApiData } from '@/hooks/useSimpleApi';
 
 const { Title, Paragraph, Text } = Typography;
 

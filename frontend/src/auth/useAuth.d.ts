@@ -4,7 +4,7 @@
  * 为 useAuth.js 提供 TypeScript 类型支持
  */
 
-import type { User } from './auth';
+import type { User } from '@/auth/auth';
 
 /**
  * 认证上下文状态

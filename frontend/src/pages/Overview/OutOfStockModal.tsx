@@ -1,6 +1,6 @@
 import { Modal, List, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
-import type { OutOfStockProduct } from './types';
+import type { OutOfStockProduct } from '@/pages/Overview/types';
 
 const { Text } = Typography;
 
