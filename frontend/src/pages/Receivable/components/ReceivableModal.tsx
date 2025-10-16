@@ -70,7 +70,7 @@ const ReceivableModal: FC<ReceivableModalProps> = ({
       onOk={handleSubmit}
       onCancel={handleCancel}
       width={600}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form
         form={form}

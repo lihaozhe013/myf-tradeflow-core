@@ -70,7 +70,7 @@ const PayableModal: FC<PayableModalProps> = ({
       onOk={handleSubmit}
       onCancel={handleCancel}
       width={600}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form
         form={form}
