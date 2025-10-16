@@ -1,6 +1,6 @@
-import { useAuth } from './useAuth';
+import { useAuth } from '@/auth/useAuth';
 import { useTranslation } from 'react-i18next';
-import type { User } from './auth';
+import type { User } from '@/auth/auth';
 
 /**
  * 角色类型

@@ -258,7 +258,7 @@ export {
   NetworkError,
   AuthenticationError,
   AuthorizationError,
-} from './types';
+} from '@/utils/types';
 
 // 导出类型
 export type {
@@ -268,6 +268,6 @@ export type {
   RequestInstance,
   HttpMethod,
   ResponseType,
-} from './types';
+} from '@/utils/types';
 
 export default apiRequest;

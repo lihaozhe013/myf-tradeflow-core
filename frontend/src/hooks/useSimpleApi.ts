@@ -6,7 +6,7 @@ import type {
   UseSimpleApiDataReturn,
   UseSimpleApiReturn,
   ApiRequestOptions,
-} from './types';
+} from '@/hooks/types';
 
 /**
  * 简化版的 API 数据获取 Hook

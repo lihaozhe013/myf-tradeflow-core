@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Form, Input, Button, Card, Alert, Spin } from 'antd';
 import { UserOutlined, LockOutlined, LoginOutlined } from '@ant-design/icons';
-import { useAuth } from './useAuth';
+import { useAuth } from '@/auth/useAuth';
 import { useNavigate, useLocation } from 'react-router-dom';
-import './LoginPage.css';
+import '@/auth/LoginPage.css';
 import { useTranslation } from 'react-i18next';
 
 /**

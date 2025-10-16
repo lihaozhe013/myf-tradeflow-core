@@ -2,9 +2,9 @@ import { Card, Spin, Alert } from 'antd';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import type { PieLabelRenderProps } from 'recharts';
 import { useTranslation } from 'react-i18next';
-import { useSimpleApiData } from '../../hooks/useSimpleApi';
-import { DEFAULT_TOP_SALES_RESPONSE } from './types';
-import type { TopSalesResponse } from './types';
+import { useSimpleApiData } from '@/hooks/useSimpleApi';
+import { DEFAULT_TOP_SALES_RESPONSE } from '@/pages/Overview/types';
+import type { TopSalesResponse } from '@/pages/Overview/types';
 
 const TopSalesPieChart = () => {
   const { t } = useTranslation();

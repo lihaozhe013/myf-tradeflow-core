@@ -3,13 +3,13 @@
  * 从 appConfig.json 导入所有配置项
  */
 
-import { appConfigData as typedConfigData } from './data';
+import { appConfigData as typedConfigData } from '@/config/data';
 import type {
   PaymentMethod,
   PaymentMethodConfig,
   ProductCategory,
   SelectOption,
-} from './types';
+} from '@/config/types';
 
 // 付款方式相关配置
 export const PAYMENT_METHODS = typedConfigData.paymentMethods.list;
@@ -103,4 +103,4 @@ export type {
   AuthConfig,
   ServerConfig,
   FrontendConfig,
-} from './types';
+} from '@/config/types';

@@ -1,8 +1,8 @@
 import React, { createContext, useReducer, useEffect, type ReactNode } from 'react';
-import { tokenManager, userManager, authAPI } from './auth';
+import { tokenManager, userManager, authAPI } from '@/auth/auth';
 import { useTranslation } from 'react-i18next';
-import type { User } from './auth';
-import type { AuthContextValue, LoginResult } from './useAuth.d';
+import type { User } from '@/auth/auth';
+import type { AuthContextValue, LoginResult } from '@/auth/useAuth.d';
 
 /**
  * 认证状态接口
