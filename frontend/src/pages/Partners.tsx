@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import { useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { ColumnsType } from 'antd/es/table';
+import type { FormProps } from 'antd';
 import {
   Table,
   Button,
@@ -14,62 +16,84 @@ import {
   Typography,
   Row,
   Col,
-  Divider
+  Divider,
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
-import { useSimpleApi, useSimpleApiData } from '../hooks/useSimpleApi';
+import { useSimpleApi, useSimpleApiData } from '@/hooks/useSimpleApi';
 
 const { Title } = Typography;
 const { Option } = Select;
 
-const Partners = () => {
+type PartnerItem = {
+  readonly code?: string | undefined;
+  readonly short_name: string;
+  readonly full_name: string;
+  readonly type: 0 | 1;
+  readonly address?: string;
+  readonly contact_person?: string;
+  readonly contact_phone?: string;
+};
+
+type PartnerListResponse = {
+  readonly data: PartnerItem[];
+};
+
+type PartnerFormValues = {
+  code?: string | undefined;
+  short_name?: string | undefined;
+  full_name?: string | undefined;
+  type?: 0 | 1;
+  address?: string;
+  contact_person?: string;
+  contact_phone?: string;
+};
+
+const Partners: FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
-  const [editingPartner, setEditingPartner] = useState(null);
-  const [form] = Form.useForm();
+  const [editingPartner, setEditingPartner] = useState<PartnerItem | null>(null);
+  const [form] = Form.useForm<PartnerFormValues>();
   const { t } = useTranslation();
 
-  // 使用简化API hooks
   const { post, put, request } = useSimpleApi();
-  
-  // 获取合作伙伴列表
-  const { 
-    data: partnersResponse, 
-    loading, 
-    refetch: refreshPartners 
-  } = useSimpleApiData('/partners', { data: [] });
-  
-  const partners = partnersResponse?.data || [];
-  // 合作伙伴选项用于联动输入
+
+  const {
+    data: partnersResponse,
+    loading,
+    refetch: refreshPartners,
+  } = useSimpleApiData<PartnerListResponse>('/partners', { data: [] });
+
+  const partners = partnersResponse?.data ?? [];
   const partnerOptions = partners;
 
-  // 新增合作伙伴
-  const handleAdd = () => {
+  const handleAdd = (): void => {
     setEditingPartner(null);
     form.resetFields();
     setModalVisible(true);
   };
 
-  // 编辑合作伙伴
-  const handleEdit = (record) => {
+  const handleEdit = (record: PartnerItem): void => {
     setEditingPartner(record);
     form.setFieldsValue(record);
     setModalVisible(true);
   };
 
-  // 删除合作伙伴
-  const handleDelete = async (shortName) => {
+  const handleDelete = async (shortName: string): Promise<void> => {
     try {
       await request(`/partners/${shortName}`, { method: 'DELETE' });
       message.success(t('partners.deleteSuccess'));
       refreshPartners();
     } catch {
-      // 错误已经在useSimpleApi中处理
+      // 错误已经在 useSimpleApi 中处理
     }
   };
 
-  // 保存合作伙伴
-  const handleSave = async (values) => {
+  const handleSave = async (values: PartnerFormValues): Promise<void> => {
     try {
+      if (!values.short_name || !values.full_name || values.type === undefined) {
+        message.error(t('common.validationError', { defaultValue: 'Validation error' }));
+        return;
+      }
+
       if (editingPartner) {
         await put(`/partners/${editingPartner.short_name}`, values);
         message.success(t('partners.editSuccess'));
@@ -80,12 +104,11 @@ const Partners = () => {
       setModalVisible(false);
       refreshPartners();
     } catch {
-      // 错误已经在useSimpleApi中处理
+      // 错误已经在 useSimpleApi 中处理
     }
   };
 
-  // 表格列定义
-  const columns = [
+  const columns: ColumnsType<PartnerItem> = [
     {
       title: t('partners.code'),
       dataIndex: 'code',
@@ -109,7 +132,7 @@ const Partners = () => {
       dataIndex: 'type',
       key: 'type',
       width: 80,
-      render: (type) => type === 0 ? t('partners.supplier') : t('partners.customer'),
+      render: type => (type === 0 ? t('partners.supplier') : t('partners.customer')),
     },
     {
       title: t('partners.address'),
@@ -149,12 +172,7 @@ const Partners = () => {
             okText={t('common.confirm')}
             cancelText={t('common.cancel')}
           >
-            <Button
-              type="link"
-              danger
-              icon={<DeleteOutlined />}
-              size="small"
-            >
+            <Button type="link" danger icon={<DeleteOutlined />} size="small">
               {t('common.delete')}
             </Button>
           </Popconfirm>
@@ -163,22 +181,25 @@ const Partners = () => {
     },
   ];
 
-  // 联动输入处理
-  const handlePartnerFieldChange = (changed) => {
-    // changed: { code/short_name/full_name: value }
-    // all: 所有表单值
-    if (changed.code) {
-      const match = partnerOptions.find(p => p.code === changed.code);
+  const handlePartnerFieldChange: FormProps<PartnerFormValues>['onValuesChange'] = changedValues => {
+    if (changedValues?.code) {
+      const match = partnerOptions.find(partner => partner.code === changedValues.code);
       if (match) {
         form.setFieldsValue({ short_name: match.short_name, full_name: match.full_name });
       }
-    } else if (changed.short_name) {
-      const match = partnerOptions.find(p => p.short_name === changed.short_name);
+      return;
+    }
+
+    if (changedValues?.short_name) {
+      const match = partnerOptions.find(partner => partner.short_name === changedValues.short_name);
       if (match) {
         form.setFieldsValue({ code: match.code, full_name: match.full_name });
       }
-    } else if (changed.full_name) {
-      const match = partnerOptions.find(p => p.full_name === changed.full_name);
+      return;
+    }
+
+    if (changedValues?.full_name) {
+      const match = partnerOptions.find(partner => partner.full_name === changedValues.full_name);
       if (match) {
         form.setFieldsValue({ code: match.code, short_name: match.short_name });
       }
@@ -190,14 +211,12 @@ const Partners = () => {
       <Card>
         <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
           <Col>
-            <Title level={2} style={{ margin: 0 }}>{t('partners.title')}</Title>
+            <Title level={2} style={{ margin: 0 }}>
+              {t('partners.title')}
+            </Title>
           </Col>
           <Col>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={handleAdd}
-            >
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
               {t('partners.addPartner')}
             </Button>
           </Col>
@@ -206,7 +225,7 @@ const Partners = () => {
         <Divider />
 
         <div className="responsive-table">
-          <Table
+          <Table<PartnerItem>
             columns={columns}
             dataSource={partners}
             rowKey="short_name"
@@ -215,7 +234,11 @@ const Partners = () => {
               pageSize: 10,
               showQuickJumper: true,
               showTotal: (total, range) =>
-                t('partners.paginationTotal', { start: range[0], end: range[1], total }),
+                t('partners.paginationTotal', {
+                  start: range[0],
+                  end: range[1],
+                  total,
+                }),
             }}
             scroll={{ x: 900 }}
           />
@@ -229,7 +252,7 @@ const Partners = () => {
         footer={null}
         width={600}
       >
-        <Form
+        <Form<PartnerFormValues>
           form={form}
           layout="vertical"
           onFinish={handleSave}
@@ -242,7 +265,7 @@ const Partners = () => {
               { max: 50, message: t('partners.codeMax') },
             ]}
           >
-            <Input placeholder={t('partners.inputCode')} disabled={!!editingPartner} />
+            <Input placeholder={t('partners.inputCode')} disabled={Boolean(editingPartner)} />
           </Form.Item>
 
           <Form.Item
@@ -253,7 +276,7 @@ const Partners = () => {
               { max: 50, message: t('partners.shortNameMax') },
             ]}
           >
-            <Input placeholder={t('partners.inputShortName')} disabled={!!editingPartner} />
+            <Input placeholder={t('partners.inputShortName')} disabled={Boolean(editingPartner)} />
           </Form.Item>
 
           <Form.Item
@@ -283,10 +306,7 @@ const Partners = () => {
             name="address"
             rules={[{ max: 500, message: t('partners.addressMax') }]}
           >
-            <Input.TextArea
-              placeholder={t('partners.inputAddress')}
-              rows={3}
-            />
+            <Input.TextArea placeholder={t('partners.inputAddress')} rows={3} />
           </Form.Item>
 
           <Form.Item
