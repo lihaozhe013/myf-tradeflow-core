@@ -1,11 +1,15 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { ColumnsType, TableProps } from 'antd/es/table';
+import type { FormProps } from 'antd';
+import type { AutoCompleteProps } from 'antd/es/auto-complete';
+import type { SelectProps } from 'antd/es/select';
+import type { Dayjs } from 'dayjs';
 import {
   Table,
   Button,
   Modal,
   Form,
-  Input,
   Select,
   DatePicker,
   InputNumber,
@@ -17,95 +21,143 @@ import {
   Row,
   Col,
   Divider,
-  AutoComplete
+  AutoComplete,
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { useSimpleApi, useSimpleApiData } from '../hooks/useSimpleApi';
+import { useSimpleApi, useSimpleApiData } from '@/hooks/useSimpleApi';
 
 const { Title } = Typography;
-const { Option } = Select;
 
-const ProductPrices = () => {
+type PaginationInfo = {
+  readonly current: number;
+  readonly pageSize: number;
+  readonly total: number;
+};
+
+type ApiListResponse<T> = {
+  readonly data: T[];
+  readonly pagination?: PaginationInfo;
+};
+
+type ProductPriceItem = {
+  readonly id: number;
+  readonly partner_short_name: string;
+  readonly partner_code?: string;
+  readonly product_model: string;
+  readonly product_code?: string;
+  readonly unit_price: number;
+  readonly effective_date: string;
+};
+
+type PartnerItem = {
+  readonly code: string;
+  readonly short_name: string;
+  readonly full_name: string;
+};
+
+type ProductItem = {
+  readonly code: string;
+  readonly product_model: string;
+  readonly category?: string;
+};
+
+type FilterState = {
+  partner_short_name?: string | undefined;
+  product_model?: string | undefined;
+  effective_date?: string | undefined;
+};
+
+type ProductPriceFormValues = {
+  partner_code?: string | undefined;
+  partner_short_name?: string | undefined;
+  product_code?: string | undefined;
+  product_model?: string | undefined;
+  unit_price: number;
+  effective_date: Dayjs | null;
+};
+
+type ProductPriceFilters = {
+  partner_short_name?: string | undefined;
+  product_model?: string | undefined;
+  effective_date?: Dayjs | null | undefined;
+};
+
+const DEFAULT_PAGINATION: PaginationInfo = {
+  current: 1,
+  pageSize: 10,
+  total: 0,
+};
+
+const ProductPrices: FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
-  const [editingPrice, setEditingPrice] = useState(null);
-  const [form] = Form.useForm();
-  const [filterForm] = Form.useForm();
+  const [editingPrice, setEditingPrice] = useState<ProductPriceItem | null>(null);
+  const [form] = Form.useForm<ProductPriceFormValues>();
+  const [filterForm] = Form.useForm<ProductPriceFilters>();
   const { t } = useTranslation();
 
-  // 搜索与分页状态
-  const [filters, setFilters] = useState({
-    partner_short_name: undefined,
-    product_model: undefined,
-    effective_date: undefined,
-  });
-  const [pagination, setPagination] = useState({
-    current: 1,
-    pageSize: 10,
-    total: 0,
-  });
+  const [filters, setFilters] = useState<FilterState>({});
+  const [pagination, setPagination] = useState<PaginationInfo>(DEFAULT_PAGINATION);
 
-  // 使用简化API hooks
   const { post, put, request } = useSimpleApi();
-  
-  // 构建产品价格查询URL
+
   const buildProductPricesUrl = useCallback(() => {
     const params = new URLSearchParams({
       page: pagination.current.toString(),
     });
-    
+
     Object.entries(filters).forEach(([key, value]) => {
       if (value) {
         params.append(key, value);
       }
     });
-    
-    return `/product-prices?${params}`;
-  }, [filters, pagination.current, pagination.pageSize]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 获取产品价格列表
-  const { 
-    data: productPricesResponse, 
-    loading, 
-    refetch: refreshProductPrices 
-  } = useSimpleApiData(buildProductPricesUrl(), {
+    return `/product-prices?${params.toString()}`;
+  }, [filters, pagination]);
+
+  const {
+    data: productPricesResponse,
+    loading,
+    refetch: refreshProductPrices,
+  } = useSimpleApiData<ApiListResponse<ProductPriceItem>>(buildProductPricesUrl(), {
     data: [],
-    pagination: { current: 1, pageSize: 10, total: 0 }
+    pagination: DEFAULT_PAGINATION,
   });
 
-  // 获取合作伙伴列表
-  const { data: partnersResponse } = useSimpleApiData('/partners', { data: [] });
-  
-  // 获取产品列表  
-  const { data: productsResponse } = useSimpleApiData('/products', { data: [] });
+  const { data: partnersResponse } = useSimpleApiData<ApiListResponse<PartnerItem>>('/partners', {
+    data: [],
+  });
 
-  const productPrices = productPricesResponse?.data || [];
-  const partners = partnersResponse?.data || [];
-  const products = productsResponse?.data || [];
+  const { data: productsResponse } = useSimpleApiData<ApiListResponse<ProductItem>>('/products', {
+    data: [],
+  });
 
-  // 当产品价格响应更新时，更新分页信息
+  const productPrices = productPricesResponse?.data ?? [];
+  const partners = partnersResponse?.data ?? [];
+  const products = productsResponse?.data ?? [];
+
   useEffect(() => {
-    if (productPricesResponse?.pagination) {
-      setPagination(prev => ({
-        ...prev,
-        total: productPricesResponse.pagination.total
-      }));
+    if (!productPricesResponse?.pagination) {
+      return;
     }
+
+    setPagination(prev => ({
+      current: productPricesResponse.pagination?.current ?? prev.current,
+      pageSize: productPricesResponse.pagination?.pageSize ?? prev.pageSize,
+      total: productPricesResponse.pagination?.total ?? prev.total,
+    }));
   }, [productPricesResponse]);
 
-  // 新增价格
-  const handleAdd = () => {
+  const handleAdd = (): void => {
     setEditingPrice(null);
     form.resetFields();
-    // 设置默认生效日期为今天
     form.setFieldsValue({
       effective_date: dayjs(),
     });
     setModalVisible(true);
   };
 
-  // 编辑价格
-  const handleEdit = (record) => {
+  const handleEdit = (record: ProductPriceItem): void => {
     setEditingPrice(record);
     form.setFieldsValue({
       ...record,
@@ -114,20 +166,23 @@ const ProductPrices = () => {
     setModalVisible(true);
   };
 
-  // 删除价格
-  const handleDelete = async (id) => {
+  const handleDelete = async (id: number): Promise<void> => {
     try {
       await request(`/product-prices/${id}`, { method: 'DELETE' });
       message.success(t('productPrices.deleteSuccess'));
       refreshProductPrices();
     } catch {
-      // 错误已经在useSimpleApi中处理
+      // 错误已经在 useSimpleApi 中处理
     }
   };
 
-  // 保存价格
-  const handleSave = async (values) => {
+  const handleSave = async (values: ProductPriceFormValues): Promise<void> => {
     try {
+      if (!values.partner_short_name || !values.product_model) {
+        message.error(t('common.validationError', { defaultValue: 'Validation error' }));
+        return;
+      }
+
       const formattedValues = {
         ...values,
         effective_date: values.effective_date ? values.effective_date.format('YYYY-MM-DD') : null,
@@ -143,12 +198,11 @@ const ProductPrices = () => {
       setModalVisible(false);
       refreshProductPrices();
     } catch {
-      // 错误已经在useSimpleApi中处理
+      // 错误已经在 useSimpleApi 中处理
     }
   };
 
-  // 表格列定义
-  const columns = [
+  const columns: ColumnsType<ProductPriceItem> = [
     {
       title: 'ID',
       dataIndex: 'id',
@@ -172,7 +226,7 @@ const ProductPrices = () => {
       dataIndex: 'unit_price',
       key: 'unit_price',
       width: 120,
-      render: (price) => `¥${price}`,
+      render: price => `¥${price}`,
     },
     {
       title: t('productPrices.effectiveDate'),
@@ -200,12 +254,7 @@ const ProductPrices = () => {
             okText={t('common.confirm')}
             cancelText={t('common.cancel')}
           >
-            <Button
-              type="link"
-              danger
-              icon={<DeleteOutlined />}
-              size="small"
-            >
+            <Button type="link" danger icon={<DeleteOutlined />} size="small">
               {t('common.delete')}
             </Button>
           </Popconfirm>
@@ -214,15 +263,28 @@ const ProductPrices = () => {
     },
   ];
 
-  // 新增：用于AutoComplete的options
-  const partnerCodeOptions = partners.map(p => ({ value: p.code, label: `${p.code} - ${p.short_name}` }));
-  const partnerShortNameOptions = partners.map(p => ({ value: p.short_name, label: `${p.short_name} - ${p.full_name}` }));
-  const productCodeOptions = products.map(p => ({ value: p.code, label: `${p.code} - ${p.product_model}` }));
-  const productModelOptions = products.map(p => ({ value: p.product_model, label: `${p.product_model} - ${p.category}` }));
+  const partnerCodeOptions: AutoCompleteProps['options'] = partners.map(partner => ({
+    value: partner.code,
+    label: `${partner.code} - ${partner.short_name}`,
+  }));
 
-  // 联动逻辑
-  const handlePartnerCodeChange = (code) => {
-    const partner = partners.find(p => p.code === code);
+  const partnerShortNameOptions: SelectProps['options'] = partners.map(partner => ({
+    value: partner.short_name,
+    label: `${partner.short_name} - ${partner.full_name}`,
+  }));
+
+  const productCodeOptions: AutoCompleteProps['options'] = products.map(product => ({
+    value: product.code,
+    label: `${product.code} - ${product.product_model}`,
+  }));
+
+  const productModelOptions: SelectProps['options'] = products.map(product => ({
+    value: product.product_model,
+    label: `${product.product_model} - ${product.category ?? ''}`,
+  }));
+
+  const handlePartnerCodeChange = (code: string): void => {
+    const partner = partners.find(item => item.code === code);
     if (partner) {
       form.setFieldsValue({
         partner_code: partner.code,
@@ -232,8 +294,9 @@ const ProductPrices = () => {
       form.setFieldsValue({ partner_short_name: undefined });
     }
   };
-  const handlePartnerShortNameChange = (short_name) => {
-    const partner = partners.find(p => p.short_name === short_name);
+
+  const handlePartnerShortNameChange = (shortName: string): void => {
+    const partner = partners.find(item => item.short_name === shortName);
     if (partner) {
       form.setFieldsValue({
         partner_code: partner.code,
@@ -243,8 +306,9 @@ const ProductPrices = () => {
       form.setFieldsValue({ partner_code: undefined });
     }
   };
-  const handleProductCodeChange = (code) => {
-    const product = products.find(p => p.code === code);
+
+  const handleProductCodeChange = (code: string): void => {
+    const product = products.find(item => item.code === code);
     if (product) {
       form.setFieldsValue({
         product_code: product.code,
@@ -254,8 +318,9 @@ const ProductPrices = () => {
       form.setFieldsValue({ product_model: undefined });
     }
   };
-  const handleProductModelChange = (model) => {
-    const product = products.find(p => p.product_model === model);
+
+  const handleProductModelChange = (model: string): void => {
+    const product = products.find(item => item.product_model === model);
     if (product) {
       form.setFieldsValue({
         product_code: product.code,
@@ -266,21 +331,35 @@ const ProductPrices = () => {
     }
   };
 
-  // 过滤提交
-  const handleFilter = () => {
+  const handleFilter = (): void => {
     const values = filterForm.getFieldsValue();
-    const nextFilters = {
+    setFilters({
       partner_short_name: values.partner_short_name,
       product_model: values.product_model,
-      effective_date: values.effective_date ? values.effective_date.format('YYYY-MM-DD') : undefined,
-    };
-    setFilters(nextFilters);
+      effective_date: values.effective_date
+        ? values.effective_date.format('YYYY-MM-DD')
+        : undefined,
+    });
     setPagination(prev => ({ ...prev, current: 1 }));
   };
 
-  // 表格分页变化
-  const handleTableChange = (paginationTable) => {
-    setPagination(prev => ({ ...prev, current: paginationTable.current }));
+  const handleTableChange: TableProps<ProductPriceItem>['onChange'] = paginationConfig => {
+    setPagination(prev => ({
+      ...prev,
+      current: paginationConfig.current ?? prev.current,
+    }));
+  };
+
+  const handleFormValuesChange: FormProps<ProductPriceFormValues>['onValuesChange'] = changedValues => {
+    if (changedValues?.partner_code) {
+      handlePartnerCodeChange(changedValues.partner_code);
+    } else if (changedValues?.partner_short_name) {
+      handlePartnerShortNameChange(changedValues.partner_short_name);
+    } else if (changedValues?.product_code) {
+      handleProductCodeChange(changedValues.product_code);
+    } else if (changedValues?.product_model) {
+      handleProductModelChange(changedValues.product_model);
+    }
   };
 
   return (
@@ -288,51 +367,64 @@ const ProductPrices = () => {
       <Card>
         <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
           <Col>
-            <Title level={2} style={{ margin: 0 }}>{t('productPrices.title')}</Title>
+            <Title level={2} style={{ margin: 0 }}>
+              {t('productPrices.title')}
+            </Title>
           </Col>
           <Col>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={handleAdd}
-            >
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
               {t('productPrices.addPrice')}
             </Button>
           </Col>
         </Row>
 
-        {/* 筛选区 */}
-        <Form form={filterForm} layout="inline" style={{ marginBottom: 12 }}>
-          <Form.Item name="partner_short_name" label={t('productPrices.partnerShortName')} style={{ minWidth: 260 }}>
+        <Form<ProductPriceFilters> form={filterForm} layout="inline" style={{ marginBottom: 12 }}>
+          <Form.Item
+            name="partner_short_name"
+            label={t('productPrices.partnerShortName')}
+            style={{ minWidth: 260 }}
+          >
             <Select
               allowClear
               showSearch
               placeholder={t('productPrices.selectPartner')}
               options={partnerShortNameOptions}
-              filterOption={(input, option) => (option?.label || '').toLowerCase().includes(input.toLowerCase())}
+              filterOption={(input, option) => {
+                const label = typeof option?.label === 'string' ? option.label : '';
+                return label.toLowerCase().includes(input.toLowerCase());
+              }}
             />
           </Form.Item>
-          <Form.Item name="product_model" label={t('productPrices.productModel')} style={{ minWidth: 260 }}>
+          <Form.Item
+            name="product_model"
+            label={t('productPrices.productModel')}
+            style={{ minWidth: 260 }}
+          >
             <Select
               allowClear
               showSearch
               placeholder={t('productPrices.selectProductModel')}
               options={productModelOptions}
-              filterOption={(input, option) => (option?.label || '').toLowerCase().includes(input.toLowerCase())}
+              filterOption={(input, option) => {
+                const label = typeof option?.label === 'string' ? option.label : '';
+                return label.toLowerCase().includes(input.toLowerCase());
+              }}
             />
           </Form.Item>
           <Form.Item name="effective_date" label={t('productPrices.effectiveDate')}>
             <DatePicker allowClear format="YYYY-MM-DD" />
           </Form.Item>
           <Form.Item>
-            <Button type="primary" onClick={handleFilter}>{t('common.search') || 'Search'}</Button>
+            <Button type="primary" onClick={handleFilter}>
+              {t('common.search') ?? 'Search'}
+            </Button>
           </Form.Item>
         </Form>
 
         <Divider />
 
         <div className="responsive-table">
-          <Table
+          <Table<ProductPriceItem>
             columns={columns}
             dataSource={productPrices}
             rowKey="id"
@@ -344,7 +436,11 @@ const ProductPrices = () => {
               total: pagination.total,
               showQuickJumper: true,
               showTotal: (total, range) =>
-                t('productPrices.paginationTotal', { start: range[0], end: range[1], total }),
+                t('productPrices.paginationTotal', {
+                  start: range[0],
+                  end: range[1],
+                  total,
+                }),
             }}
             scroll={{ x: 800 }}
           />
@@ -358,10 +454,11 @@ const ProductPrices = () => {
         footer={null}
         width={600}
       >
-        <Form
+        <Form<ProductPriceFormValues>
           form={form}
           layout="vertical"
           onFinish={handleSave}
+          onValuesChange={handleFormValuesChange}
         >
           <Row gutter={8}>
             <Col span={12}>
@@ -370,9 +467,13 @@ const ProductPrices = () => {
                   options={partnerCodeOptions}
                   placeholder={t('productPrices.inputPartnerCode')}
                   onChange={handlePartnerCodeChange}
-                  filterOption={(inputValue, option) =>
-                    option.value.toLowerCase().includes(inputValue.toLowerCase())
-                  }
+                  filterOption={(inputValue, option) => {
+                    const optionValue = option?.value;
+                    const normalized = typeof optionValue === 'number'
+                      ? optionValue.toString()
+                      : optionValue ?? '';
+                    return normalized.toLowerCase().includes(inputValue.toLowerCase());
+                  }}
                 />
               </Form.Item>
             </Col>
@@ -387,9 +488,10 @@ const ProductPrices = () => {
                   showSearch
                   options={partnerShortNameOptions}
                   onChange={handlePartnerShortNameChange}
-                  filterOption={(input, option) =>
-                    option.value.toLowerCase().includes(input.toLowerCase())
-                  }
+                  filterOption={(input, option) => {
+                    const value = typeof option?.value === 'string' ? option.value : '';
+                    return value.toLowerCase().includes(input.toLowerCase());
+                  }}
                 />
               </Form.Item>
             </Col>
@@ -401,9 +503,13 @@ const ProductPrices = () => {
                   options={productCodeOptions}
                   placeholder={t('productPrices.inputProductCode')}
                   onChange={handleProductCodeChange}
-                  filterOption={(inputValue, option) =>
-                    option.value.toLowerCase().includes(inputValue.toLowerCase())
-                  }
+                  filterOption={(inputValue, option) => {
+                    const optionValue = option?.value;
+                    const normalized = typeof optionValue === 'number'
+                      ? optionValue.toString()
+                      : optionValue ?? '';
+                    return normalized.toLowerCase().includes(inputValue.toLowerCase());
+                  }}
                 />
               </Form.Item>
             </Col>
@@ -418,9 +524,10 @@ const ProductPrices = () => {
                   showSearch
                   options={productModelOptions}
                   onChange={handleProductModelChange}
-                  filterOption={(input, option) =>
-                    option.value.toLowerCase().includes(input.toLowerCase())
-                  }
+                  filterOption={(input, option) => {
+                    const value = typeof option?.value === 'string' ? option.value : '';
+                    return value.toLowerCase().includes(input.toLowerCase());
+                  }}
                 />
               </Form.Item>
             </Col>
