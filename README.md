@@ -31,16 +31,19 @@ The system was developed in a Chinese-language environment and extensively utili
 This is the detailed page for my demo link:
 [My Demo](https://lihaozhe013.github.io/lihaozhe-website/posts/tradeflow-system/)
 
-![1.png](./docs/images/1.png)
+![1.png](https://lihaozhe013.github.io/lihaozhe-website/posts/tradeflow-system/1.png)
 
-![2.png](./docs/images/2.png)
+![2.png](https://lihaozhe013.github.io/lihaozhe-website/posts/tradeflow-system/2.png)
 
-![3.png](./docs/images/3.png)
+![3.png](https://lihaozhe013.github.io/lihaozhe-website/posts/tradeflow-system/3.png)
 
-![4.png](./docs/images/4.png)
+![4.png](https://lihaozhe013.github.io/lihaozhe-website/posts/tradeflow-system/4.png)
 
-![5.png](./docs/images/5.png)
+![5.png](https://lihaozhe013.github.io/lihaozhe-website/posts/tradeflow-system/5.png)
 
+![6.png](https://lihaozhe013.github.io/lihaozhe-website/posts/tradeflow-system/6.png)
+
+![7.png](https://lihaozhe013.github.io/lihaozhe-website/posts/tradeflow-system/7.png)
 ## ⚡ Quick Start
 
 ### Prerequisites
