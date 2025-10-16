@@ -1,22 +1,39 @@
-import React from 'react';
 import { Table, Button, Space, Popconfirm } from 'antd';
+import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
+import type { TableRowSelection } from 'antd/es/table/interface';
+import type { TableProps } from 'antd/es/table';
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import type { FC, Key, Dispatch, SetStateAction } from 'react';
+import type { OutboundRecord, Partner, Product } from '../types';
 
-const OutboundTable = ({ 
-  outboundRecords, 
-  loading, 
-  partners, 
-  products, 
-  selectedRowKeys, 
-  setSelectedRowKeys, 
-  onEdit, 
-  onDelete, 
+interface OutboundTableProps {
+  readonly outboundRecords: OutboundRecord[];
+  readonly loading: boolean;
+  readonly partners: Partner[];
+  readonly products: Product[];
+  readonly selectedRowKeys: Key[];
+  readonly setSelectedRowKeys: Dispatch<SetStateAction<Key[]>>;
+  readonly onEdit: (record: OutboundRecord) => void;
+  readonly onDelete: (id: number) => void;
+  readonly onTableChange: NonNullable<TableProps<OutboundRecord>['onChange']>;
+  readonly pagination: TablePaginationConfig;
+}
+
+const OutboundTable: FC<OutboundTableProps> = ({
+  outboundRecords,
+  loading,
+  partners,
+  products,
+  selectedRowKeys,
+  setSelectedRowKeys,
+  onEdit,
+  onDelete,
   onTableChange,
-  pagination 
+  pagination,
 }) => {
   const { t } = useTranslation();
-  const columns = [
+  const columns: ColumnsType<OutboundRecord> = [
     {
       title: t('outbound.id'),
       dataIndex: 'id',
@@ -34,7 +51,7 @@ const OutboundTable = ({
       dataIndex: 'customer_short_name',
       key: 'customer_short_name',
       width: 120,
-      filters: partners.map(p => ({ text: p.short_name, value: p.short_name })),
+      filters: partners.map(partner => ({ text: partner.short_name, value: partner.short_name })),
       onFilter: (value, record) => record.customer_short_name === value,
     },
     {
@@ -48,7 +65,7 @@ const OutboundTable = ({
       dataIndex: 'product_model',
       key: 'product_model',
       width: 150,
-      filters: products.map(p => ({ text: p.product_model, value: p.product_model })),
+      filters: products.map(product => ({ text: product.product_model, value: product.product_model })),
       onFilter: (value, record) => record.product_model === value,
     },
     {
@@ -62,7 +79,7 @@ const OutboundTable = ({
       dataIndex: 'unit_price',
       key: 'unit_price',
       width: 100,
-      render: (price) => `¥${price}`,
+      render: price => `¥${price}`,
       sorter: true,
     },
     {
@@ -70,7 +87,7 @@ const OutboundTable = ({
       dataIndex: 'total_price',
       key: 'total_price',
       width: 100,
-      render: (price) => `¥${price}`,
+      render: price => `¥${price}`,
       sorter: true,
     },
     {
@@ -84,13 +101,14 @@ const OutboundTable = ({
       title: t('outbound.invoiceLink'),
       key: 'invoice_link',
       width: 120,
-      render: (_, record) => {
-        if (record.invoice_image_url && record.invoice_image_url.trim()) {
+      render: (_value, record) => {
+        const invoiceUrl = record.invoice_image_url?.trim();
+        if (invoiceUrl) {
           return (
             <Button
               type="link"
               size="small"
-              onClick={() => window.open(record.invoice_image_url, '_blank')}
+              onClick={() => window.open(invoiceUrl, '_blank')}
               style={{ padding: 0 }}
             >
               {t('outbound.viewInvoice')}
@@ -104,7 +122,7 @@ const OutboundTable = ({
       title: t('outbound.actions'),
       key: 'actions',
       width: 120,
-      render: (_, record) => (
+      render: (_value, record) => (
         <Space size="small">
           <Button
             type="link"
@@ -134,9 +152,11 @@ const OutboundTable = ({
     },
   ];
 
-  const rowSelection = {
+  const rowSelection: TableRowSelection<OutboundRecord> = {
     selectedRowKeys,
-    onChange: setSelectedRowKeys,
+    onChange: (keys: Key[]) => {
+      setSelectedRowKeys(keys);
+    },
   };
 
   return (

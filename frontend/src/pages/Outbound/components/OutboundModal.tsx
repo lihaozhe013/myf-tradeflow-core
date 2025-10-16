@@ -1,26 +1,60 @@
-import React from 'react';
-import { 
-  Modal, 
-  Form, 
-  Input, 
-  Select, 
-  DatePicker, 
-  InputNumber, 
-  Button, 
-  Row, 
-  Col, 
-  AutoComplete,
-  Radio
-} from 'antd';
 import { useTranslation } from 'react-i18next';
+import {
+  Modal,
+  Form,
+  Input,
+  DatePicker,
+  InputNumber,
+  Button,
+  Row,
+  Col,
+  AutoComplete,
+  Radio,
+} from 'antd';
+import type { FC, Dispatch, SetStateAction } from 'react';
+import type { FormInstance } from 'antd/es/form';
+import type { RadioChangeEvent } from 'antd/es/radio';
+import type { DefaultOptionType } from 'antd/es/select';
+import type { Dayjs } from 'dayjs';
+import type {
+  OutboundFormValues,
+  OutboundRecord,
+  Partner,
+  Product,
+} from '../types';
 
-const OutboundModal = ({ 
-  modalVisible, 
-  setModalVisible, 
-  editingRecord, 
-  form, 
-  partners, 
-  products, 
+interface OutboundModalProps {
+  readonly modalVisible: boolean;
+  readonly setModalVisible: Dispatch<SetStateAction<boolean>>;
+  readonly editingRecord: OutboundRecord | null;
+  readonly form: FormInstance<OutboundFormValues>;
+  readonly partners: Partner[];
+  readonly products: Product[];
+  readonly manualPrice: boolean;
+  readonly setManualPrice: Dispatch<SetStateAction<boolean>>;
+  readonly onSave: (values: OutboundFormValues) => Promise<void> | void;
+  readonly onCustomerCodeChange: (value: string) => void;
+  readonly onCustomerShortNameChange: (value: string) => void;
+  readonly onProductCodeChange: (value: string) => void;
+  readonly onProductModelChange: (value: string) => void;
+  readonly onPartnerOrProductChange: () => void;
+  readonly onPriceOrQuantityChange: () => void;
+}
+
+const filterOption = (inputValue: string, option?: DefaultOptionType): boolean => {
+  const valueText = typeof option?.value === 'string' ? option.value.toLowerCase() : '';
+  const labelText = typeof option?.label === 'string' ? option.label.toLowerCase() : '';
+  const needle = inputValue.toLowerCase();
+  return valueText.includes(needle) || labelText.includes(needle);
+};
+
+const OutboundModal: FC<OutboundModalProps> = ({
+  modalVisible,
+  setModalVisible,
+  editingRecord,
+  form,
+  partners,
+  products,
   manualPrice,
   setManualPrice,
   onSave,
@@ -29,10 +63,18 @@ const OutboundModal = ({
   onProductCodeChange,
   onProductModelChange,
   onPartnerOrProductChange,
-  onPriceOrQuantityChange
+  onPriceOrQuantityChange,
 }) => {
   const { t } = useTranslation();
-  
+
+  const handleManualPriceChange = (event: RadioChangeEvent): void => {
+    const isManual = Boolean(event.target.value);
+    setManualPrice(isManual);
+    if (!isManual) {
+      onPartnerOrProductChange();
+    }
+  };
+
   return (
     <Modal
       title={editingRecord ? t('outbound.editOutboundRecord') : t('outbound.addOutboundRecord')}
@@ -41,7 +83,7 @@ const OutboundModal = ({
       footer={null}
       width={800}
     >
-      <Form
+      <Form<OutboundFormValues>
         form={form}
         layout="vertical"
         onFinish={onSave}
@@ -54,16 +96,13 @@ const OutboundModal = ({
               rules={[{ required: true, message: t('outbound.inputCustomerCode') }]}
             >
               <AutoComplete
-                placeholder={t('outbound.inputCustomerCode')}
-                onChange={onCustomerCodeChange}
+                placeholder={t('outbound.inputCustomerCode') ?? ''}
+                onChange={value => onCustomerCodeChange(value ?? '')}
                 options={partners.map(partner => ({
-                  value: partner.code,
-                  label: `${partner.code} - ${partner.short_name}`
+                  value: partner.code ?? '',
+                  label: `${partner.code ?? ''} - ${partner.short_name}`,
                 }))}
-                filterOption={(inputValue, option) =>
-                  option.value.toLowerCase().indexOf(inputValue.toLowerCase()) !== -1 ||
-                  option.label.toLowerCase().indexOf(inputValue.toLowerCase()) !== -1
-                }
+                filterOption={filterOption}
               />
             </Form.Item>
           </Col>
@@ -74,16 +113,13 @@ const OutboundModal = ({
               rules={[{ required: true, message: t('outbound.inputCustomerShortName') }]}
             >
               <AutoComplete
-                placeholder={t('outbound.inputCustomerShortName')}
-                onChange={onCustomerShortNameChange}
+                placeholder={t('outbound.inputCustomerShortName') ?? ''}
+                onChange={value => onCustomerShortNameChange(value ?? '')}
                 options={partners.map(partner => ({
                   value: partner.short_name,
-                  label: `${partner.short_name} - ${partner.code}`
+                  label: `${partner.short_name} - ${partner.code ?? ''}`,
                 }))}
-                filterOption={(inputValue, option) =>
-                  option.value.toLowerCase().indexOf(inputValue.toLowerCase()) !== -1 ||
-                  option.label.toLowerCase().indexOf(inputValue.toLowerCase()) !== -1
-                }
+                filterOption={filterOption}
               />
             </Form.Item>
           </Col>
@@ -92,7 +128,7 @@ const OutboundModal = ({
               label={t('outbound.customerFullName')}
               name="customer_full_name"
             >
-              <Input placeholder={t('outbound.autoFill')} disabled />
+              <Input placeholder={t('outbound.autoFill') ?? ''} disabled />
             </Form.Item>
           </Col>
         </Row>
@@ -105,16 +141,13 @@ const OutboundModal = ({
               rules={[{ required: true, message: t('outbound.inputProductCode') }]}
             >
               <AutoComplete
-                placeholder={t('outbound.inputProductCode')}
-                onChange={onProductCodeChange}
+                placeholder={t('outbound.inputProductCode') ?? ''}
+                onChange={value => onProductCodeChange(value ?? '')}
                 options={products.map(product => ({
-                  value: product.code,
-                  label: `${product.code} - ${product.product_model}`
+                  value: product.code ?? '',
+                  label: `${product.code ?? ''} - ${product.product_model}`,
                 }))}
-                filterOption={(inputValue, option) =>
-                  option.value.toLowerCase().indexOf(inputValue.toLowerCase()) !== -1 ||
-                  option.label.toLowerCase().indexOf(inputValue.toLowerCase()) !== -1
-                }
+                filterOption={filterOption}
               />
             </Form.Item>
           </Col>
@@ -125,16 +158,13 @@ const OutboundModal = ({
               rules={[{ required: true, message: t('outbound.inputProductModel') }]}
             >
               <AutoComplete
-                placeholder={t('outbound.inputProductModel')}
-                onChange={onProductModelChange}
+                placeholder={t('outbound.inputProductModel') ?? ''}
+                onChange={value => onProductModelChange(value ?? '')}
                 options={products.map(product => ({
                   value: product.product_model,
-                  label: `${product.product_model} - ${product.code}`
+                  label: `${product.product_model} - ${product.code ?? ''}`,
                 }))}
-                filterOption={(inputValue, option) =>
-                  option.value.toLowerCase().indexOf(inputValue.toLowerCase()) !== -1 ||
-                  option.label.toLowerCase().indexOf(inputValue.toLowerCase()) !== -1
-                }
+                filterOption={filterOption}
               />
             </Form.Item>
           </Col>
@@ -146,9 +176,9 @@ const OutboundModal = ({
             >
               <DatePicker
                 style={{ width: '100%' }}
-                placeholder={t('outbound.selectOutboundDate')}
+                placeholder={t('outbound.selectOutboundDate') ?? ''}
                 format="YYYY-MM-DD"
-                onChange={onPartnerOrProductChange}
+                onChange={(_date: Dayjs | null) => onPartnerOrProductChange()}
               />
             </Form.Item>
           </Col>
@@ -166,7 +196,7 @@ const OutboundModal = ({
             >
               <InputNumber
                 style={{ width: '100%' }}
-                placeholder={t('outbound.inputQuantity')}
+                placeholder={t('outbound.inputQuantity') ?? ''}
                 min={1}
                 onChange={onPriceOrQuantityChange}
               />
@@ -183,10 +213,7 @@ const OutboundModal = ({
                   { label: t('outbound.autoFetch'), value: false },
                   { label: t('outbound.manualInput'), value: true },
                 ]}
-                onChange={e => {
-                  setManualPrice(e.target.value);
-                  if (!e.target.value) onPartnerOrProductChange();
-                }}
+                onChange={handleManualPriceChange}
                 optionType="button"
                 buttonStyle="solid"
                 value={manualPrice}
@@ -204,7 +231,7 @@ const OutboundModal = ({
             >
               <InputNumber
                 style={{ width: '100%' }}
-                placeholder={t('outbound.inputUnitPrice')}
+                placeholder={t('outbound.inputUnitPrice') ?? ''}
                 precision={4}
                 addonBefore="¥"
                 onChange={onPriceOrQuantityChange}
@@ -222,7 +249,7 @@ const OutboundModal = ({
             >
               <InputNumber
                 style={{ width: '100%' }}
-                placeholder={t('outbound.autoCalc')}
+                placeholder={t('outbound.autoCalc') ?? ''}
                 precision={3}
                 disabled
                 addonBefore="¥"
@@ -236,7 +263,7 @@ const OutboundModal = ({
             >
               <DatePicker
                 style={{ width: '100%' }}
-                placeholder={t('outbound.selectInvoiceDate')}
+                placeholder={t('outbound.selectInvoiceDate') ?? ''}
                 format="YYYY-MM-DD"
               />
             </Form.Item>
@@ -246,7 +273,7 @@ const OutboundModal = ({
               label={t('outbound.invoiceNumber')}
               name="invoice_number"
             >
-              <Input placeholder={t('outbound.inputInvoiceNumber')} />
+              <Input placeholder={t('outbound.inputInvoiceNumber') ?? ''} />
             </Form.Item>
           </Col>
         </Row>
@@ -257,7 +284,7 @@ const OutboundModal = ({
               label={t('outbound.orderNumber')}
               name="order_number"
             >
-              <Input placeholder={t('outbound.inputOrderNumber')} />
+              <Input placeholder={t('outbound.inputOrderNumber') ?? ''} />
             </Form.Item>
           </Col>
           <Col span={8}>
@@ -265,7 +292,7 @@ const OutboundModal = ({
               label={t('outbound.invoiceImageUrl')}
               name="invoice_image_url"
             >
-              <Input placeholder={t('outbound.inputInvoiceImageUrl')} />
+              <Input placeholder={t('outbound.inputInvoiceImageUrl') ?? ''} />
             </Form.Item>
           </Col>
         </Row>
@@ -275,7 +302,7 @@ const OutboundModal = ({
           name="remark"
         >
           <Input.TextArea
-            placeholder={t('outbound.inputRemark')}
+            placeholder={t('outbound.inputRemark') ?? ''}
             rows={3}
           />
         </Form.Item>
