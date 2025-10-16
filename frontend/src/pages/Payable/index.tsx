@@ -60,21 +60,15 @@ const Payable: FC = () => {
     return Array.isArray(list) ? list : [];
   }, [suppliersResponse]);
 
-  const supplierShortName = filters.supplier_short_name ?? '';
-  const sortField = sorter.field ?? 'balance';
-  const sortOrder = sorter.order;
-  const currentPage = pagination.current;
-  const pageSize = pagination.pageSize;
-
   const fetchPayableRecords = useCallback(
     async (params: FetchParams = {}) => {
       try {
         setLoading(true);
-        const page = params.page ?? currentPage;
-        const limit = params.limit ?? pageSize;
-        const supplierName = params.supplier_short_name ?? supplierShortName;
-        const field = params.sort_field ?? sortField;
-        const order = params.sort_order ?? toApiSortOrder(sortOrder);
+        const page = params.page ?? pagination.current;
+        const limit = params.limit ?? pagination.pageSize;
+        const supplierName = params.supplier_short_name ?? (filters.supplier_short_name ?? '');
+        const field = params.sort_field ?? (sorter.field ?? 'balance');
+        const order = params.sort_order ?? toApiSortOrder(sorter.order);
 
         const query = new URLSearchParams({
           page: String(page),
@@ -100,12 +94,13 @@ const Payable: FC = () => {
         setLoading(false);
       }
     },
-    [apiInstance, currentPage, pageSize, sortField, sortOrder, supplierShortName, t]
+    [apiInstance, t, pagination, filters, sorter]
   );
 
   useEffect(() => {
     fetchPayableRecords();
-  }, [fetchPayableRecords]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pagination.current, pagination.pageSize, filters.supplier_short_name, sorter.field, sorter.order]);
 
   const handleFilter = (filterValues: PayableFilters): void => {
     setFilters(filterValues);

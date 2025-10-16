@@ -60,21 +60,15 @@ const Receivable: FC = () => {
     return Array.isArray(list) ? list : [];
   }, [customersResponse]);
 
-  const customerShortName = filters.customer_short_name ?? '';
-  const sortField = sorter.field ?? 'balance';
-  const sortOrder = sorter.order;
-  const currentPage = pagination.current;
-  const pageSize = pagination.pageSize;
-
   const fetchReceivableRecords = useCallback(
     async (params: FetchParams = {}) => {
       try {
         setLoading(true);
-        const page = params.page ?? currentPage;
-        const limit = params.limit ?? pageSize;
-        const customerName = params.customer_short_name ?? customerShortName;
-        const field = params.sort_field ?? sortField;
-        const order = params.sort_order ?? toApiSortOrder(sortOrder);
+        const page = params.page ?? pagination.current;
+        const limit = params.limit ?? pagination.pageSize;
+        const customerName = params.customer_short_name ?? (filters.customer_short_name ?? '');
+        const field = params.sort_field ?? (sorter.field ?? 'balance');
+        const order = params.sort_order ?? toApiSortOrder(sorter.order);
 
         const query = new URLSearchParams({
           page: String(page),
@@ -100,12 +94,13 @@ const Receivable: FC = () => {
         setLoading(false);
       }
     },
-    [apiInstance, currentPage, customerShortName, pageSize, sortField, sortOrder, t]
+    [apiInstance, t, pagination, filters, sorter]
   );
 
   useEffect(() => {
     fetchReceivableRecords();
-  }, [fetchReceivableRecords]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pagination.current, pagination.pageSize, filters.customer_short_name, sorter.field, sorter.order]);
 
   const handleFilter = (filterValues: ReceivableFilters): void => {
     setFilters(filterValues);
