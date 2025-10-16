@@ -1,21 +1,39 @@
-import React from 'react';
-import { Table, Button, Space, Popconfirm, Tag } from 'antd';
+import { Table, Button, Space, Popconfirm } from 'antd';
+import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
+import type { TableRowSelection } from 'antd/es/table/interface';
+import type { TableProps } from 'antd/es/table';
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-const InboundTable = ({ 
-  inboundRecords, 
-  loading, 
-  partners, 
-  products, 
-  selectedRowKeys, 
-  setSelectedRowKeys, 
-  onEdit, 
-  onDelete, 
+import type { FC, Key, Dispatch, SetStateAction } from 'react';
+import type { InboundRecord, Partner, Product } from '../types';
+
+interface InboundTableProps {
+  readonly inboundRecords: InboundRecord[];
+  readonly loading: boolean;
+  readonly partners: Partner[];
+  readonly products: Product[];
+  readonly selectedRowKeys: Key[];
+  readonly setSelectedRowKeys: Dispatch<SetStateAction<Key[]>>;
+  readonly onEdit: (record: InboundRecord) => void;
+  readonly onDelete: (id: number) => void;
+  readonly onTableChange: NonNullable<TableProps<InboundRecord>['onChange']>;
+  readonly pagination: TablePaginationConfig;
+}
+
+const InboundTable: FC<InboundTableProps> = ({
+  inboundRecords,
+  loading,
+  partners,
+  products,
+  selectedRowKeys,
+  setSelectedRowKeys,
+  onEdit,
+  onDelete,
   onTableChange,
-  pagination 
+  pagination,
 }) => {
   const { t } = useTranslation();
-  const columns = [
+  const columns: ColumnsType<InboundRecord> = [
     {
       title: t('inbound.id'),
       dataIndex: 'id',
@@ -61,7 +79,7 @@ const InboundTable = ({
       dataIndex: 'unit_price',
       key: 'unit_price',
       width: 100,
-      render: (price) => `¥${price}`,
+      render: price => `¥${price}`,
       sorter: true,
     },
     {
@@ -69,7 +87,7 @@ const InboundTable = ({
       dataIndex: 'total_price',
       key: 'total_price',
       width: 100,
-      render: (price) => `¥${price}`,
+      render: price => `¥${price}`,
       sorter: true,
     },
     {
@@ -83,13 +101,14 @@ const InboundTable = ({
       title: t('inbound.invoiceLink'),
       key: 'invoice_link',
       width: 120,
-      render: (_, record) => {
-        if (record.invoice_image_url && record.invoice_image_url.trim()) {
+      render: (_value, record) => {
+        const invoiceUrl = record.invoice_image_url?.trim();
+        if (invoiceUrl) {
           return (
             <Button
               type="link"
               size="small"
-              onClick={() => window.open(record.invoice_image_url, '_blank')}
+              onClick={() => window.open(invoiceUrl, '_blank')}
               style={{ padding: 0 }}
             >
               {t('inbound.viewInvoice')}
@@ -103,7 +122,7 @@ const InboundTable = ({
       title: t('inbound.actions'),
       key: 'actions',
       width: 120,
-      render: (_, record) => (
+      render: (_value, record) => (
         <Space size="small">
           <Button
             type="link"
@@ -133,9 +152,11 @@ const InboundTable = ({
     },
   ];
 
-  const rowSelection = {
+  const rowSelection: TableRowSelection<InboundRecord> = {
     selectedRowKeys,
-    onChange: setSelectedRowKeys,
+    onChange: (keys: Key[]) => {
+      setSelectedRowKeys(keys);
+    },
   };
 
   return (
