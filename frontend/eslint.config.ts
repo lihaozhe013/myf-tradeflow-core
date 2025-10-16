@@ -9,9 +9,9 @@ export default [
   {
     ignores: ['dist', 'node_modules', 'build'],
   },
-  // Configuration for TypeScript files
+  // Configuration for TypeScript source files
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ['src/**/*.{ts,tsx}'],
     languageOptions: {
       ecmaVersion: 2024,
       globals: globals.browser,
@@ -58,6 +58,28 @@ export default [
       // General rules
       'no-unused-vars': 'off', // Turn off base rule as it can report incorrect errors
       'prefer-const': 'error',
+    },
+  },
+  // Configuration for TypeScript config files
+  {
+    files: ['vite.config.ts', 'eslint.config.ts'],
+    languageOptions: {
+      ecmaVersion: 2024,
+      globals: globals.node,
+      parser: tsparser,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+        project: './tsconfig.node.json',
+      },
+    },
+    plugins: {
+      '@typescript-eslint': tseslint,
+    },
+    rules: {
+      ...js.configs.recommended.rules,
+      ...tseslint.configs.recommended.rules,
+      'no-console': 'off',
     },
   },
   // Configuration for JavaScript files
