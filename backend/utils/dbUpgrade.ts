@@ -5,13 +5,13 @@
 
 import path from 'path';
 import { fileURLToPath } from 'url';
-import * as sqlite3Module from 'sqlite3';
+import sqlite3 from 'sqlite3';
 import { initSql } from '@/utils/dbSchema';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const sqlite3 = sqlite3Module.verbose();
+const sqlite = sqlite3.verbose();
 
 interface ColumnInfo {
   cid: number;
@@ -28,7 +28,7 @@ interface ColumnInfo {
  */
 export function ensureAllTablesAndColumns(): void {
   const dbPath: string = path.resolve(__dirname, '../../data/data.db');
-  const dbInstance: sqlite3Module.Database = new sqlite3.Database(dbPath);
+  const dbInstance: sqlite3.Database = new sqlite.Database(dbPath);
   
   // 1. 执行基础表结构创建
   dbInstance.exec(initSql, (err: Error | null) => {
@@ -45,9 +45,9 @@ export function ensureAllTablesAndColumns(): void {
 
 /**
  * 检查并添加缺失的字段
- * @param {sqlite3Module.Database} dbInstance 数据库实例
+ * @param {sqlite3.Database} dbInstance 数据库实例
  */
-function checkAndAddMissingColumns(dbInstance: sqlite3Module.Database): void {
+function checkAndAddMissingColumns(dbInstance: sqlite3.Database): void {
   let pendingChecks = 4; // 需要检查的表数量
   
   // 检查并补全 partners.code 字段
@@ -197,9 +197,9 @@ function checkAndAddMissingColumns(dbInstance: sqlite3Module.Database): void {
 
 /**
  * 完成数据库升级，关闭连接
- * @param {sqlite3Module.Database} dbInstance 数据库实例
+ * @param {sqlite3.Database} dbInstance 数据库实例
  */
-function finishUpgrade(dbInstance: sqlite3Module.Database): void {
+function finishUpgrade(dbInstance: sqlite3.Database): void {
   dbInstance.close((err: Error | null) => {
     if (err) {
       console.error('❌ 关闭数据库连接失败:', err.message);

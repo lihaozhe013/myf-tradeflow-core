@@ -3,23 +3,23 @@
  */
 import path from 'path';
 import fs from 'fs';
-import * as sqlite3Module from 'sqlite3';
+import sqlite3 from 'sqlite3';
 import { fileURLToPath } from 'url';
 import { initSql } from '@/utils/dbSchema';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const sqlite3 = sqlite3Module.verbose();
+const sqlite3Verbose = sqlite3.verbose();
 const dbPath: string = path.resolve(__dirname, '../data/data.db');
 
 /**
  * 初始化数据库连接
- * @returns {sqlite3Module.Database} 数据库实例
+ * @returns {sqlite3.Database} 数据库实例
  */
-function initializeDatabase(): sqlite3Module.Database {
+function initializeDatabase(): sqlite3.Database {
   const dbExists: boolean = fs.existsSync(dbPath);
-  const db = new sqlite3.Database(dbPath, (err: Error | null) => {
+  const db = new sqlite3Verbose.Database(dbPath, (err: Error | null) => {
     if (err) {
       console.error('数据库连接失败:', err.message);
       process.exit(1);

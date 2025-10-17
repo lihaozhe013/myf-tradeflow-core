@@ -43,10 +43,9 @@
     /* Advanced */
     "resolveJsonModule": true,
     "allowJs": false,
-    "ignoreDeprecations": "5.0",
+    "ignoreDeprecations": "6.0",
 
     /* Path Mapping */
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
       "@/types/*": ["./types/*"],
@@ -62,5 +61,9 @@
     "dist",
     "**/*.spec.ts",
     "**/*.test.ts"
-  ]
+  ],
+  "tsc-alias": {
+    "resolveFullPaths": true,
+    "resolveFullExtension": ".js"
+  }
 }

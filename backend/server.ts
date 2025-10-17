@@ -1,19 +1,18 @@
-import express, { Express, Request, Response, NextFunction } from 'express';
+import express, { Express, Request, Response, NextFunction, Router } from 'express';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
 import cors from 'cors';
-import type { AppConfig, CustomError } from '@/types/index';
-
-// 导入 Express 类型扩展
-import '@/types/express.d.js';
+import type { AppConfig, CustomError } from './types/index.js';
 
 // ESM __dirname 兼容
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const require = createRequire(import.meta.url);
 
 // 导入数据库模块（触发初始化）
-import '@/db.js';
+import '@/db';
 import { ensureAllTablesAndColumns } from '@/utils/dbUpgrade';
 import { logger } from '@/utils/logger';
 import { requestLogger, errorLogger } from '@/utils/loggerMiddleware';
@@ -22,7 +21,12 @@ import { authenticateToken, checkWritePermission } from '@/utils/auth';
 const app: Express = express();
 
 // 读取应用配置
-const configPath: string = path.resolve(__dirname, '../data/appConfig.json');
+const configCandidates: string[] = [
+  path.resolve(__dirname, './appConfig.json'),
+  path.resolve(__dirname, '../data/appConfig.json'),
+  path.resolve(__dirname, '../../data/appConfig.json')
+];
+const configPath: string = (configCandidates.find(candidate => fs.existsSync(candidate)) ?? configCandidates[0]) as string;
 const config: AppConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
 // 端口配置
@@ -71,7 +75,7 @@ if (process.env['NODE_ENV'] !== 'production') {
 // =============================================================================
 
 // 导入认证路由（优先注册登录接口）
-import authRoutes from '@/routes/auth.js';
+import authRoutes from './routes/auth.js';
 app.use('/api/auth', authRoutes);
 
 // 鉴权中间件（仅对API路由生效，登录接口除外）
@@ -93,18 +97,18 @@ app.use('/api', (req, res, next) => {
 });
 
 // 导入所有路由模块
-import overviewRoutes from '@/routes/overview.js';                 // 总览接口
-import inboundRoutes from '@/routes/inbound.js';                   // 入库管理
-import outboundRoutes from '@/routes/outbound.js';                 // 出库管理
-import stockRoutes from '@/routes/stock.js';                       // 库存管理
-import partnersRoutes from '@/routes/partners.js';                 // 客户/供应商管理
-import productsRoutes from '@/routes/products.js';                 // 产品管理
-import productPricesRoutes from '@/routes/productPrices.js';       // 产品价格管理
-import receivableRoutes from '@/routes/receivable.js';             // 应收账款管理
-import payableRoutes from '@/routes/payable.js';                   // 应付账款管理
-const exportRoutes = require('@/routes/export/index');             // 导出功能
-const analysisRoutes = require('@/routes/analysis/analysis');      // 数据分析功能
-import aboutRoutes from '@/routes/about.js';                       // 关于页面
+import overviewRoutes from '@/routes/overview';                 // 总览接口
+import inboundRoutes from '@/routes/inbound';                   // 入库管理
+import outboundRoutes from '@/routes/outbound';                 // 出库管理
+import stockRoutes from '@/routes/stock';                       // 库存管理
+import partnersRoutes from '@/routes/partners';                 // 客户/供应商管理
+import productsRoutes from '@/routes/products';                 // 产品管理
+import productPricesRoutes from '@/routes/productPrices';       // 产品价格管理
+import receivableRoutes from '@/routes/receivable';             // 应收账款管理
+import payableRoutes from '@/routes/payable';                   // 应付账款管理
+const exportRoutes = require('./routes/export/index.js') as Router;       // 导出功能 (CommonJS)
+const analysisRoutes = require('./routes/analysis/analysis.js') as Router; // 数据分析功能 (CommonJS)
+import aboutRoutes from '@/routes/about';                       // 关于页面
 
 // 注册 API 路由
 app.use('/api/overview', overviewRoutes);
@@ -152,7 +156,7 @@ const shouldHostFrontend: boolean = !!(config.frontend?.hostByBackend &&
   (process.env['NODE_ENV'] === 'production' || process.env['FORCE_FRONTEND_HOSTING'] === 'true'));
 
 if (shouldHostFrontend && config.frontend) {
-  const frontendDist: string = path.resolve(__dirname, '..', config.frontend.distPath || './frontend/dist');
+  const frontendDist: string = path.resolve(__dirname, '..', config.frontend.distPath || './frontend');
   
   logger.info(`启用前端托管: ${frontendDist}`);
   
