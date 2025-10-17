@@ -94,8 +94,8 @@ app.use('/api', (req, res, next) => {
 
 // 导入所有路由模块
 const overviewRoutes = require('@/routes/overview');               // 总览接口
-const inboundRoutes = require('@/routes/inbound');                 // 入库管理
-const outboundRoutes = require('@/routes/outbound');               // 出库管理
+import inboundRoutes from '@/routes/inbound.js';                   // 入库管理
+import outboundRoutes from '@/routes/outbound.js';                 // 出库管理
 import stockRoutes from '@/routes/stock.js';                       // 库存管理
 import partnersRoutes from '@/routes/partners.js';                 // 客户/供应商管理
 import productsRoutes from '@/routes/products.js';                 // 产品管理
