@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const decimalCalc = require('../../utils/decimalCalculator');
+const decimalCalc = require('../../utils/decimalCalculator_commonjs.cjs');
 
 // 导入工具模块
 const { calculateFilteredSoldGoodsCost } = require('./utils/costCalculator');

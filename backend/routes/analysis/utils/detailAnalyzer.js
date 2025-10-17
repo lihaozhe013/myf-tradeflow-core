@@ -1,5 +1,5 @@
-const db = require('../../../db');
-const decimalCalc = require('../../../utils/decimalCalculator');
+const db = require('../../../utils/db_commonjs.cjs');
+const decimalCalc = require('../../../utils/decimalCalculator_commonjs.cjs');
 const { calculateFilteredSoldGoodsCost } = require('./costCalculator');
 
 /**

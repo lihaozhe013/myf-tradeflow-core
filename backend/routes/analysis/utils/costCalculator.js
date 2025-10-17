@@ -1,5 +1,5 @@
-const db = require('../../../db');
-const decimalCalc = require('../../../utils/decimalCalculator');
+const db = require('../../../utils/db_commonjs.cjs');
+const decimalCalc = require('../../../utils/decimalCalculator_commonjs.cjs');
 
 /**
  * 计算指定条件下已售商品的真实成本（加权平均成本法）
