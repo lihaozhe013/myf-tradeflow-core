@@ -5,19 +5,22 @@
   "license": "MIT",
   "author": "",
   "type": "commonjs",
-  "main": "server.js",
+  "main": "dist/server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js",
-    "dev:debug": "nodemon --inspect server.js",
-    "db:init": "node utils/dbSchema.js"
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "tsx watch server.ts",
+    "dev:debug": "tsx watch --inspect server.ts",
+    "db:init": "tsx utils/dbSchema.ts",
+    "clean": "rm -rf dist",
+    "prebuild": "npm run clean"
   },
   "dependencies": {
+    "argon2": "^0.44.0",
     "cors": "^2.8.5",
     "decimal.js": "^10.6.0",
     "express": "^5.1.0",
     "fs-extra": "^11.3.2",
-    "argon2": "^0.44.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.1",
     "sqlite3": "^5.1.7",
@@ -25,7 +28,15 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^24.8.1",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
   },
   "engines": {
     "node": ">=22.0.0",
