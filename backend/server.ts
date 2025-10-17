@@ -100,8 +100,8 @@ import stockRoutes from '@/routes/stock.js';                       // 库存管�
 import partnersRoutes from '@/routes/partners.js';                 // 客户/供应商管理
 import productsRoutes from '@/routes/products.js';                 // 产品管理
 import productPricesRoutes from '@/routes/productPrices.js';       // 产品价格管理
-const receivableRoutes = require('@/routes/receivable');           // 应收账款管理
-const payableRoutes = require('@/routes/payable');                 // 应付账款管理
+import receivableRoutes from '@/routes/receivable.js';             // 应收账款管理
+import payableRoutes from '@/routes/payable.js';                   // 应付账款管理
 const exportRoutes = require('@/routes/export/index');             // 导出功能
 const analysisRoutes = require('@/routes/analysis/analysis');      // 数据分析功能
 import aboutRoutes from '@/routes/about.js';                       // 关于页面
