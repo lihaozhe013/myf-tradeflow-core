@@ -93,7 +93,7 @@ app.use('/api', (req, res, next) => {
 });
 
 // 导入所有路由模块
-const overviewRoutes = require('@/routes/overview');               // 总览接口
+import overviewRoutes from '@/routes/overview.js';                 // 总览接口
 import inboundRoutes from '@/routes/inbound.js';                   // 入库管理
 import outboundRoutes from '@/routes/outbound.js';                 // 出库管理
 import stockRoutes from '@/routes/stock.js';                       // 库存管理
