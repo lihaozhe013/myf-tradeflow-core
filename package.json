@@ -8,15 +8,9 @@
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:frontend": "cd frontend && npm run dev",
     "dev:backend": "cd backend && npm run dev",
-    "build": "node \"scripts/pre-build.js\" && cd frontend && npm run build && cd ../backend && npm run build",
-    "start": "cd backend && cross-env NODE_ENV=production npm start",
-    "start:legacy": "concurrently \"cd backend && cross-env NODE_ENV=production npm start\" \"cd frontend && npm start\"",
-    "start:pm2": "pm2 start scripts/production/ecosystem.config.json",
-    "stop:pm2": "pm2 stop scripts/production/ecosystem.config.json",
-    "restart:pm2": "pm2 restart scripts/production/ecosystem.config.json",
-    "logs:pm2": "pm2 logs myf-tradeflow-backend",
-    "monit:pm2": "pm2 monit",
-    "lint": "cd frontend && npm run lint"
+    "build": "node \"scripts/build/pre-build.js\" && cd frontend && npm run build && cd ../backend && npm run build && cd .. && npm run build:post-build",
+    "build:post-build": "node \"./scripts/build/post-build-global.js\"",
+    "start": "cd dist && npm start"
   },
   "dependencies": {
     "argon2": "^0.44.0",

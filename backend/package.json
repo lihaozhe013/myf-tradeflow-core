@@ -7,8 +7,11 @@
   "type": "module",
   "main": "dist/server.js",
   "scripts": {
-    "build": "tsc",
-    "start": "node --experimental-specifier-resolution=node dist/server.js",
+    "build": "npm run build:tsc && npm run build:resolve-paths && npm run build:post-build",
+    "build:tsc": "tsc",
+    "build:resolve-paths": "tsc-alias",
+    "build:post-build": "node \"../scripts/build/post-build-backend.js\"",
+    "start": "cross-env NODE_ENV=production node ./backend/server.js",
     "dev": "tsx watch server.ts",
     "dev:debug": "tsx watch --inspect server.ts",
     "db:init": "tsx utils/dbSchema.ts",
@@ -25,7 +28,8 @@
     "multer": "^2.0.1",
     "sqlite3": "^5.1.7",
     "winston": "^3.18.3",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "cross-env": "10.1.0"
   },
   "devDependencies": {
     "@types/argon2": "^0.14.1",
@@ -39,6 +43,7 @@
     "@types/winston": "^2.4.4",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
+    "tsc-alias": "^1.8.16",
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3"
