@@ -8,7 +8,7 @@
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:frontend": "cd frontend && npm run dev",
     "dev:backend": "cd backend && npm run dev",
-    "build": "node \"backend/utils/initCopyCfg.js\" && cd frontend && npm run build && cd ../backend && npm run build",
+    "build": "node \"scripts/pre-build.js\" && cd frontend && npm run build && cd ../backend && npm run build",
     "start": "cd backend && cross-env NODE_ENV=production npm start",
     "start:legacy": "concurrently \"cd backend && cross-env NODE_ENV=production npm start\" \"cd frontend && npm start\"",
     "start:pm2": "pm2 start scripts/production/ecosystem.config.json",

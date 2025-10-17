@@ -5,8 +5,8 @@ const path = require('path');
  * 复制 ../data/appConfig.json 到 ../frontend/src/config/ 目录下
  */
 async function copyAppConfig() {
-  const src = path.resolve(__dirname, '../../data/appConfig.json');
-  const destDir = path.resolve(__dirname, '../../frontend/src/config');
+  const src = path.resolve(__dirname, '../data/appConfig.json');
+  const destDir = path.resolve(__dirname, '../frontend/src/config');
   const dest = path.join(destDir, 'appConfig.json');
   try {
     await fs.ensureDir(destDir);
@@ -20,8 +20,8 @@ async function copyAppConfig() {
 module.exports = { copyAppConfig };
 
 async function copyIcon() {
-  const src = path.resolve(__dirname, '../../data/logo.svg');
-  const destDir = path.resolve(__dirname, '../../frontend/public');
+  const src = path.resolve(__dirname, '../data/logo.svg');
+  const destDir = path.resolve(__dirname, '../frontend/public');
   const dest = path.join(destDir, 'logo.svg');
   try {
     await fs.ensureDir(destDir);
