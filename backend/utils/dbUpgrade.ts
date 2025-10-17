@@ -4,8 +4,12 @@
  */
 
 import path from 'path';
+import { fileURLToPath } from 'url';
 import * as sqlite3Module from 'sqlite3';
 import { initSql } from '@/utils/dbSchema';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const sqlite3 = sqlite3Module.verbose();
 
@@ -202,8 +206,3 @@ function finishUpgrade(dbInstance: sqlite3Module.Database): void {
     }
   });
 }
-
-// 为了兼容 CommonJS require，也导出为 module.exports
-module.exports = {
-  ensureAllTablesAndColumns
-};

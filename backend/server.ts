@@ -1,19 +1,23 @@
 import express, { Express, Request, Response, NextFunction } from 'express';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import cors from 'cors';
-import type { AppConfig, CustomError } from '@/types';
+import type { AppConfig, CustomError } from '@/types/index';
 
 // 导入 Express 类型扩展
-import '@/types/express.d';
+import '@/types/express.d.js';
 
-// 在 CommonJS 模式下使用 require
-// db 模块初始化数据库连接，虽然不直接使用但需要导入以触发初始化
-require('@/db');
-const { ensureAllTablesAndColumns } = require('@/utils/dbUpgrade');
-const { logger } = require('@/utils/logger');
-const { requestLogger, errorLogger } = require('@/utils/loggerMiddleware');
-const { authenticateToken, checkWritePermission } = require('@/utils/auth');
+// ESM __dirname 兼容
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// 导入数据库模块（触发初始化）
+import '@/db.js';
+import { ensureAllTablesAndColumns } from '@/utils/dbUpgrade';
+import { logger } from '@/utils/logger';
+import { requestLogger, errorLogger } from '@/utils/loggerMiddleware';
+import { authenticateToken, checkWritePermission } from '@/utils/auth';
 
 const app: Express = express();
 

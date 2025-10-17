@@ -87,8 +87,3 @@ CREATE TABLE IF NOT EXISTS payable_payments (
   remark TEXT
 );
 `;
-
-// 为了兼容 CommonJS require，也导出为 module.exports
-module.exports = {
-  initSql,
-};

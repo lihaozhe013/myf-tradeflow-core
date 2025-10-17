@@ -1,15 +1,22 @@
-const winston = require('winston');
-const path = require('path');
-const fs = require('fs');
+/**
+ * Winston 日志系统配置
+ */
+import winston from 'winston';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // 创建日志目录
-const logDir = path.resolve(process.cwd(), '../data/log');
+const logDir: string = path.resolve(__dirname, '../../data/log');
 if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir, { recursive: true });
 }
 
 // 创建 winston logger
-const logger = winston.createLogger({
+export const logger = winston.createLogger({
   level: 'info',
   format: winston.format.combine(
     winston.format.timestamp({
@@ -23,7 +30,7 @@ const logger = winston.createLogger({
 });
 
 // 生产环境配置文件日志
-if (process.env.NODE_ENV === 'production') {
+if (process.env['NODE_ENV'] === 'production') {
   // 应用日志 - 只记录warn及以上级别
   logger.add(new winston.transports.File({
     filename: path.join(logDir, 'app.log'),
@@ -58,7 +65,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // 创建访问日志记录器 - 仅记录API请求
-const accessLogger = winston.createLogger({
+export const accessLogger = winston.createLogger({
   level: 'info',
   format: winston.format.combine(
     winston.format.timestamp({
@@ -71,7 +78,7 @@ const accessLogger = winston.createLogger({
   transports: []
 });
 
-if (process.env.NODE_ENV === 'production') {
+if (process.env['NODE_ENV'] === 'production') {
   accessLogger.add(new winston.transports.File({
     filename: path.join(logDir, 'access.log'),
     maxsize: 3 * 1024 * 1024, // 3MB
@@ -87,8 +94,3 @@ if (process.env.NODE_ENV === 'production') {
     )
   }));
 }
-
-module.exports = {
-  logger,
-  accessLogger
-};

@@ -4,8 +4,11 @@
 import path from 'path';
 import fs from 'fs';
 import * as sqlite3Module from 'sqlite3';
+import { fileURLToPath } from 'url';
+import { initSql } from '@/utils/dbSchema';
 
-const { initSql } = require('@/utils/dbSchema');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const sqlite3 = sqlite3Module.verbose();
 const dbPath: string = path.resolve(__dirname, '../data/data.db');
@@ -36,4 +39,4 @@ function initializeDatabase(): sqlite3Module.Database {
   return db;
 }
 
-export = initializeDatabase();
+export default initializeDatabase();
