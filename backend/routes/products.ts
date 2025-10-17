@@ -1,12 +1,38 @@
-const express = require('express');
-const router = express.Router();
-const db = require('../db');
+/**
+ * 产品路由
+ * 管理产品信息，包括查询、新增、修改和删除
+ */
+import express, { type Router, type Request, type Response } from 'express';
+import db from '@/db.js';
 
-// 获取产品列表
-router.get('/', (req, res) => {
+const router: Router = express.Router();
+
+/**
+ * 产品绑定数据接口
+ */
+interface ProductBinding {
+  code: string;
+  product_model: string;
+}
+
+/**
+ * 冲突结果接口
+ */
+interface ConflictResult {
+  code: string;
+  product_model: string;
+}
+
+/**
+ * GET /api/products
+ * 获取产品列表
+ */
+router.get('/', (req: Request, res: Response): void => {
   const { category, product_model, code } = req.query;
+  
   let sql = 'SELECT * FROM products WHERE 1=1';
-  let params = [];
+  const params: any[] = [];
+  
   if (category) {
     sql += ' AND category LIKE ?';
     params.push(`%${category}%`);
@@ -19,7 +45,9 @@ router.get('/', (req, res) => {
     sql += ' AND code LIKE ?';
     params.push(`%${code}%`);
   }
+  
   sql += ' ORDER BY code';
+  
   db.all(sql, params, (err, rows) => {
     if (err) {
       res.status(500).json({ error: err.message });
@@ -29,16 +57,21 @@ router.get('/', (req, res) => {
   });
 });
 
-// 新增产品
-router.post('/', (req, res) => {
+/**
+ * POST /api/products
+ * 新增产品
+ */
+router.post('/', (req: Request, res: Response): void => {
   const { code, category, product_model, remark } = req.body;
+  
   const sql = `
     INSERT INTO products (code, category, product_model, remark)
     VALUES (?, ?, ?, ?)
   `;
+  
   db.run(sql, [code, category, product_model, remark], function(err) {
     if (err) {
-      if (err.code === 'SQLITE_CONSTRAINT') {
+      if ((err as any).code === 'SQLITE_CONSTRAINT') {
         res.status(400).json({ error: '产品代号已存在' });
       } else {
         res.status(500).json({ error: err.message });
@@ -49,75 +82,110 @@ router.post('/', (req, res) => {
   });
 });
 
-// 修改产品（按code主键）
-router.put('/:code', (req, res) => {
+/**
+ * PUT /api/products/:code
+ * 修改产品（按code主键）
+ */
+router.put('/:code', (req: Request, res: Response): void => {
   const { code } = req.params;
   const { category, product_model, remark } = req.body;
+  
   const sql = `UPDATE products SET category=?, product_model=?, remark=? WHERE code=?`;
+  
   db.run(sql, [category, product_model, remark, code], function(err) {
     if (err) {
       res.status(500).json({ error: err.message });
       return;
     }
+    
     if (this.changes === 0) {
       res.status(404).json({ error: '产品不存在' });
       return;
     }
+    
     res.json({ message: '产品更新成功' });
   });
 });
 
-// 删除产品（按code主键）
-router.delete('/:code', (req, res) => {
+/**
+ * DELETE /api/products/:code
+ * 删除产品（按code主键）
+ */
+router.delete('/:code', (req: Request, res: Response): void => {
   const { code } = req.params;
+  
   db.run('DELETE FROM products WHERE code = ?', [code], function(err) {
     if (err) {
       res.status(500).json({ error: err.message });
       return;
     }
+    
     if (this.changes === 0) {
       res.status(404).json({ error: '产品不存在' });
       return;
     }
+    
     res.json({ message: '产品删除成功' });
   });
 });
 
-// 批量/单条设置代号-型号强绑定
-router.post('/bindings', (req, res) => {
-  const bindings = Array.isArray(req.body) ? req.body : [req.body];
-  // bindings: [{code, product_model}]
-  if (!bindings.length) return res.status(400).json({ error: '无绑定数据' });
-  const codes = new Set();
-  const models = new Set();
+/**
+ * POST /api/products/bindings
+ * 批量/单条设置代号-型号强绑定
+ */
+router.post('/bindings', (req: Request, res: Response): void => {
+  const bindings: ProductBinding[] = Array.isArray(req.body) ? req.body : [req.body];
+  
+  if (!bindings.length) {
+    res.status(400).json({ error: '无绑定数据' });
+    return;
+  }
+  
+  const codes = new Set<string>();
+  const models = new Set<string>();
+  
   for (const b of bindings) {
     if (!b.code || !b.product_model) {
-      return res.status(400).json({ error: '代号和型号均不能为空' });
+      res.status(400).json({ error: '代号和型号均不能为空' });
+      return;
     }
     if (codes.has(b.code) || models.has(b.product_model)) {
-      return res.status(400).json({ error: '批量数据内有重复' });
+      res.status(400).json({ error: '批量数据内有重复' });
+      return;
     }
-    codes.add(b.code); models.add(b.product_model);
+    codes.add(b.code);
+    models.add(b.product_model);
   }
+  
   // 检查数据库冲突
   const placeholders = bindings.map(() => '?').join(',');
   const checkSql = `SELECT code, product_model FROM products WHERE code IN (${placeholders}) OR product_model IN (${placeholders})`;
-  const params = [...bindings.map(b=>b.code), ...bindings.map(b=>b.product_model)];
-  db.all(checkSql, params, (err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
-    if (rows && rows.length) {
-      return res.status(400).json({ error: '与现有数据冲突', conflicts: rows });
+  const params = [...bindings.map(b => b.code), ...bindings.map(b => b.product_model)];
+  
+  db.all<ConflictResult>(checkSql, params, (err, rows) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
     }
+    
+    if (rows && rows.length) {
+      res.status(400).json({ error: '与现有数据冲突', conflicts: rows });
+      return;
+    }
+    
     // 插入/更新
     const stmt = db.prepare('INSERT OR REPLACE INTO products (code, product_model) VALUES (?, ?)');
     for (const b of bindings) {
       stmt.run([b.code, b.product_model]);
     }
     stmt.finalize((err2) => {
-      if (err2) return res.status(500).json({ error: err2.message });
+      if (err2) {
+        res.status(500).json({ error: err2.message });
+        return;
+      }
       res.json({ message: '绑定成功' });
     });
   });
 });
 
-module.exports = router;
+export default router;

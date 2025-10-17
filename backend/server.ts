@@ -71,7 +71,7 @@ if (process.env['NODE_ENV'] !== 'production') {
 // =============================================================================
 
 // 导入认证路由（优先注册登录接口）
-const authRoutes = require('@/routes/auth');
+import authRoutes from '@/routes/auth.js';
 app.use('/api/auth', authRoutes);
 
 // 鉴权中间件（仅对API路由生效，登录接口除外）
@@ -96,15 +96,15 @@ app.use('/api', (req, res, next) => {
 const overviewRoutes = require('@/routes/overview');               // 总览接口
 const inboundRoutes = require('@/routes/inbound');                 // 入库管理
 const outboundRoutes = require('@/routes/outbound');               // 出库管理
-const stockRoutes = require('@/routes/stock');                     // 库存管理
-const partnersRoutes = require('@/routes/partners');               // 客户/供应商管理
-const productsRoutes = require('@/routes/products');               // 产品管理
-const productPricesRoutes = require('@/routes/productPrices');     // 产品价格管理
+import stockRoutes from '@/routes/stock.js';                       // 库存管理
+import partnersRoutes from '@/routes/partners.js';                 // 客户/供应商管理
+import productsRoutes from '@/routes/products.js';                 // 产品管理
+import productPricesRoutes from '@/routes/productPrices.js';       // 产品价格管理
 const receivableRoutes = require('@/routes/receivable');           // 应收账款管理
 const payableRoutes = require('@/routes/payable');                 // 应付账款管理
 const exportRoutes = require('@/routes/export/index');             // 导出功能
 const analysisRoutes = require('@/routes/analysis/analysis');      // 数据分析功能
-const aboutRoutes = require('@/routes/about');                     // 关于页面
+import aboutRoutes from '@/routes/about.js';                       // 关于页面
 
 // 注册 API 路由
 app.use('/api/overview', overviewRoutes);
