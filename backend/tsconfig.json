@@ -42,7 +42,17 @@
 
     /* Advanced */
     "resolveJsonModule": true,
-    "allowJs": false
+    "allowJs": false,
+    "ignoreDeprecations": "6.0",
+
+    /* Path Mapping */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"],
+      "@/types/*": ["./types/*"],
+      "@/utils/*": ["./utils/*"],
+      "@/routes/*": ["./routes/*"]
+    }
   },
   "include": [
     "**/*.ts"
