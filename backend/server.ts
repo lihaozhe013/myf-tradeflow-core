@@ -2,18 +2,18 @@ import express, { Express, Request, Response, NextFunction } from 'express';
 import fs from 'fs';
 import path from 'path';
 import cors from 'cors';
-import type { AppConfig, CustomError } from './types';
+import type { AppConfig, CustomError } from '@/types';
 
 // 导入 Express 类型扩展
-import './types/express.d';
+import '@/types/express.d';
 
 // 在 CommonJS 模式下使用 require
 // db 模块初始化数据库连接，虽然不直接使用但需要导入以触发初始化
-require('./db');
-const { ensureAllTablesAndColumns } = require('./utils/dbUpgrade');
-const { logger } = require('./utils/logger');
-const { requestLogger, errorLogger } = require('./utils/loggerMiddleware');
-const { authenticateToken, checkWritePermission } = require('./utils/auth');
+require('@/db');
+const { ensureAllTablesAndColumns } = require('@/utils/dbUpgrade');
+const { logger } = require('@/utils/logger');
+const { requestLogger, errorLogger } = require('@/utils/loggerMiddleware');
+const { authenticateToken, checkWritePermission } = require('@/utils/auth');
 
 const app: Express = express();
 
@@ -67,7 +67,7 @@ if (process.env['NODE_ENV'] !== 'production') {
 // =============================================================================
 
 // 导入认证路由（优先注册登录接口）
-const authRoutes = require('./routes/auth');
+const authRoutes = require('@/routes/auth');
 app.use('/api/auth', authRoutes);
 
 // 鉴权中间件（仅对API路由生效，登录接口除外）
@@ -89,18 +89,18 @@ app.use('/api', (req, res, next) => {
 });
 
 // 导入所有路由模块
-const overviewRoutes = require('./routes/overview');               // 总览接口
-const inboundRoutes = require('./routes/inbound');                 // 入库管理
-const outboundRoutes = require('./routes/outbound');               // 出库管理
-const stockRoutes = require('./routes/stock');                     // 库存管理
-const partnersRoutes = require('./routes/partners');               // 客户/供应商管理
-const productsRoutes = require('./routes/products');               // 产品管理
-const productPricesRoutes = require('./routes/productPrices');     // 产品价格管理
-const receivableRoutes = require('./routes/receivable');           // 应收账款管理
-const payableRoutes = require('./routes/payable');                 // 应付账款管理
-const exportRoutes = require('./routes/export/index');             // 导出功能
-const analysisRoutes = require('./routes/analysis/analysis');               // 数据分析功能
-const aboutRoutes = require('./routes/about');                     // 关于页面
+const overviewRoutes = require('@/routes/overview');               // 总览接口
+const inboundRoutes = require('@/routes/inbound');                 // 入库管理
+const outboundRoutes = require('@/routes/outbound');               // 出库管理
+const stockRoutes = require('@/routes/stock');                     // 库存管理
+const partnersRoutes = require('@/routes/partners');               // 客户/供应商管理
+const productsRoutes = require('@/routes/products');               // 产品管理
+const productPricesRoutes = require('@/routes/productPrices');     // 产品价格管理
+const receivableRoutes = require('@/routes/receivable');           // 应收账款管理
+const payableRoutes = require('@/routes/payable');                 // 应付账款管理
+const exportRoutes = require('@/routes/export/index');             // 导出功能
+const analysisRoutes = require('@/routes/analysis/analysis');      // 数据分析功能
+const aboutRoutes = require('@/routes/about');                     // 关于页面
 
 // 注册 API 路由
 app.use('/api/overview', overviewRoutes);

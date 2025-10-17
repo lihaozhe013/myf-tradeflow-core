@@ -1,6 +1,13 @@
-// 数据库表结构SQL，供主服务引用
+/**
+ * 数据库表结构 SQL 定义
+ * 供数据库初始化和升级使用
+ */
 
-const initSql = `
+/**
+ * 数据库初始化 SQL
+ * 创建所有必要的表结构
+ */
+export const initSql = `
 CREATE TABLE IF NOT EXISTS inbound_records (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   supplier_code TEXT,
@@ -81,6 +88,7 @@ CREATE TABLE IF NOT EXISTS payable_payments (
 );
 `;
 
+// 为了兼容 CommonJS require，也导出为 module.exports
 module.exports = {
   initSql,
 };
