@@ -1,7 +1,7 @@
 {
   "name": "myf-tradeflow-system",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.2.0",
   "description": "a lightweight tradeflow System",
   "scripts": {
     "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
