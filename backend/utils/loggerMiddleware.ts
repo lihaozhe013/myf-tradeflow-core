@@ -1,4 +1,8 @@
-const { logger, accessLogger } = require('./logger');
+/**
+ * Express 日志中间件
+ */
+import { Request, Response, NextFunction } from 'express';
+import { logger, accessLogger } from '@/utils/logger';
 
 // 静态文件扩展名过滤
 const STATIC_EXTENSIONS = ['.js', '.css', '.map', '.ico', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.woff', '.woff2', '.ttf', '.eot'];
@@ -26,8 +30,10 @@ const IGNORE_PATHS = [
   '.jsp'
 ];
 
-// 判断是否应该记录该请求
-const shouldLogRequest = (url, method) => {
+/**
+ * 判断是否应该记录该请求
+ */
+const shouldLogRequest = (url: string, _method: string): boolean => {
   // 静态文件过滤
   const hasStaticExtension = STATIC_EXTENSIONS.some(ext => url.toLowerCase().includes(ext));
   if (hasStaticExtension) return false;
@@ -45,15 +51,17 @@ const shouldLogRequest = (url, method) => {
   return false;
 };
 
-// 请求日志中间件
-const requestLogger = (req, res, next) => {
+/**
+ * 请求日志中间件
+ */
+export const requestLogger = (req: Request, res: Response, next: NextFunction): void => {
   const start = Date.now();
   
   // 记录请求开始
   const requestInfo = {
     method: req.method,
     url: req.originalUrl,
-    ip: req.ip || req.connection.remoteAddress,
+    ip: req.ip || req.socket.remoteAddress,
     userAgent: req.get('User-Agent'),
     timestamp: new Date().toISOString()
   };
@@ -76,7 +84,9 @@ const requestLogger = (req, res, next) => {
 
     // 附带用户信息
     if (req.user) {
-      responseInfo.user = { username: req.user.username, role: req.user.role };
+      Object.assign(responseInfo, { 
+        user: { username: req.user.username, role: req.user.role } 
+      });
     }
 
     // 记录访问日志（带用户信息）
@@ -101,14 +111,16 @@ const requestLogger = (req, res, next) => {
   next();
 };
 
-// 错误日志中间件
-const errorLogger = (err, req, res, next) => {
-  const errorInfo = {
+/**
+ * 错误日志中间件
+ */
+export const errorLogger = (err: Error, req: Request, _res: Response, next: NextFunction): void => {
+  const errorInfo: Record<string, any> = {
     error: err.message,
     stack: err.stack,
     method: req.method,
     url: req.originalUrl,
-    ip: req.ip || req.connection.remoteAddress,
+    ip: req.ip || req.socket.remoteAddress,
     timestamp: new Date().toISOString(),
     body: req.body,
     params: req.params,
@@ -116,14 +128,9 @@ const errorLogger = (err, req, res, next) => {
   };
 
   if (req.user) {
-    errorInfo.user = { username: req.user.username, role: req.user.role };
+    errorInfo['user'] = { username: req.user.username, role: req.user.role };
   }
 
   logger.error('API Error', errorInfo);
   next(err);
-};
-
-module.exports = {
-  requestLogger,
-  errorLogger
 };

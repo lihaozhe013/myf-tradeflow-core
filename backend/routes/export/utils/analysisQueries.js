@@ -1,5 +1,5 @@
 // 分析数据查询模块
-const db = require('../../../db');
+const db = require('../../../utils/db_commonjs.cjs');
 
 class AnalysisQueries {
   /**

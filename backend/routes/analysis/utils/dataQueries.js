@@ -1,4 +1,4 @@
-const db = require('../../../db');
+const db = require('../../../utils/db_commonjs.cjs');
 
 /**
  * 获取筛选选项（客户和产品列表）

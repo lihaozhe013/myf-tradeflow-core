@@ -1,20 +1,36 @@
-const express = require('express');
-const fs = require('fs');
-const path = require('path');
-const cors = require('cors');
-const db = require('./db');
-const { ensureAllTablesAndColumns } = require('./utils/dbUpgrade');
-const { logger } = require('./utils/logger');
-const { requestLogger, errorLogger } = require('./utils/loggerMiddleware');
-const { authenticateToken, getAuthConfig, checkWritePermission } = require('./utils/auth');
+import express, { Express, Request, Response, NextFunction, Router } from 'express';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
+import cors from 'cors';
+import type { AppConfig, CustomError } from './types/index.js';
 
-const app = express();
+// ESM __dirname 兼容
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const require = createRequire(import.meta.url);
+
+// 导入数据库模块（触发初始化）
+import '@/db';
+import { ensureAllTablesAndColumns } from '@/utils/dbUpgrade';
+import { logger } from '@/utils/logger';
+import { requestLogger, errorLogger } from '@/utils/loggerMiddleware';
+import { authenticateToken, checkWritePermission } from '@/utils/auth';
+
+const app: Express = express();
 
 // 读取应用配置
-const config = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../data/appConfig.json'), 'utf8'));
+const configCandidates: string[] = [
+  path.resolve(__dirname, './appConfig.json'),
+  path.resolve(__dirname, '../data/appConfig.json'),
+  path.resolve(__dirname, '../../data/appConfig.json')
+];
+const configPath: string = (configCandidates.find(candidate => fs.existsSync(candidate)) ?? configCandidates[0]) as string;
+const config: AppConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
 // 端口配置
-const PORT = process.env.PORT || (config.server && config.server.httpPort) || 8080;
+const PORT: number = Number(process.env['PORT']) || config.server?.httpPort || 8080;
 
 // =============================================================================
 // 数据库初始化
@@ -25,7 +41,8 @@ try {
   ensureAllTablesAndColumns();
   logger.info('数据库初始化完成');
 } catch (error) {
-  logger.error('数据库初始化失败', { error: error.message, stack: error.stack });
+  const err = error as CustomError;
+  logger.error('数据库初始化失败', { error: err.message, stack: err.stack });
   process.exit(1);
 }
 
@@ -40,7 +57,7 @@ app.use(requestLogger);
 app.use(express.json());
 
 // CORS 配置 (开发模式)
-if (process.env.NODE_ENV !== 'production') {
+if (process.env['NODE_ENV'] !== 'production') {
   app.use(cors({
     origin: [
       'http://localhost:5173',
@@ -58,7 +75,7 @@ if (process.env.NODE_ENV !== 'production') {
 // =============================================================================
 
 // 导入认证路由（优先注册登录接口）
-const authRoutes = require('./routes/auth');
+import authRoutes from './routes/auth.js';
 app.use('/api/auth', authRoutes);
 
 // 鉴权中间件（仅对API路由生效，登录接口除外）
@@ -80,18 +97,18 @@ app.use('/api', (req, res, next) => {
 });
 
 // 导入所有路由模块
-const overviewRoutes = require('./routes/overview');               // 总览接口
-const inboundRoutes = require('./routes/inbound');                 // 入库管理
-const outboundRoutes = require('./routes/outbound');               // 出库管理
-const stockRoutes = require('./routes/stock');                     // 库存管理
-const partnersRoutes = require('./routes/partners');               // 客户/供应商管理
-const productsRoutes = require('./routes/products');               // 产品管理
-const productPricesRoutes = require('./routes/productPrices');     // 产品价格管理
-const receivableRoutes = require('./routes/receivable');           // 应收账款管理
-const payableRoutes = require('./routes/payable');                 // 应付账款管理
-const exportRoutes = require('./routes/export/index');             // 导出功能
-const analysisRoutes = require('./routes/analysis/analysis');               // 数据分析功能
-const aboutRoutes = require('./routes/about');                     // 关于页面
+import overviewRoutes from '@/routes/overview';                 // 总览接口
+import inboundRoutes from '@/routes/inbound';                   // 入库管理
+import outboundRoutes from '@/routes/outbound';                 // 出库管理
+import stockRoutes from '@/routes/stock';                       // 库存管理
+import partnersRoutes from '@/routes/partners';                 // 客户/供应商管理
+import productsRoutes from '@/routes/products';                 // 产品管理
+import productPricesRoutes from '@/routes/productPrices';       // 产品价格管理
+import receivableRoutes from '@/routes/receivable';             // 应收账款管理
+import payableRoutes from '@/routes/payable';                   // 应付账款管理
+const exportRoutes = require('./routes/export/index.js') as Router;       // 导出功能 (CommonJS)
+const analysisRoutes = require('./routes/analysis/analysis.js') as Router; // 数据分析功能 (CommonJS)
+import aboutRoutes from '@/routes/about';                       // 关于页面
 
 // 注册 API 路由
 app.use('/api/overview', overviewRoutes);
@@ -115,7 +132,7 @@ app.use('/api/about', aboutRoutes);
 app.use(errorLogger);
 
 // 全局错误处理中间件
-app.use((err, req, res, next) => {
+app.use((err: CustomError, req: Request, res: Response, _next: NextFunction) => {
   logger.error('Unhandled Error', {
     error: err.message,
     stack: err.stack,
@@ -125,7 +142,7 @@ app.use((err, req, res, next) => {
   
   res.status(500).json({
     success: false,
-    message: process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message
+    message: process.env['NODE_ENV'] === 'production' ? '服务器内部错误' : err.message
   });
 });
 
@@ -135,11 +152,11 @@ app.use((err, req, res, next) => {
 
 
 // 前端托管配置 (只在生产模式下启用，或开发模式下明确配置)
-const shouldHostFrontend = config.frontend && config.frontend.hostByBackend && 
-  (process.env.NODE_ENV === 'production' || process.env.FORCE_FRONTEND_HOSTING === 'true');
+const shouldHostFrontend: boolean = !!(config.frontend?.hostByBackend && 
+  (process.env['NODE_ENV'] === 'production' || process.env['FORCE_FRONTEND_HOSTING'] === 'true'));
 
-if (shouldHostFrontend) {
-  const frontendDist = path.resolve(__dirname, '..', config.frontend.distPath || './frontend/dist');
+if (shouldHostFrontend && config.frontend) {
+  const frontendDist: string = path.resolve(__dirname, '..', config.frontend.distPath || './frontend');
   
   logger.info(`启用前端托管: ${frontendDist}`);
   
@@ -150,7 +167,7 @@ if (shouldHostFrontend) {
     
     // SPA 路由回退 - 所有未匹配的非 API 路由返回 index.html
     if (config.frontend.fallbackToIndex) {
-      app.get(/^\/(?!api).*/, (req, res) => {
+      app.get(/^\/(?!api).*/, (_req: Request, res: Response) => {
         res.sendFile(path.join(frontendDist, 'index.html'));
       });
     }
@@ -178,12 +195,12 @@ app.listen(PORT, () => {
   
   logger.info('服务器启动成功', { 
     port: PORT, 
-    environment: process.env.NODE_ENV || 'development',
+    environment: process.env['NODE_ENV'] || 'development',
     pid: process.pid,
     frontend_hosted: shouldHostFrontend
   });
   
-  if (process.env.NODE_ENV === 'production') {
+  if (process.env['NODE_ENV'] === 'production') {
     console.log('📦 生产环境运行中');
     if (shouldHostFrontend) {
       console.log(`🌐 集成前端服务: http://localhost:${PORT}`);

@@ -4,28 +4,49 @@
   "description": "backend",
   "license": "MIT",
   "author": "",
-  "type": "commonjs",
-  "main": "server.js",
+  "type": "module",
+  "main": "dist/server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js",
-    "dev:debug": "nodemon --inspect server.js",
-    "db:init": "node utils/dbSchema.js"
+    "build": "npm run build:tsc && npm run build:resolve-paths && npm run build:post-build",
+    "build:tsc": "tsc",
+    "build:resolve-paths": "tsc-alias",
+    "build:post-build": "node \"../scripts/build/post-build-backend.js\"",
+    "start": "cross-env NODE_ENV=production node ./backend/server.js",
+    "dev": "tsx watch server.ts",
+    "dev:debug": "tsx watch --inspect server.ts",
+    "db:init": "tsx utils/dbSchema.ts",
+    "clean": "rm -rf dist",
+    "prebuild": "npm run clean"
   },
   "dependencies": {
+    "argon2": "^0.44.0",
     "cors": "^2.8.5",
     "decimal.js": "^10.6.0",
     "express": "^5.1.0",
     "fs-extra": "^11.3.2",
-    "argon2": "^0.44.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.1",
     "sqlite3": "^5.1.7",
     "winston": "^3.18.3",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "cross-env": "10.1.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "@types/argon2": "^0.14.1",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/fs-extra": "^11.0.4",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^24.8.1",
+    "@types/sqlite3": "^3.1.11",
+    "@types/winston": "^2.4.4",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "tsc-alias": "^1.8.16",
+    "tsconfig-paths": "^4.2.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
   },
   "engines": {
     "node": ">=22.0.0",

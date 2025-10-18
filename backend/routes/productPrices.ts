@@ -1,15 +1,34 @@
-const express = require('express');
-const router = express.Router();
-const db = require('../db');
+/**
+ * 产品价格路由
+ * 管理产品价格信息，包括查询、新增、修改和删除
+ */
+import express, { type Router, type Request, type Response } from 'express';
+import db from '@/db.js';
 
-// 获取产品价格列表（支持分页与筛选）
-router.get('/', (req, res) => {
+const router: Router = express.Router();
+
+/**
+ * 数据库查询结果类型
+ */
+interface CountResult {
+  total: number;
+}
+
+interface UnitPriceResult {
+  unit_price: number;
+}
+
+/**
+ * GET /api/product-prices
+ * 获取产品价格列表（支持分页与筛选）
+ */
+router.get('/', (req: Request, res: Response): void => {
   const { partner_short_name, product_model, effective_date } = req.query;
   let { page = 1 } = req.query;
   const limit = 10; // 固定每页10条
 
   let baseWhere = ' FROM product_prices WHERE 1=1';
-  let whereParams = [];
+  const whereParams: any[] = [];
 
   if (partner_short_name) {
     baseWhere += ' AND partner_short_name LIKE ?';
@@ -27,9 +46,9 @@ router.get('/', (req, res) => {
   const orderBy = ' ORDER BY effective_date DESC, partner_short_name, product_model';
 
   // 分页
-  const offset = (page - 1) * limit;
+  const offset = (Number(page) - 1) * limit;
   const listSql = `SELECT *${baseWhere}${orderBy} LIMIT ? OFFSET ?`;
-  const listParams = [...whereParams, limit, parseInt(offset)];
+  const listParams = [...whereParams, limit, offset];
 
   db.all(listSql, listParams, (err, rows) => {
     if (err) {
@@ -39,7 +58,7 @@ router.get('/', (req, res) => {
 
     // 统计总数
     const countSql = `SELECT COUNT(*) as total${baseWhere}`;
-    db.get(countSql, whereParams, (countErr, countResult) => {
+    db.get<CountResult>(countSql, whereParams, (countErr, countResult) => {
       if (countErr) {
         res.status(500).json({ error: countErr.message });
         return;
@@ -48,18 +67,21 @@ router.get('/', (req, res) => {
       res.json({
         data: rows,
         pagination: {
-          page: parseInt(page),
+          page: Number(page),
           limit,
-          total: countResult.total,
-          pages: Math.ceil(countResult.total / limit)
+          total: countResult!.total,
+          pages: Math.ceil(countResult!.total / limit)
         }
       });
     });
   });
 });
 
-// 获取特定产品在特定日期的价格
-router.get('/current', (req, res) => {
+/**
+ * GET /api/product-prices/current
+ * 获取特定产品在特定日期的价格
+ */
+router.get('/current', (req: Request, res: Response): void => {
   const { partner_short_name, product_model, date } = req.query;
   
   if (!partner_short_name || !product_model) {
@@ -67,7 +89,7 @@ router.get('/current', (req, res) => {
     return;
   }
   
-  const targetDate = date || new Date().toISOString().split('T')[0];
+  const targetDate = (date as string) || new Date().toISOString().split('T')[0];
   
   const sql = `
     SELECT * FROM product_prices 
@@ -91,8 +113,11 @@ router.get('/current', (req, res) => {
   });
 });
 
-// 新增产品价格
-router.post('/', (req, res) => {
+/**
+ * POST /api/product-prices
+ * 新增产品价格
+ */
+router.post('/', (req: Request, res: Response): void => {
   const { partner_short_name, product_model, effective_date, unit_price } = req.body;
   
   const sql = `
@@ -110,8 +135,11 @@ router.post('/', (req, res) => {
   });
 });
 
-// 修改产品价格
-router.put('/:id', (req, res) => {
+/**
+ * PUT /api/product-prices/:id
+ * 修改产品价格
+ */
+router.put('/:id', (req: Request, res: Response): void => {
   const { id } = req.params;
   const { partner_short_name, product_model, effective_date, unit_price } = req.body;
   
@@ -135,8 +163,11 @@ router.put('/:id', (req, res) => {
   });
 });
 
-// 删除产品价格
-router.delete('/:id', (req, res) => {
+/**
+ * DELETE /api/product-prices/:id
+ * 删除产品价格
+ */
+router.delete('/:id', (req: Request, res: Response): void => {
   const { id } = req.params;
   
   db.run('DELETE FROM product_prices WHERE id = ?', [id], function(err) {
@@ -154,30 +185,38 @@ router.delete('/:id', (req, res) => {
   });
 });
 
-// 自动获取产品价格（完全匹配且生效日期<=指定日期，取最晚的）
-router.get('/auto', (req, res) => {
+/**
+ * GET /api/product-prices/auto
+ * 自动获取产品价格（完全匹配且生效日期<=指定日期，取最晚的）
+ */
+router.get('/auto', (req: Request, res: Response): void => {
   const { partner_short_name, product_model, date } = req.query;
+  
   if (!partner_short_name || !product_model || !date) {
     res.status(400).json({ error: '缺少必要参数：partner_short_name, product_model, date' });
     return;
   }
+  
   const sql = `
     SELECT unit_price FROM product_prices
     WHERE partner_short_name = ? AND product_model = ? AND effective_date <= ?
     ORDER BY effective_date DESC
     LIMIT 1
   `;
-  db.get(sql, [partner_short_name, product_model, date], (err, row) => {
+  
+  db.get<UnitPriceResult>(sql, [partner_short_name, product_model, date], (err, row) => {
     if (err) {
       res.status(500).json({ error: err.message });
       return;
     }
+    
     if (!row) {
       res.status(404).json({ error: '未找到匹配的单价' });
       return;
     }
+    
     res.json({ unit_price: row.unit_price });
   });
 });
 
-module.exports = router;
+export default router;

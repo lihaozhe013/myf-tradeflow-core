@@ -1,6 +1,6 @@
 // 应收数据查询模块
-const db = require('../../../db');
-const decimalCalc = require('../../../utils/decimalCalculator');
+const db = require('../../../utils/db_commonjs.cjs');
+const decimalCalc = require('../../../utils/decimalCalculator_commonjs.cjs');
 
 class ReceivableQueries {
   /**

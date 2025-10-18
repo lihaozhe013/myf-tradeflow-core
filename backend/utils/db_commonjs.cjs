@@ -2,9 +2,9 @@
 const path = require('path');
 const fs = require('fs');
 const sqlite3 = require('sqlite3').verbose();
-const { initSql } = require('./utils/dbSchema');
+const { initSql } = require('./dbSchema_commonjs.cjs');
 
-const dbPath = path.resolve(__dirname, '../data/data.db');
+const dbPath = path.resolve(__dirname, '../../data/data.db');
 let db;
 
 function initializeDatabase() {
