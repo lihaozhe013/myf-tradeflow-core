@@ -1,15 +1,15 @@
-import express, { Express, Request, Response, NextFunction, Router } from 'express';
+import express, { Express, Request, Response, NextFunction } from 'express';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { createRequire } from 'module';
+// import { createRequire } from 'module';
 import cors from 'cors';
 import type { AppConfig, CustomError } from './types/index.js';
 
 // ESM __dirname 兼容
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const require = createRequire(import.meta.url);
+// const require = createRequire(import.meta.url); // unused after ESM migration
 
 // 导入数据库模块（触发初始化）
 import '@/db';
@@ -106,7 +106,7 @@ import productsRoutes from '@/routes/products';                 // 产品管理
 import productPricesRoutes from '@/routes/productPrices';       // 产品价格管理
 import receivableRoutes from '@/routes/receivable';             // 应收账款管理
 import payableRoutes from '@/routes/payable';                   // 应付账款管理
-const exportRoutes = require('./routes/export/index.js') as Router;       // 导出功能 (CommonJS)
+import exportRoutes from '@/routes/export';                     // 导出功能 (ESM + TS)
 import analysisRoutes from '@/routes/analysis/analysis'; // 数据分析功能 (ESM + TS)
 import aboutRoutes from '@/routes/about';                       // 关于页面
 
