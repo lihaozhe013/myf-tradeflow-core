@@ -1,0 +1,25 @@
+{
+  "name": "prod",
+  "version": "1.0.0",
+  "description": "prod",
+  "license": "MIT",
+  "author": "",
+  "type": "module",
+  "main": "backend/server.js",
+  "dependencies": {
+    "argon2": "^0.44.0",
+    "cors": "^2.8.5",
+    "decimal.js": "^10.6.0",
+    "express": "^5.1.0",
+    "fs-extra": "^11.3.2",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.1",
+    "sqlite3": "^5.1.7",
+    "winston": "^3.18.3",
+    "xlsx": "^0.18.5"
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=11.0.0"
+  }
+}

@@ -7,11 +7,9 @@
   "type": "module",
   "main": "dist/server.js",
   "scripts": {
-    "build": "npm run build:tsc && npm run build:resolve-paths && npm run build:post-build",
-    "build:tsc": "tsc",
-    "build:resolve-paths": "tsc-alias",
+    "build": "node ./scripts/bundle.mjs && npm run build:post-build",
     "build:post-build": "node \"../scripts/build/post-build-backend.js\"",
-    "start": "cross-env NODE_ENV=production node ./backend/server.js",
+    "start": "cross-env NODE_ENV=production node ./server.js",
     "dev": "tsx watch server.ts",
     "dev:debug": "tsx watch --inspect server.ts",
     "db:init": "tsx utils/dbSchema.ts",
@@ -28,8 +26,7 @@
     "multer": "^2.0.1",
     "sqlite3": "^5.1.7",
     "winston": "^3.18.3",
-    "xlsx": "^0.18.5",
-    "cross-env": "10.1.0"
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/argon2": "^0.14.1",
@@ -41,6 +38,8 @@
     "@types/node": "^24.8.1",
     "@types/sqlite3": "^3.1.11",
     "@types/winston": "^2.4.4",
+    "esbuild": "^0.24.0",
+    "esbuild-plugin-tsconfig-paths": "^1.0.1",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "tsc-alias": "^1.8.16",
