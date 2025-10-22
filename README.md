@@ -77,7 +77,6 @@ cp -r config-example/* data/
 4. **Init**:
 
 ```bash
-# Build (you should run this for the first time, this will copy appConfig.json to frontend folder)
 npm run build
 ```
 
@@ -87,6 +86,7 @@ npm run build
 # Start the dev server()
 npm run dev
 ```
+
 ## Production Deployment
 First, ensure that a functional build artifact is available
 ```bash
@@ -96,6 +96,14 @@ mkdir -p data
 cp -r ../config-example/* data/
 cd ..
 ```
+
+To start the server
+```bash
+cd dist
+NODE_ENV=production node ./backend/server.js 
+```
+
+
 For production deployment with PM2 cluster mode:
 ```bash
 cd dist/pm2
