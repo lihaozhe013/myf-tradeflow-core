@@ -107,7 +107,7 @@ import productPricesRoutes from '@/routes/productPrices';       // 产品价格�
 import receivableRoutes from '@/routes/receivable';             // 应收账款管理
 import payableRoutes from '@/routes/payable';                   // 应付账款管理
 const exportRoutes = require('./routes/export/index.js') as Router;       // 导出功能 (CommonJS)
-const analysisRoutes = require('./routes/analysis/analysis.js') as Router; // 数据分析功能 (CommonJS)
+import analysisRoutes from '@/routes/analysis/analysis'; // 数据分析功能 (ESM + TS)
 import aboutRoutes from '@/routes/about';                       // 关于页面
 
 // 注册 API 路由

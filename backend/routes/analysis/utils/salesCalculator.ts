@@ -1,29 +1,31 @@
-const db = require('../../../utils/db_commonjs.cjs');
-const decimalCalc = require('../../../utils/decimalCalculator_commonjs.cjs');
+import db from '@/db';
+import decimalCalc from '@/utils/decimalCalculator';
+import type { SalesData } from '@/routes/analysis/utils/types';
 
 /**
  * 计算销售额数据
- * @param {string} startDate 开始日期
- * @param {string} endDate 结束日期
- * @param {string} customerCode 客户代号（可选）
- * @param {string} productModel 产品型号（可选）
- * @param {Function} callback 回调函数 (err, salesData)
  */
-function calculateSalesData(startDate, endDate, customerCode, productModel, callback) {
+export function calculateSalesData(
+  startDate: string,
+  endDate: string,
+  customerCode: string | null | undefined,
+  productModel: string | null | undefined,
+  callback: (err: Error | null, salesData?: SalesData) => void
+): void {
   // 1. 构建销售额查询条件
-  let salesSqlConditions = ['unit_price >= 0', 'date(outbound_date) BETWEEN ? AND ?'];
-  let salesParams = [startDate, endDate];
-  
+  const salesSqlConditions: string[] = ['unit_price >= 0', 'date(outbound_date) BETWEEN ? AND ?'];
+  const salesParams: any[] = [startDate, endDate];
+
   if (customerCode && customerCode !== 'All') {
     salesSqlConditions.push('customer_code = ?');
     salesParams.push(customerCode);
   }
-  
+
   if (productModel && productModel !== 'All') {
     salesSqlConditions.push('product_model = ?');
     salesParams.push(productModel);
   }
-  
+
   const salesSql = `
     SELECT 
       COALESCE(SUM(quantity * unit_price), 0) as normal_sales,
@@ -38,29 +40,29 @@ function calculateSalesData(startDate, endDate, customerCode, productModel, call
     FROM outbound_records 
     WHERE ${salesSqlConditions.join(' AND ')}
   `;
-  
+
   // 构建特殊支出查询的参数
-  let specialExpenseParams = [startDate, endDate];
+  const specialExpenseParams: any[] = [startDate, endDate];
   if (customerCode && customerCode !== 'All') {
     specialExpenseParams.push(customerCode);
   }
   if (productModel && productModel !== 'All') {
     specialExpenseParams.push(productModel);
   }
-  
+
   const finalSalesParams = [...salesParams, ...specialExpenseParams];
-  
-  db.get(salesSql, finalSalesParams, (err, salesRow) => {
+
+  db.get(salesSql, finalSalesParams, (err: Error | null, salesRow: any) => {
     if (err) {
       console.error('计算销售额失败:', err);
-      return callback(err);
+      callback(err);
+      return;
     }
-    
-    // 使用 decimal.js 精确计算销售额
-    const normalSales = decimalCalc.fromSqlResult(salesRow.normal_sales, 0, 2);
-    const specialExpense = decimalCalc.fromSqlResult(salesRow.special_expense, 0, 2);
+
+    const normalSales = decimalCalc.fromSqlResult(salesRow?.normal_sales, 0, 2);
+    const specialExpense = decimalCalc.fromSqlResult(salesRow?.special_expense, 0, 2);
     const salesAmount = decimalCalc.toDbNumber(decimalCalc.subtract(normalSales, specialExpense), 2);
-    
+
     callback(null, {
       normal_sales: normalSales,
       special_expense: specialExpense,
@@ -68,7 +70,3 @@ function calculateSalesData(startDate, endDate, customerCode, productModel, call
     });
   });
 }
-
-module.exports = {
-  calculateSalesData
-};

@@ -1,10 +1,19 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /**
  * 生成缓存键
  */
-function generateCacheKey(startDate, endDate, customerCode, productModel) {
+export function generateCacheKey(
+  startDate: string,
+  endDate: string,
+  customerCode?: string,
+  productModel?: string
+): string {
   const customer = customerCode || 'All';
   const product = productModel || 'All';
   return `${startDate}_${endDate}_${customer}_${product}`;
@@ -13,7 +22,12 @@ function generateCacheKey(startDate, endDate, customerCode, productModel) {
 /**
  * 生成详细分析缓存键
  */
-function generateDetailCacheKey(startDate, endDate, customerCode, productModel) {
+export function generateDetailCacheKey(
+  startDate: string,
+  endDate: string,
+  customerCode?: string,
+  productModel?: string
+): string {
   const customer = customerCode || 'All';
   const product = productModel || 'All';
   return `detail_${startDate}_${endDate}_${customer}_${product}`;
@@ -22,52 +36,50 @@ function generateDetailCacheKey(startDate, endDate, customerCode, productModel) 
 /**
  * 获取分析数据缓存文件路径
  */
-function getCacheFilePath() {
+export function getCacheFilePath(): string {
   return path.resolve(__dirname, '../../../../data/analysis-cache.json');
 }
 
 /**
  * 清理过期缓存数据（30天以上）
  */
-function cleanExpiredCache(cacheData) {
+export function cleanExpiredCache<T extends Record<string, any>>(cacheData: T): T {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  
-  const cleanedData = {};
+
+  const cleanedData: Record<string, any> = {};
   let cleanedCount = 0;
-  
+
   Object.entries(cacheData).forEach(([key, data]) => {
-    if (data.last_updated) {
-      const lastUpdated = new Date(data.last_updated);
-      // 保留30天内的缓存
+    const d: any = data as any;
+    if (d && d.last_updated) {
+      const lastUpdated = new Date(d.last_updated);
       if (lastUpdated >= thirtyDaysAgo) {
         cleanedData[key] = data;
       } else {
         cleanedCount++;
       }
     } else {
-      // 没有更新时间的数据也保留（兼容性）
       cleanedData[key] = data;
     }
   });
-  
+
   if (cleanedCount > 0) {
     console.log(`清理了 ${cleanedCount} 个过期的分析缓存`);
   }
-  
-  return cleanedData;
+
+  return cleanedData as T;
 }
 
 /**
  * 读取缓存数据
  */
-function readCache() {
+export function readCache(): Record<string, any> {
   const cacheFile = getCacheFilePath();
   if (fs.existsSync(cacheFile)) {
     try {
       const json = fs.readFileSync(cacheFile, 'utf-8');
       const cacheData = JSON.parse(json);
-      // 读取时自动清理过期缓存
       return cleanExpiredCache(cacheData);
     } catch (e) {
       console.error('读取分析缓存失败:', e);
@@ -80,10 +92,9 @@ function readCache() {
 /**
  * 写入缓存数据
  */
-function writeCache(cacheData) {
+export function writeCache(cacheData: Record<string, any>): boolean {
   const cacheFile = getCacheFilePath();
   try {
-    // 写入前先清理过期缓存
     const cleanedData = cleanExpiredCache(cacheData);
     fs.writeFileSync(cacheFile, JSON.stringify(cleanedData, null, 2), 'utf-8');
     return true;
@@ -92,12 +103,3 @@ function writeCache(cacheData) {
     return false;
   }
 }
-
-module.exports = {
-  generateCacheKey,
-  generateDetailCacheKey,
-  getCacheFilePath,
-  cleanExpiredCache,
-  readCache,
-  writeCache
-};
