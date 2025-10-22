@@ -35,11 +35,11 @@
     "allowExportsForReader": true
   },
   "server": {
-    "httpPort": 8080
+    "httpPort": 8000
   },
   "frontend": {
     "hostByBackend": true,
-    "distPath": "./frontend/dist",
+    "distPath": "./frontend",
     "fallbackToIndex": true
   }
 }

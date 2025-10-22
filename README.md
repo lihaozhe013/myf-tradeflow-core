@@ -1,6 +1,6 @@
 # MYF Tradeflow Core
 
-A lightweight tradeflow system designed for small businesses, built with React, Node.js, and SQLite.
+A lightweight tradeflow system designed for small businesses, built with React.js based frontend and Node.js + SQLite based backend.
 
 Originally developed for a relative’s family business (myf), it is now open‑sourced on GitHub.
 
@@ -19,8 +19,8 @@ The system was developed in a Chinese-language environment and extensively utili
 
 ## Tech Stack
 
-- **Frontend**: React 19, Vite, Ant Design
-- **Backend**: Node.js, Express, SQLite3
+- **Frontend**: React 19, Vite, Ant Design, TypeScript
+- **Backend**: Node.js, Express, SQLite3, TypeScript
 - **Authentication**: JWT stateless authentication
 - **Styling**: CSS3, Ant Design component library
 - **Logging**: Winston logging system
@@ -48,7 +48,7 @@ This is the detailed page for my demo link:
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 22+
 - npm
 
 ### Installation
@@ -70,6 +70,7 @@ npm run install:all
 
 ```bash
 # Copy the example configuration files
+mkdir -p data
 cp -r config-example/* data/
 ```
 
@@ -86,48 +87,41 @@ npm run build
 # Start the dev server()
 npm run dev
 ```
-
-The application will be available at the following addresses:
-
-- Frontend: http://localhost:5173
-- Backend API: http://localhost:8080
-
 ## Production Deployment
-
-For production deployment with PM2 cluster mode:
-
+First, ensure that a functional build artifact is available
 ```bash
-# One-click production deployment
-cd ./scripts/production
-./start-prod.sh
+npm run build
+cd dist # dist stores the complete frontend and backend build artifacts
+mkdir -p data
+cp -r ../config-example/* data/
+cd ..
 ```
-
+For production deployment with PM2 cluster mode:
+```bash
+cd dist/pm2
+./stop-pm2.sh
+./start-pm2.sh
+```
 This will:
-
+- Shut down the previously running process
 - Install PM2 globally (if not installed)
 - Build the frontend application
 - Start backend services with cluster mode (max instances)
 - Configure logging and auto-restart
 
-See [PM2 Deployment Guide](docs/pm2-deployment.md) for detailed instructions.
+> Internal access logs have been simplified. If you require detailed access logs, I recommend using Nginx as a proxy and reviewing Nginx's logs.
 
-## Project Structure
-
+## Docker
+To create docker image, first build the project
+```bash
+npm run build
 ```
-myf-tradeflow-core/
-├── backend/            # Node.js backend server
-│   ├── routes/         # API routes
-│   └── utils/          # Utility functions and middleware
-├── frontend/           # React frontend application
-│   ├── src/            # Source code
-│   └── public/         # Static assets
-├── scripts/            # Deployment and automation scripts
-│   └── production/     # Production deployment scripts (PM2)
-├── data/               # Database and configuration files
-├── config-example/     # Example configuration files
-└── docs/               # Project documentation
+Then
+```
+docker build -t myf-tradeflow:1.0 .
 ```
 
+## Data Files
 The system uses JSON configuration files located in the `data/` directory:
 
 - `appConfig.json`: Application settings and company information
