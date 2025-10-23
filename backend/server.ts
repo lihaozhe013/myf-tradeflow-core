@@ -2,9 +2,8 @@ import express, { Express, Request, Response, NextFunction } from 'express';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-// import { createRequire } from 'module';
 import cors from 'cors';
-import type { AppConfig, CustomError } from './types/index.js';
+import type { AppConfig, CustomError } from '@/types/index';
 
 // ESM __dirname 兼容
 const __filename = fileURLToPath(import.meta.url);

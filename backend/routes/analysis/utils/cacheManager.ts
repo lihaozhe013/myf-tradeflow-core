@@ -1,9 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Note: avoid using __dirname here; resolve paths from process.cwd() to be robust in dev/prod
 
 /**
  * 生成缓存键
@@ -37,7 +34,10 @@ export function generateDetailCacheKey(
  * 获取分析数据缓存文件路径
  */
 export function getCacheFilePath(): string {
-  return path.resolve(__dirname, '../../../../data/analysis-cache.json');
+  // Resolve to the repository-level data folder regardless of build output location
+  // Prefer current working directory so "node dist/..." and PM2 both work
+  const projectRoot = process.cwd();
+  return path.resolve(projectRoot, 'data/analysis-cache.json');
 }
 
 /**
@@ -95,6 +95,11 @@ export function readCache(): Record<string, any> {
 export function writeCache(cacheData: Record<string, any>): boolean {
   const cacheFile = getCacheFilePath();
   try {
+    // Ensure parent directory exists to avoid ENOENT
+    const dir = path.dirname(cacheFile);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
     const cleanedData = cleanExpiredCache(cacheData);
     fs.writeFileSync(cacheFile, JSON.stringify(cleanedData, null, 2), 'utf-8');
     return true;
