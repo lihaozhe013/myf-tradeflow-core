@@ -2,8 +2,8 @@
   "apps": [
     {
       "name": "myf-tradeflow-backend",
-      "script": "server.js",
-      "cwd": "../backend",
+      "script": "backend/server.js",
+      "cwd": "..",
       "instances": "max",
       "exec_mode": "cluster",
       "env": {
@@ -13,9 +13,9 @@
       "max_memory_restart": "500M",
       "log_date_format": "YYYY-MM-DD HH:mm:ss Z",
       "merge_logs": true,
-      "out_file": "../data/log/pm2-out.log",
-      "error_file": "../data/log/pm2-error.log",
-      "log_file": "../data/log/pm2-combined.log",
+      "out_file": "data/log/pm2-out.log",
+      "error_file": "data/log/pm2-error.log",
+      "log_file": "data/log/pm2-combined.log",
       "time": true,
       "autorestart": true,
       "watch": false,

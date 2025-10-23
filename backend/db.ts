@@ -1,17 +1,13 @@
 /**
  * SQLite3 数据库连接与初始化
  */
-import path from 'path';
 import fs from 'fs';
 import sqlite3 from 'sqlite3';
-import { fileURLToPath } from 'url';
 import { initSql } from '@/utils/dbSchema';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { resolveFilesInDataPath } from '@/utils/paths';
 
 const sqlite3Verbose = sqlite3.verbose();
-const dbPath: string = path.resolve(__dirname, '../data/data.db');
+const dbPath: string = resolveFilesInDataPath('data.db');
 
 /**
  * 初始化数据库连接

@@ -4,13 +4,11 @@
 import winston from 'winston';
 import path from 'path';
 import fs from 'fs';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { resolveFilesInDataPath } from '@/utils/paths';
 
 // 创建日志目录
-const logDir: string = path.resolve(__dirname, '../../data/log');
+
+const logDir: string = resolveFilesInDataPath('log');
 if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir, { recursive: true });
 }

@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import cors from 'cors';
 import type { AppConfig, CustomError } from '@/types/index';
+import { resolveFilesInDataPath } from '@/utils/paths'
 
 // ESM __dirname 兼容
 const __filename = fileURLToPath(import.meta.url);
@@ -19,13 +20,7 @@ import { authenticateToken, checkWritePermission } from '@/utils/auth';
 
 const app: Express = express();
 
-// 读取应用配置
-const configCandidates: string[] = [
-  path.resolve(__dirname, './appConfig.json'),
-  path.resolve(__dirname, '../data/appConfig.json'),
-  path.resolve(__dirname, '../../data/appConfig.json')
-];
-const configPath: string = (configCandidates.find(candidate => fs.existsSync(candidate)) ?? configCandidates[0]) as string;
+const configPath: string = resolveFilesInDataPath('appConfig.json');
 const config: AppConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
 // 端口配置
