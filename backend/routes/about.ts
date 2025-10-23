@@ -7,9 +7,7 @@ import fs from 'fs/promises';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import { logger } from '@/utils/logger.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { resolveFilesInDataPath } from '@/utils/paths';
 
 const router: Router = express.Router();
 
@@ -19,7 +17,7 @@ const router: Router = express.Router();
  */
 router.get('/', async (_req: Request, res: Response): Promise<void> => {
   try {
-    const aboutPath = path.join(__dirname, '../../data/about.json');
+    const aboutPath = resolveFilesInDataPath("about.json");
     await fs.access(aboutPath);
 
     // 读取文件内容

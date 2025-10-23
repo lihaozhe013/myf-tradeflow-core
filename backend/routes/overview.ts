@@ -1,13 +1,10 @@
 import express, { Request, Response, Router } from 'express';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import db from '@/db.js';
 import { getAllStockData } from '@/utils/stockCacheService.js';
 import decimalCalc from '@/utils/decimalCalculator.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { resolveFilesInDataPath } from '@/utils/paths';
 
 const router: Router = express.Router();
 
@@ -197,7 +194,7 @@ function calculateSoldGoodsCost(callback: ErrorCallback<number>): void {
 // 获取系统统计数据
 // GET 只读缓存
 router.get('/stats', (_req: Request, res: Response) => {
-  const statsFile = path.resolve(__dirname, '../../data/overview-stats.json');
+  const statsFile = resolveFilesInDataPath("overview-stats.json");
   if (fs.existsSync(statsFile)) {
     try {
       const json = fs.readFileSync(statsFile, 'utf-8');
@@ -212,7 +209,7 @@ router.get('/stats', (_req: Request, res: Response) => {
 
 // POST 强制刷新并写入缓存（含top_sales_products和monthly_stock_changes）
 router.post('/stats', (_req: Request, res: Response) => {
-  const statsFile = path.resolve(__dirname, '../../data/overview-stats.json');
+  const statsFile = resolveFilesInDataPath("overview-stats.json");
   const stats: StatsCache = {};
   let completed = 0;
   const totalQueries = 4; // 增加到4个查询
@@ -539,7 +536,7 @@ router.get('/all-tables', (_req: Request, res: Response) => {
 
 // 获取销售额前10的商品及"其他"合计（从overview-stats.json读取）
 router.get('/top-sales-products', (_req: Request, res: Response) => {
-  const statsFile = path.resolve(__dirname, '../../data/overview-stats.json');
+  const statsFile = resolveFilesInDataPath("overview-stats.json");
   if (fs.existsSync(statsFile)) {
     try {
       const json = fs.readFileSync(statsFile, 'utf-8');
@@ -565,7 +562,7 @@ router.get('/monthly-stock-change/:productModel', (req: Request, res: Response) 
     });
   }
 
-  const statsFile = path.resolve(__dirname, '../../data/overview-stats.json');
+  const statsFile = resolveFilesInDataPath("overview-stats.json");
   if (fs.existsSync(statsFile)) {
     try {
       const json = fs.readFileSync(statsFile, 'utf-8');

@@ -3,11 +3,8 @@
  * 为 SPA 应用提供静态文件服务和路由回退
  */
 import express, { type Application } from 'express';
-import { fileURLToPath } from 'url';
 import path from 'path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { getAppRoot } from '@/utils/paths';
 
 /**
  * 配置前端静态资源服务
@@ -15,7 +12,7 @@ const __dirname = path.dirname(__filename);
  */
 function setupFrontend(app: Application): void {
   // 假设前端已构建到 frontend/dist
-  const frontendDist = path.resolve(__dirname, '../../frontend/dist');
+  const frontendDist = path.resolve(getAppRoot(), '../frontend');
   app.use(express.static(frontendDist));
   
   // Express 5.x 推荐用 '/*' 作为 SPA 兜底路由

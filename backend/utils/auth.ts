@@ -3,20 +3,16 @@
  */
 import fs from 'fs-extra';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import argon2 from 'argon2';
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '@/utils/logger';
+import { resolveFilesInDataPath } from '@/utils/paths';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const dataDir: string = path.resolve(__dirname, "../../data");
-const usersPath: string = path.join(dataDir, "users.json");
-const secretPath: string = path.join(dataDir, "jwt-secret.txt");
-const appConfigPath: string = path.join(dataDir, "appConfig.json");
+const usersPath: string = resolveFilesInDataPath("users.json");
+const secretPath: string = resolveFilesInDataPath("jwt-secret.txt");
+const appConfigPath: string = resolveFilesInDataPath("appConfig.json");
 
 interface UserData {
   username: string;

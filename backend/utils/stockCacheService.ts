@@ -4,16 +4,13 @@
  */
 import db from '@/db.js';
 import fs from 'fs';
-import { fileURLToPath } from 'url';
 import path from 'path';
 import { logger } from '@/utils/logger.js';
 import decimalCalc from '@/utils/decimalCalculator.js';
 import type Decimal from 'decimal.js';
+import {resolveFilesInDataPath} from '@/utils/paths';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const STOCK_CACHE_FILE = path.resolve(__dirname, '../../data/stock-summary.json');
+const STOCK_CACHE_FILE = resolveFilesInDataPath('stock-summary.json');
 
 /**
  * 产品库存数据接口
