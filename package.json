@@ -5,14 +5,15 @@
   "description": "a lightweight tradeflow System",
   "scripts": {
     "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
+    "ci:all": "npm ci && cd frontend && npm ci && cd ../backend && npm ci",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:frontend": "cd frontend && npm run dev",
     "dev:backend": "cd backend && npm run dev",
     "build": "node \"scripts/build/pre-build.js\" && cd frontend && npm run build && cd ../backend && npm run build && cd .. && npm run build:post-build",
     "build:post-build": "node \"./scripts/build/post-build-global.js\"",
-    "start": "cd dist && npm start"
+    "start": "cd dist && cross-env NODE_ENV=production backend/server/.js"
   },
-  "dependencies": {
+  "devDependencies": {
     "argon2": "^0.44.0",
     "concurrently": "^9.2.1",
     "fs-extra": "^11.3.0",

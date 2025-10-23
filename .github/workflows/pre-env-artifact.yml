@@ -16,7 +16,7 @@ jobs:
           cache: "npm"
       - name: Install dependencies and build project
         run: |
-          npm run install:all
+          npm run ci:all
           mkdir -p data
           cp -r config-example/* data
           npm run build

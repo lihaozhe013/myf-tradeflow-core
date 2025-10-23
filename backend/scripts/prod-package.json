@@ -16,7 +16,7 @@
     "multer": "^2.0.1",
     "sqlite3": "^5.1.7",
     "winston": "^3.18.3",
-    "xlsx": "^0.18.5"
+    "xlsx": "https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz"
   },
   "engines": {
     "node": ">=22.0.0",
