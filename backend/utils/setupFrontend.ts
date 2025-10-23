@@ -11,8 +11,8 @@ import { getAppRoot } from '@/utils/paths';
  * @param app Express 应用实例
  */
 function setupFrontend(app: Application): void {
-  // 假设前端已构建到 frontend/dist
-  const frontendDist = path.resolve(getAppRoot(), '../frontend');
+  // 前端构建产物位于 dist/frontend（以 dist 为 app root）
+  const frontendDist = path.resolve(getAppRoot(), 'frontend');
   app.use(express.static(frontendDist));
   
   // Express 5.x 推荐用 '/*' 作为 SPA 兜底路由
