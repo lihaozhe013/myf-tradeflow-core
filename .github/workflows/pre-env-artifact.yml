@@ -1,0 +1,121 @@
+name: Node.js CI
+on:
+  push:
+    branches:
+      - master
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Use Node.js 24.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+          cache: "npm"
+      - name: Install dependencies and build project
+        run: |
+          npm run install:all
+          mkdir -p data
+          cp -r config-example/* data
+          npm run build
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pre-env-build-artifacts
+          path: ./dist/
+  cleanup:
+    if: github.event_name != 'pull_request' && success()
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Delete previous workflow runs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: workflows } = await github.rest.actions.listRepoWorkflows({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+
+            for (const workflow of workflows.workflows) {
+              const { data: runs } = await github.rest.actions.listWorkflowRuns({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: workflow.id,
+                per_page: 100
+              });
+              
+              // 保留最新的3次运行, 删除其余的
+              const runsToDelete = runs.workflow_runs.slice(3);
+              
+              for (const run of runsToDelete) {
+                try {
+                  await github.rest.actions.deleteWorkflowRun({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    run_id: run.id,
+                  });
+                  console.log(`Deleted workflow run: ${run.id}`);
+                } catch (error) {
+                  console.log(`Failed to delete workflow run ${run.id}: ${error.message}`);
+                }
+              }
+            }
+
+      - name: Delete old artifacts
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: artifacts } = await github.rest.actions.listArtifactsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100
+            });
+
+            // 保留最新的3个artifact, 删除其余的
+            const artifactsToDelete = artifacts.artifacts.slice(3);
+
+            for (const artifact of artifactsToDelete) {
+              try {
+                await github.rest.actions.deleteArtifact({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  artifact_id: artifact.id,
+                });
+                console.log(`Deleted artifact: ${artifact.name} (${artifact.id})`);
+              } catch (error) {
+                console.log(`Failed to delete artifact ${artifact.id}: ${error.message}`);
+              }
+            }
+
+      - name: Delete old caches
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              const { data: caches } = await github.rest.actions.getActionsCacheList({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 100
+              });
+              
+              // 保留最新的3个缓存,删除其余的
+              const cachesToDelete = caches.actions_caches.slice(3);
+              
+              for (const cache of cachesToDelete) {
+                try {
+                  await github.rest.actions.deleteActionsCacheById({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    cache_id: cache.id,
+                  });
+                  console.log(`Deleted cache: ${cache.key} (${cache.id})`);
+                } catch (error) {
+                  console.log(`Failed to delete cache ${cache.id}: ${error.message}`);
+                }
+              }
+            } catch (error) {
+              console.log(`Failed to list caches: ${error.message}`);
+            }
