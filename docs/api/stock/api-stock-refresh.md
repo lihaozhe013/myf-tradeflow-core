@@ -1,7 +1,7 @@
-## `/api/stock/refresh`
+## `/api/inventory/refresh`
 
 ### POST
-POST /api/stock/refresh
+POST /api/inventory/refresh
 
 Authorization: Bearer <token>
 

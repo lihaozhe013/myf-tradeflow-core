@@ -15,7 +15,7 @@ import type { MenuProps, SelectProps } from 'antd';
 import { GlobalOutlined, UserOutlined, LogoutOutlined } from '@ant-design/icons';
 import Inbound from '@/pages/Inbound';
 import Outbound from '@/pages/Outbound';
-import Stock from '@/pages/Stock';
+import Inventory from '@/pages/Inventory';
 import Partners from '@/pages/Partners';
 import Products from '@/pages/Products';
 import ProductPrices from '@/pages/ProductPrices';
@@ -235,7 +235,7 @@ type MenuKey =
   | 'overview'
   | 'inbound'
   | 'outbound'
-  | 'stock'
+  | 'inventory'
   | 'partners'
   | 'products'
   | 'product-prices'
@@ -255,7 +255,7 @@ function AppContentInner({ location, t }: AppContentInnerProps): React.ReactElem
     if (path === '/overview' || path === '/') return 'overview';
     if (path === '/inbound') return 'inbound';
     if (path === '/outbound') return 'outbound';
-    if (path === '/stock') return 'stock';
+    if (path === '/inventory') return 'inventory';
     if (path === '/partners') return 'partners';
     if (path === '/products') return 'products';
     if (path === '/product-prices') return 'product-prices';
@@ -292,10 +292,10 @@ function AppContentInner({ location, t }: AppContentInnerProps): React.ReactElem
       ),
     },
     {
-      key: 'stock',
+      key: 'inventory',
       label: (
-        <Link to="/stock" style={{ fontWeight: 'bold' }}>
-          {t('nav.stock')}
+        <Link to="/inventory" style={{ fontWeight: 'bold' }}>
+          {t('nav.inventory')}
         </Link>
       ),
     },
@@ -398,7 +398,7 @@ function AppContentInner({ location, t }: AppContentInnerProps): React.ReactElem
               <Route path="/overview" element={<Overview />} />
               <Route path="/inbound" element={<Inbound />} />
               <Route path="/outbound" element={<Outbound />} />
-              <Route path="/stock" element={<Stock />} />
+              <Route path="/inventory" element={<Inventory />} />
               <Route path="/partners" element={<Partners />} />
               <Route path="/products" element={<Products />} />
               <Route path="/product-prices" element={<ProductPrices />} />

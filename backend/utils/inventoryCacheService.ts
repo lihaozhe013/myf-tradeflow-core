@@ -1,5 +1,5 @@
 /**
- * Stock Cache Service
+ * Inventory Cache Service
  * Calculate inventory from the database and cache management
  */
 import db from "@/db.js";
@@ -10,28 +10,28 @@ import decimalCalc from "@/utils/decimalCalculator.js";
 import type Decimal from "decimal.js";
 import { resolveFilesInDataPath } from "@/utils/paths";
 
-const STOCK_CACHE_FILE = resolveFilesInDataPath("stock-summary.json");
+const INVENTORY_CACHE_FILE = resolveFilesInDataPath("inventory-summary.json");
 
-interface ProductStockData {
-  current_stock: number;
+interface ProductInventoryData {
+  current_inventory: number;
   last_inbound: string | null;
   last_outbound: string | null;
 }
 
-interface StockMapItem {
+interface InventoryMapItem {
   inbound: number;
   outbound: number;
 }
 
-interface StockCacheData {
+interface InventoryCacheData {
   last_updated: string;
-  products: Record<string, ProductStockData>;
+  products: Record<string, ProductInventoryData>;
   total_cost_estimate?: number;
 }
 
-interface StockSummaryItem {
+interface InventorySummaryItem {
   product_model: string;
-  current_stock: number;
+  current_inventory: number;
   last_inbound: string | null;
   last_outbound: string | null;
   last_update: string;
@@ -66,26 +66,26 @@ interface DateRow {
 type ErrorCallback<T> = (err: Error | null, result?: T) => void;
 
 /**
- * @param stockData
+ * @param inventoryData
  * @param callback
  */
 function calculateTotalCostEstimate(
-  stockData: StockCacheData,
+  inventoryData: InventoryCacheData,
   callback: ErrorCallback<number>
 ): void {
   // Get all products with available inventory
-  const productsWithStock = Object.entries(stockData.products).filter(
-    ([_model, data]) => data.current_stock > 0
+  const productsWithInventory = Object.entries(inventoryData.products).filter(
+    ([_model, data]) => data.current_inventory > 0
   );
 
-  if (productsWithStock.length === 0) {
+  if (productsWithInventory.length === 0) {
     return callback(null, 0);
   }
 
   let totalCost: Decimal = decimalCalc.decimal(0);
   let completedQueries = 0;
 
-  productsWithStock.forEach(([productModel, productData]) => {
+  productsWithInventory.forEach(([productModel, productData]) => {
     // Retrieve the latest unit price for this product (using the most recent unit price from the inventory records)
     // Use this unit price to better estimate the latest revenue
     db.get<UnitPriceRow>(
@@ -94,14 +94,14 @@ function calculateTotalCostEstimate(
       (err, row) => {
         if (!err && row && row.unit_price) {
           const productCost = decimalCalc.multiply(
-            productData.current_stock,
+            productData.current_inventory,
             row.unit_price
           );
           totalCost = decimalCalc.add(totalCost, productCost);
         }
 
         completedQueries++;
-        if (completedQueries === productsWithStock.length) {
+        if (completedQueries === productsWithInventory.length) {
           callback(null, decimalCalc.toNumber(totalCost, 2));
         }
       }
@@ -112,10 +112,10 @@ function calculateTotalCostEstimate(
 /**
  * @param callback
  */
-function calculateStockFromRecords(
-  callback: ErrorCallback<StockCacheData>
+function calculateInventoryFromRecords(
+  callback: ErrorCallback<InventoryCacheData>
 ): void {
-  const stockMap: Record<string, StockMapItem> = {};
+  const inventoryMap: Record<string, InventoryMapItem> = {};
   let completed = 0;
   const totalQueries = 2;
 
@@ -126,15 +126,15 @@ function calculateStockFromRecords(
       if (err) return callback(err);
 
       inboundRows.forEach((row) => {
-        if (!stockMap[row.product_model]) {
-          stockMap[row.product_model] = { inbound: 0, outbound: 0 };
+        if (!inventoryMap[row.product_model]) {
+          inventoryMap[row.product_model] = { inbound: 0, outbound: 0 };
         }
-        stockMap[row.product_model]!.inbound = row.total_inbound || 0;
+        inventoryMap[row.product_model]!.inbound = row.total_inbound || 0;
       });
 
       completed++;
       if (completed === totalQueries) {
-        processStockData();
+        processInventoryData();
       }
     }
   );
@@ -146,26 +146,26 @@ function calculateStockFromRecords(
       if (err) return callback(err);
 
       outboundRows.forEach((row) => {
-        if (!stockMap[row.product_model]) {
-          stockMap[row.product_model] = { inbound: 0, outbound: 0 };
+        if (!inventoryMap[row.product_model]) {
+          inventoryMap[row.product_model] = { inbound: 0, outbound: 0 };
         }
-        stockMap[row.product_model]!.outbound = row.total_outbound || 0;
+        inventoryMap[row.product_model]!.outbound = row.total_outbound || 0;
       });
 
       completed++;
       if (completed === totalQueries) {
-        processStockData();
+        processInventoryData();
       }
     }
   );
 
-  function processStockData(): void {
+  function processInventoryData(): void {
     // Retrieve the last date of inventory receipt and last date of inventory issuance
     let productQueries = 0;
-    const productList = Object.keys(stockMap);
+    const productList = Object.keys(inventoryMap);
 
     if (productList.length === 0) {
-      // No stock data
+      // No inventory data
       return callback(null, {
         last_updated: new Date().toISOString(),
         products: {},
@@ -173,13 +173,13 @@ function calculateStockFromRecords(
       });
     }
 
-    const finalProductsMap: Record<string, ProductStockData> = {};
+    const finalProductsMap: Record<string, ProductInventoryData> = {};
 
     productList.forEach((productModel) => {
       let productCompleted = 0;
-      const stockItem = stockMap[productModel]!;
-      const productData: ProductStockData = {
-        current_stock: stockItem.inbound - stockItem.outbound,
+      const inventoryItem = inventoryMap[productModel]!;
+      const productData: ProductInventoryData = {
+        current_inventory: inventoryItem.inbound - inventoryItem.outbound,
         last_inbound: null,
         last_outbound: null,
       };
@@ -225,22 +225,22 @@ function calculateStockFromRecords(
 
     function finalizeCacheData(): void {
       // Calculate Total Cost Estimate
-      const finalStockData: StockCacheData = {
+      const finalInventoryData: InventoryCacheData = {
         last_updated: new Date().toISOString(),
         products: finalProductsMap,
       };
 
       calculateTotalCostEstimate(
-        finalStockData,
+        finalInventoryData,
         (costErr, totalCostEstimate) => {
           if (costErr) {
             logger.error("Calculate Total Cost Estimate Failed", { error: costErr.message });
-            finalStockData.total_cost_estimate = 0;
+            finalInventoryData.total_cost_estimate = 0;
           } else {
-            finalStockData.total_cost_estimate = totalCostEstimate;
+            finalInventoryData.total_cost_estimate = totalCostEstimate;
           }
 
-          callback(null, finalStockData);
+          callback(null, finalInventoryData);
         }
       );
     }
@@ -250,20 +250,20 @@ function calculateStockFromRecords(
 /**
  * @param callback
  */
-function refreshStockCache(callback: ErrorCallback<StockCacheData>): void {
-  calculateStockFromRecords((err, stockData) => {
+function refreshInventoryCache(callback: ErrorCallback<InventoryCacheData>): void {
+  calculateInventoryFromRecords((err, inventoryData) => {
     if (err) return callback(err);
 
     try {
       // ensure data dir exist
-      const dataDir = path.dirname(STOCK_CACHE_FILE);
+      const dataDir = path.dirname(INVENTORY_CACHE_FILE);
       if (!fs.existsSync(dataDir)) {
         fs.mkdirSync(dataDir, { recursive: true });
       }
 
       // write cache to file
-      fs.writeFileSync(STOCK_CACHE_FILE, JSON.stringify(stockData, null, 2));
-      callback(null, stockData);
+      fs.writeFileSync(INVENTORY_CACHE_FILE, JSON.stringify(inventoryData, null, 2));
+      callback(null, inventoryData);
     } catch (writeErr) {
       callback(writeErr as Error);
     }
@@ -273,27 +273,27 @@ function refreshStockCache(callback: ErrorCallback<StockCacheData>): void {
 /**
  * @param callback
  */
-function getStockCache(callback: ErrorCallback<StockCacheData>): void {
+function getInventoryCache(callback: ErrorCallback<InventoryCacheData>): void {
   try {
-    if (!fs.existsSync(STOCK_CACHE_FILE)) {
+    if (!fs.existsSync(INVENTORY_CACHE_FILE)) {
       logger.warn("The cache do not exist, attempting to refresh the cache");
-      return refreshStockCache((refreshErr) => {
+      return refreshInventoryCache((refreshErr) => {
         if (refreshErr) {
           logger.error("refresh (cache) failed", { error: refreshErr.message });
           return callback(
             new Error("Inventory cache does not exist and refresh failed!")
           );
         }
-        getStockCache(callback);
+        getInventoryCache(callback);
       });
     }
 
-    const data = fs.readFileSync(STOCK_CACHE_FILE, "utf8");
-    const stockData = JSON.parse(data) as StockCacheData;
-    callback(null, stockData);
+    const data = fs.readFileSync(INVENTORY_CACHE_FILE, "utf8");
+    const inventoryData = JSON.parse(data) as InventoryCacheData;
+    callback(null, inventoryData);
   } catch (err) {
     const error = err as Error;
-    logger.error("Failed to read stock cache", { error: error.message });
+    logger.error("Failed to read inventory cache", { error: error.message });
     callback(error);
   }
 }
@@ -304,19 +304,19 @@ function getStockCache(callback: ErrorCallback<StockCacheData>): void {
  * @param limit
  * @param callback
  */
-function getStockSummary(
+function getInventorySummary(
   productModel: string | null,
   page: number = 1,
   limit: number = 10,
   callback: ErrorCallback<{
-    data: StockSummaryItem[];
+    data: InventorySummaryItem[];
     pagination: PaginationInfo;
   }>
 ): void {
-  getStockCache((err, stockData) => {
+  getInventoryCache((err, inventoryData) => {
     if (err) return callback(err);
 
-    let products = Object.entries(stockData!.products);
+    let products = Object.entries(inventoryData!.products);
 
     if (productModel) {
       products = products.filter(([model]) =>
@@ -328,13 +328,13 @@ function getStockSummary(
     const offset = (page - 1) * limit;
     const pagedProducts = products.slice(offset, offset + limit);
 
-    const result: StockSummaryItem[] = pagedProducts.map(
+    const result: InventorySummaryItem[] = pagedProducts.map(
       ([product_model, data]) => ({
         product_model,
-        current_stock: data.current_stock,
+        current_inventory: data.current_inventory,
         last_inbound: data.last_inbound,
         last_outbound: data.last_outbound,
-        last_update: stockData!.last_updated,
+        last_update: inventoryData!.last_updated,
       })
     );
 
@@ -353,16 +353,16 @@ function getStockSummary(
 /**
  * @param callback
  */
-function getAllStockData(
-  callback: ErrorCallback<Record<string, ProductStockData>>
+function getAllInventoryData(
+  callback: ErrorCallback<Record<string, ProductInventoryData>>
 ): void {
-  getStockCache((err, stockData) => {
+  getInventoryCache((err, inventoryData) => {
     if (err) {
       logger.error("Failed to retrieve inventory data", { error: err.message });
       return callback(err);
     }
-    callback(null, stockData!.products);
+    callback(null, inventoryData!.products);
   });
 }
 
-export { refreshStockCache, getStockCache, getStockSummary, getAllStockData };
+export { refreshInventoryCache, getInventoryCache, getInventorySummary, getAllInventoryData };

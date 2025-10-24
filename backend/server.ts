@@ -13,7 +13,7 @@ import { authenticateToken, checkWritePermission } from "@/utils/auth";
 import overviewRoutes from "@/routes/overview";
 import inboundRoutes from "@/routes/inbound";
 import outboundRoutes from "@/routes/outbound";
-import stockRoutes from "@/routes/stock";
+import inventoryRoutes from "@/routes/inventory";
 import partnersRoutes from "@/routes/partners";
 import productsRoutes from "@/routes/products";
 import productPricesRoutes from "@/routes/productPrices";
@@ -98,7 +98,7 @@ app.use("/api", (req, res, next) => {
 app.use("/api/overview", overviewRoutes);
 app.use("/api/inbound", inboundRoutes);
 app.use("/api/outbound", outboundRoutes);
-app.use("/api/stock", stockRoutes);
+app.use("/api/inventory", inventoryRoutes);
 app.use("/api/partners", partnersRoutes);
 app.use("/api/products", productsRoutes);
 app.use("/api/product-prices", productPricesRoutes);

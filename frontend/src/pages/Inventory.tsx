@@ -19,11 +19,11 @@ import { useSimpleApi, useSimpleApiData } from '@/hooks/useSimpleApi';
 
 const { Title } = Typography;
 
-type StockStatusColor = 'green' | 'orange' | 'red';
+type InventoryStatusColor = 'green' | 'orange' | 'red';
 
-type StockItem = {
+type InventoryItem = {
   readonly product_model?: string;
-  readonly current_stock?: number;
+  readonly current_inventory?: number;
   readonly last_update?: string;
 };
 
@@ -33,8 +33,8 @@ type PaginationInfo = {
   readonly total: number;
 };
 
-type StockResponse = {
-  readonly data: StockItem[];
+type InventoryResponse = {
+  readonly data: InventoryItem[];
   readonly pagination?: PaginationInfo;
 };
 
@@ -48,14 +48,14 @@ const DEFAULT_PAGINATION: PaginationInfo = {
   total: 0,
 };
 
-const Stock: FC = () => {
+const Inventory: FC = () => {
   const [productFilter, setProductFilter] = useState('');
   const [pagination, setPagination] = useState<PaginationInfo>(DEFAULT_PAGINATION);
   const { t } = useTranslation();
 
   const { post, loading: actionLoading } = useSimpleApi();
 
-  const buildStockUrl = useCallback(() => {
+  const buildInventoryUrl = useCallback(() => {
     const params = new URLSearchParams({
       page: pagination.current.toString(),
     });
@@ -64,14 +64,14 @@ const Stock: FC = () => {
       params.append('product_model', productFilter);
     }
 
-    return `/stock?${params.toString()}`;
+    return `/inventory?${params.toString()}`;
   }, [pagination, productFilter]);
 
   const {
-    data: stockResponse,
+    data: inventoryResponse,
     loading,
-    refetch: refreshStock,
-  } = useSimpleApiData<StockResponse>(buildStockUrl(), {
+    refetch: refreshInventory,
+  } = useSimpleApiData<InventoryResponse>(buildInventoryUrl(), {
     data: [],
     pagination: DEFAULT_PAGINATION,
   });
@@ -79,33 +79,33 @@ const Stock: FC = () => {
   const {
     data: totalCostResponse,
     refetch: refreshTotalCost,
-  } = useSimpleApiData<TotalCostResponse>('/stock/total-cost-estimate', {
+  } = useSimpleApiData<TotalCostResponse>('/inventory/total-cost-estimate', {
     total_cost_estimate: 0,
   });
 
-  const stockData = useMemo<StockItem[]>(() => {
-    return stockResponse?.data ?? [];
-  }, [stockResponse?.data]);
+  const inventoryData = useMemo<InventoryItem[]>(() => {
+    return inventoryResponse?.data ?? [];
+  }, [inventoryResponse?.data]);
 
   const totalCostEstimate = totalCostResponse?.total_cost_estimate ?? 0;
 
   useEffect(() => {
-    if (!stockResponse?.pagination) {
+    if (!inventoryResponse?.pagination) {
       return;
     }
 
     setPagination(prev => ({
-      current: stockResponse.pagination?.current ?? prev.current,
-      pageSize: stockResponse.pagination?.pageSize ?? prev.pageSize,
-      total: stockResponse.pagination?.total ?? prev.total,
+      current: inventoryResponse.pagination?.current ?? prev.current,
+      pageSize: inventoryResponse.pagination?.pageSize ?? prev.pageSize,
+      total: inventoryResponse.pagination?.total ?? prev.total,
     }));
-  }, [stockResponse]);
+  }, [inventoryResponse]);
 
   const handleRefreshCache = async (): Promise<void> => {
     try {
-      await post('/stock/refresh', {});
-      message.success(t('stock.recalculated'));
-      refreshStock();
+      await post('/inventory/refresh', {});
+      message.success(t('inventory.recalculated'));
+      refreshInventory();
       refreshTotalCost();
     } catch {
       // 错误已经在 useSimpleApi 中处理
@@ -118,30 +118,30 @@ const Stock: FC = () => {
     setPagination(prev => ({ ...prev, current: 1 }));
   };
 
-  const handleTableChange: TableProps<StockItem>['onChange'] = paginationConfig => {
+  const handleTableChange: TableProps<InventoryItem>['onChange'] = paginationConfig => {
     setPagination(prev => ({
       ...prev,
       current: paginationConfig.current ?? prev.current,
     }));
   };
 
-  const stockColumns: ColumnsType<StockItem> = [
+  const inventoryColumns: ColumnsType<InventoryItem> = [
     {
-      title: t('stock.productModel'),
+      title: t('inventory.productModel'),
       dataIndex: 'product_model',
       key: 'product_model',
       width: 200,
       sorter: (a, b) => (a.product_model ?? '').localeCompare(b.product_model ?? ''),
     },
     {
-      title: t('stock.currentStock'),
-      dataIndex: 'current_stock',
-      key: 'current_stock',
+      title: t('inventory.currentInventory'),
+      dataIndex: 'current_inventory',
+      key: 'current_inventory',
       width: 120,
-      sorter: (a, b) => (a.current_stock ?? 0) - (b.current_stock ?? 0),
+      sorter: (a, b) => (a.current_inventory ?? 0) - (b.current_inventory ?? 0),
       render: quantity => {
         const value = quantity ?? 0;
-        let color: StockStatusColor = 'green';
+        let color: InventoryStatusColor = 'green';
 
         if (value === 0) {
           color = 'red';
@@ -153,25 +153,25 @@ const Stock: FC = () => {
       },
     },
     {
-      title: t('stock.status'),
-      key: 'stock_status',
+      title: t('inventory.status'),
+      key: 'inventory_status',
       width: 100,
       render: (_, record) => {
-        const quantity = record.current_stock ?? 0;
+        const quantity = record.current_inventory ?? 0;
 
         if (quantity === 0) {
-          return <Tag color="red">{t('stock.outOfStock')}</Tag>;
+          return <Tag color="red">{t('inventory.outOfInventory')}</Tag>;
         }
 
         if (quantity < 10) {
-          return <Tag color="orange">{t('stock.lowStock')}</Tag>;
+          return <Tag color="orange">{t('inventory.lowInventory')}</Tag>;
         }
 
-        return <Tag color="green">{t('stock.normal')}</Tag>;
+        return <Tag color="green">{t('inventory.normal')}</Tag>;
       },
     },
     {
-      title: t('stock.lastUpdate'),
+      title: t('inventory.lastUpdate'),
       dataIndex: 'last_update',
       key: 'last_update',
       width: 180,
@@ -185,13 +185,13 @@ const Stock: FC = () => {
         <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
           <Col>
             <Title level={2} style={{ margin: 0 }}>
-              {t('stock.title')}
+              {t('inventory.title')}
             </Title>
           </Col>
           <Col>
             <Space>
               <Input
-                placeholder={t('stock.searchProductModel')}
+                placeholder={t('inventory.searchProductModel')}
                 prefix={<SearchOutlined />}
                 value={productFilter}
                 onChange={handleProductFilterChange}
@@ -204,7 +204,7 @@ const Stock: FC = () => {
                 onClick={handleRefreshCache}
                 loading={actionLoading}
               >
-                {t('stock.recalculate')}
+                {t('inventory.recalculate')}
               </Button>
             </Space>
           </Col>
@@ -225,7 +225,7 @@ const Stock: FC = () => {
         >
           <Col>
             <Space>
-              <strong>{t('stock.totalCostEstimate')}: </strong>
+              <strong>{t('inventory.totalCostEstimate')}: </strong>
               <Tag color="blue" style={{ fontSize: '14px', padding: '4px 8px' }}>
                 ¥
                 {totalCostEstimate.toLocaleString('en-US', {
@@ -238,9 +238,9 @@ const Stock: FC = () => {
         </Row>
 
         <div className="responsive-table">
-          <Table<StockItem>
-            columns={stockColumns}
-            dataSource={stockData}
+          <Table<InventoryItem>
+            columns={inventoryColumns}
+            dataSource={inventoryData}
             rowKey="product_model"
             loading={loading}
             onChange={handleTableChange}
@@ -250,7 +250,7 @@ const Stock: FC = () => {
               total: pagination.total,
               showQuickJumper: true,
               showTotal: (total, range) =>
-                t('stock.paginationTotal', {
+                t('inventory.paginationTotal', {
                   start: range[0],
                   end: range[1],
                   total,
@@ -264,4 +264,4 @@ const Stock: FC = () => {
   );
 };
 
-export default Stock;
+export default Inventory;

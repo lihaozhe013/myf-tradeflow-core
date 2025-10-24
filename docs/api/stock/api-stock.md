@@ -1,7 +1,7 @@
-## `/api/stock`
+## `/api/inventory`
 
 ### GET
-GET /api/stock?page=1&pageSize=10&product_model=iPhone
+GET /api/inventory?page=1&pageSize=10&product_model=iPhone
 
 Authorization: Bearer <token>
 
@@ -11,7 +11,7 @@ Response:
   "data": [
     {
       "product_model": "iPhone 15",
-      "current_stock": 100,
+      "current_inventory": 100,
       "last_inbound": "2025-08-18",
       "last_outbound": "2025-08-17"
     }

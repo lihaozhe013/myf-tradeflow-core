@@ -12,7 +12,7 @@
 `/api/auth/logout`
 `/api/outbound`
 `/api/overview/stats`
-`/api/overview/monthly-stock-change`
+`/api/overview/monthly-inventory-change`
 `/api/overview/top-sales-products`
 `/api/partners`
 `/api/payable`
@@ -24,6 +24,6 @@
 `/api/receivable`
 `/api/receivable/payments`
 `/api/receivable/details`
-`/api/stock/refresh`
-`/api/stock/total-cost-estimate`
-`/api/stock`
+`/api/inventory/refresh`
+`/api/inventory/total-cost-estimate`
+`/api/inventory`
