@@ -1,15 +1,30 @@
-// 交易数据查询模块（TS + ESM）
-import db from '@/db';
+import db from "@/db";
 
 export default class TransactionQueries {
   async getInboundOutboundData(filters: any = {}): Promise<any> {
-    const { tables = '12', dateFrom, dateTo, productCode, customerCode } = filters || {};
+    const {
+      tables = "12",
+      dateFrom,
+      dateTo,
+      productCode,
+      customerCode,
+    } = filters || {};
     const result: any = {};
-    if (tables.includes('1')) {
-      result.inbound = await this.getInboundData({ dateFrom, dateTo, productCode, customerCode });
+    if (tables.includes("1")) {
+      result.inbound = await this.getInboundData({
+        dateFrom,
+        dateTo,
+        productCode,
+        customerCode,
+      });
     }
-    if (tables.includes('2')) {
-      result.outbound = await this.getOutboundData({ dateFrom, dateTo, productCode, customerCode });
+    if (tables.includes("2")) {
+      result.outbound = await this.getOutboundData({
+        dateFrom,
+        dateTo,
+        productCode,
+        customerCode,
+      });
     }
     return result;
   }
@@ -24,12 +39,27 @@ export default class TransactionQueries {
         WHERE 1=1
       `;
       const params: any[] = [];
-      if (filters.dateFrom) { sql += ' AND inbound_date >= ?'; params.push(filters.dateFrom); }
-      if (filters.dateTo) { sql += ' AND inbound_date <= ?'; params.push(filters.dateTo); }
-      if (filters.productCode) { sql += ' AND (product_code LIKE ? OR product_model LIKE ?)'; params.push(`%${filters.productCode}%`, `%${filters.productCode}%`); }
-      if (filters.customerCode) { sql += ' AND (supplier_code LIKE ? OR supplier_short_name LIKE ?)'; params.push(`%${filters.customerCode}%`, `%${filters.customerCode}%`); }
-      sql += ' ORDER BY inbound_date DESC, id DESC';
-      db.all(sql, params, (err: any, rows: any[]) => { if (err) reject(err); else resolve(rows || []); });
+      if (filters.dateFrom) {
+        sql += " AND inbound_date >= ?";
+        params.push(filters.dateFrom);
+      }
+      if (filters.dateTo) {
+        sql += " AND inbound_date <= ?";
+        params.push(filters.dateTo);
+      }
+      if (filters.productCode) {
+        sql += " AND (product_code LIKE ? OR product_model LIKE ?)";
+        params.push(`%${filters.productCode}%`, `%${filters.productCode}%`);
+      }
+      if (filters.customerCode) {
+        sql += " AND (supplier_code LIKE ? OR supplier_short_name LIKE ?)";
+        params.push(`%${filters.customerCode}%`, `%${filters.customerCode}%`);
+      }
+      sql += " ORDER BY inbound_date DESC, id DESC";
+      db.all(sql, params, (err: any, rows: any[]) => {
+        if (err) reject(err);
+        else resolve(rows || []);
+      });
     });
   }
 
@@ -43,12 +73,27 @@ export default class TransactionQueries {
         WHERE 1=1
       `;
       const params: any[] = [];
-      if (filters.dateFrom) { sql += ' AND outbound_date >= ?'; params.push(filters.dateFrom); }
-      if (filters.dateTo) { sql += ' AND outbound_date <= ?'; params.push(filters.dateTo); }
-      if (filters.productCode) { sql += ' AND (product_code LIKE ? OR product_model LIKE ?)'; params.push(`%${filters.productCode}%`, `%${filters.productCode}%`); }
-      if (filters.customerCode) { sql += ' AND (customer_code LIKE ? OR customer_short_name LIKE ?)'; params.push(`%${filters.customerCode}%`, `%${filters.customerCode}%`); }
-      sql += ' ORDER BY outbound_date DESC, id DESC';
-      db.all(sql, params, (err: any, rows: any[]) => { if (err) reject(err); else resolve(rows || []); });
+      if (filters.dateFrom) {
+        sql += " AND outbound_date >= ?";
+        params.push(filters.dateFrom);
+      }
+      if (filters.dateTo) {
+        sql += " AND outbound_date <= ?";
+        params.push(filters.dateTo);
+      }
+      if (filters.productCode) {
+        sql += " AND (product_code LIKE ? OR product_model LIKE ?)";
+        params.push(`%${filters.productCode}%`, `%${filters.productCode}%`);
+      }
+      if (filters.customerCode) {
+        sql += " AND (customer_code LIKE ? OR customer_short_name LIKE ?)";
+        params.push(`%${filters.customerCode}%`, `%${filters.customerCode}%`);
+      }
+      sql += " ORDER BY outbound_date DESC, id DESC";
+      db.all(sql, params, (err: any, rows: any[]) => {
+        if (err) reject(err);
+        else resolve(rows || []);
+      });
     });
   }
 }

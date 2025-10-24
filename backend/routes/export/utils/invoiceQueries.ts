@@ -1,10 +1,9 @@
-// 发票数据查询模块（TS + ESM）
-import db from '@/db';
+import db from "@/db";
 
 export default class InvoiceQueries {
   async getInvoiceData(filters: any = {}): Promise<any[]> {
     const { partnerCode, dateFrom, dateTo } = filters || {};
-    if (!partnerCode) throw new Error('合作伙伴代号是必填项');
+    if (!partnerCode) throw new Error("Partner Code is required");
     return new Promise((resolve, reject) => {
       let sql = `
         SELECT 
@@ -20,8 +19,8 @@ export default class InvoiceQueries {
             total_price
           FROM inbound_records 
           WHERE (supplier_code = ? OR supplier_short_name = ?)
-          ${dateFrom ? 'AND inbound_date >= ?' : ''}
-          ${dateTo ? 'AND inbound_date <= ?' : ''}
+          ${dateFrom ? "AND inbound_date >= ?" : ""}
+          ${dateTo ? "AND inbound_date <= ?" : ""}
           UNION ALL
           SELECT 
             product_model,
@@ -30,8 +29,8 @@ export default class InvoiceQueries {
             total_price
           FROM outbound_records 
           WHERE (customer_code = ? OR customer_short_name = ?)
-          ${dateFrom ? 'AND outbound_date >= ?' : ''}
-          ${dateTo ? 'AND outbound_date <= ?' : ''}
+          ${dateFrom ? "AND outbound_date >= ?" : ""}
+          ${dateTo ? "AND outbound_date <= ?" : ""}
         ) as combined_records
         GROUP BY product_model, unit_price
         ORDER BY product_model, unit_price
@@ -42,7 +41,10 @@ export default class InvoiceQueries {
       params.push(partnerCode, partnerCode);
       if (dateFrom) params.push(dateFrom);
       if (dateTo) params.push(dateTo);
-      db.all(sql, params, (err: any, rows: any[]) => { if (err) reject(err); else resolve(rows || []); });
+      db.all(sql, params, (err: any, rows: any[]) => {
+        if (err) reject(err);
+        else resolve(rows || []);
+      });
     });
   }
 }

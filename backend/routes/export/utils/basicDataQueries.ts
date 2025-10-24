@@ -1,12 +1,11 @@
-// 基础数据查询模块（TS + ESM）
-import db from '@/db';
+import db from "@/db";
 
 export default class BasicDataQueries {
-  async getBaseInfoData(tables: string = '123'): Promise<any> {
+  async getBaseInfoData(tables: string = "123"): Promise<any> {
     const result: any = {};
-    if (tables.includes('1')) result.partners = await this.getPartnersData();
-    if (tables.includes('2')) result.products = await this.getProductsData();
-    if (tables.includes('3')) result.prices = await this.getPricesData();
+    if (tables.includes("1")) result.partners = await this.getPartnersData();
+    if (tables.includes("2")) result.products = await this.getProductsData();
+    if (tables.includes("3")) result.prices = await this.getPricesData();
     return result;
   }
 
@@ -20,7 +19,8 @@ export default class BasicDataQueries {
         ORDER BY short_name
       `;
       db.all(sql, [], (err: any, rows: any[]) => {
-        if (err) reject(err); else resolve(rows || []);
+        if (err) reject(err);
+        else resolve(rows || []);
       });
     });
   }
@@ -33,7 +33,8 @@ export default class BasicDataQueries {
         ORDER BY category, product_model
       `;
       db.all(sql, [], (err: any, rows: any[]) => {
-        if (err) reject(err); else resolve(rows || []);
+        if (err) reject(err);
+        else resolve(rows || []);
       });
     });
   }
@@ -46,7 +47,8 @@ export default class BasicDataQueries {
         ORDER BY partner_short_name, product_model, effective_date DESC
       `;
       db.all(sql, [], (err: any, rows: any[]) => {
-        if (err) reject(err); else resolve(rows || []);
+        if (err) reject(err);
+        else resolve(rows || []);
       });
     });
   }

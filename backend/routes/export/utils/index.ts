@@ -1,10 +1,9 @@
-// 导出数据查询模块入口（TS + ESM）
-import BasicDataQueries from '@/routes/export/utils/basicDataQueries';
-import TransactionQueries from '@/routes/export/utils/transactionQueries';
-import ReceivableQueries from '@/routes/export/utils/receivableQueries';
-import PayableQueries from '@/routes/export/utils/payableQueries';
-import InvoiceQueries from '@/routes/export/utils/invoiceQueries';
-import AnalysisQueries from '@/routes/export/utils/analysisQueries';
+import BasicDataQueries from "@/routes/export/utils/basicDataQueries";
+import TransactionQueries from "@/routes/export/utils/transactionQueries";
+import ReceivableQueries from "@/routes/export/utils/receivableQueries";
+import PayableQueries from "@/routes/export/utils/payableQueries";
+import InvoiceQueries from "@/routes/export/utils/invoiceQueries";
+import AnalysisQueries from "@/routes/export/utils/analysisQueries";
 
 export default class ExportQueries {
   basicData: BasicDataQueries;
@@ -23,7 +22,7 @@ export default class ExportQueries {
     this.analysis = new AnalysisQueries();
   }
 
-  async getBaseInfoData(tables: string = '123') {
+  async getBaseInfoData(tables: string = "123") {
     return this.basicData.getBaseInfoData(tables);
   }
 
@@ -34,12 +33,34 @@ export default class ExportQueries {
   async getReceivablePayableData(filters: any = {}) {
     const { outboundFrom, outboundTo, paymentFrom, paymentTo } = filters || {};
     return {
-      receivable_summary: await this.receivable.getReceivableSummary({ outboundFrom, outboundTo, paymentFrom, paymentTo }),
-      receivable_details: await this.receivable.getReceivableDetails({ outboundFrom, outboundTo }),
-      receivable_payments: await this.receivable.getReceivablePayments({ paymentFrom, paymentTo }),
-      payable_summary: await this.payable.getPayableSummary({ outboundFrom, outboundTo, paymentFrom, paymentTo }),
-      payable_details: await this.payable.getPayableDetails({ outboundFrom, outboundTo }),
-      payable_payments: await this.payable.getPayablePayments({ paymentFrom, paymentTo })
+      receivable_summary: await this.receivable.getReceivableSummary({
+        outboundFrom,
+        outboundTo,
+        paymentFrom,
+        paymentTo,
+      }),
+      receivable_details: await this.receivable.getReceivableDetails({
+        outboundFrom,
+        outboundTo,
+      }),
+      receivable_payments: await this.receivable.getReceivablePayments({
+        paymentFrom,
+        paymentTo,
+      }),
+      payable_summary: await this.payable.getPayableSummary({
+        outboundFrom,
+        outboundTo,
+        paymentFrom,
+        paymentTo,
+      }),
+      payable_details: await this.payable.getPayableDetails({
+        outboundFrom,
+        outboundTo,
+      }),
+      payable_payments: await this.payable.getPayablePayments({
+        paymentFrom,
+        paymentTo,
+      }),
     };
   }
 
@@ -55,16 +76,38 @@ export default class ExportQueries {
     return this.analysis.getProductAnalysisData(startDate, endDate);
   }
 
-  // 直接代理方法，保持向后兼容性
-  getPartnersData() { return this.basicData.getPartnersData(); }
-  getProductsData() { return this.basicData.getProductsData(); }
-  getPricesData() { return this.basicData.getPricesData(); }
-  getInboundData(filters: any = {}) { return this.transaction.getInboundData(filters); }
-  getOutboundData(filters: any = {}) { return this.transaction.getOutboundData(filters); }
-  getReceivableSummary(filters: any = {}) { return this.receivable.getReceivableSummary(filters); }
-  getReceivableDetails(filters: any = {}) { return this.receivable.getReceivableDetails(filters); }
-  getReceivablePayments(filters: any = {}) { return this.receivable.getReceivablePayments(filters); }
-  getPayableSummary(filters: any = {}) { return this.payable.getPayableSummary(filters); }
-  getPayableDetails(filters: any = {}) { return this.payable.getPayableDetails(filters); }
-  getPayablePayments(filters: any = {}) { return this.payable.getPayablePayments(filters); }
+  // Direct proxy methods for backward compatibility
+  getPartnersData() {
+    return this.basicData.getPartnersData();
+  }
+  getProductsData() {
+    return this.basicData.getProductsData();
+  }
+  getPricesData() {
+    return this.basicData.getPricesData();
+  }
+  getInboundData(filters: any = {}) {
+    return this.transaction.getInboundData(filters);
+  }
+  getOutboundData(filters: any = {}) {
+    return this.transaction.getOutboundData(filters);
+  }
+  getReceivableSummary(filters: any = {}) {
+    return this.receivable.getReceivableSummary(filters);
+  }
+  getReceivableDetails(filters: any = {}) {
+    return this.receivable.getReceivableDetails(filters);
+  }
+  getReceivablePayments(filters: any = {}) {
+    return this.receivable.getReceivablePayments(filters);
+  }
+  getPayableSummary(filters: any = {}) {
+    return this.payable.getPayableSummary(filters);
+  }
+  getPayableDetails(filters: any = {}) {
+    return this.payable.getPayableDetails(filters);
+  }
+  getPayablePayments(filters: any = {}) {
+    return this.payable.getPayablePayments(filters);
+  }
 }

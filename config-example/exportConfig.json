@@ -159,12 +159,24 @@
     ]
   },
   "analysis_summary": {
-    "sheetName": "数据分析汇总",
+    "sheetName": "Analysis Summary",
     "columns": [
       { "label": "Analysis Item", "key": "metric_name" },
       { "label": "Amount", "key": "amount" },
       { "label": "Remark", "key": "remark" }
-    ]
+    ],
+    "labels": {
+      "sales_amount": "Sales Amount",
+      "cost_amount": "Cost Amount",
+      "profit_amount": "Profit Amount",
+      "profit_rate": "Profit Margin",
+      "time_period": "Time Period",
+      "customer_filter": "Customer Filter",
+      "product_filter": "Product Filter",
+      "all": "All",
+      "last_updated": "Last Updated",
+      "calculation_method": "Calculated using weighted average cost method"
+    }
   },
   "analysis_detail": {
     "sheetName": "Detailed Analysis",
@@ -187,7 +199,11 @@
       { "label": "Cost", "key": "cost_amount" },
       { "label": "Profit", "key": "profit_amount" },
       { "label": "Profit Margin (%)", "key": "profit_rate" }
-    ]
+    ],
+    "labels": {
+      "summary_suffix": "Summary",
+      "detail_suffix": "Details"
+    }
   },
   "analysis_customer_detail": {
     "sheetName": "Product Sales Detail",
@@ -197,7 +213,11 @@
       { "label": "Cost", "key": "cost_amount" },
       { "label": "Profit", "key": "profit_amount" },
       { "label": "Profit Margin (%)", "key": "profit_rate" }
-    ]
+    ],
+    "labels": {
+      "summary_suffix": "Summary",
+      "detail_suffix": "Details"
+    }
   },
   "analysis_product_summary": {
     "sheetName": "Product Sales Summary",
@@ -207,7 +227,11 @@
       { "label": "Cost", "key": "cost_amount" },
       { "label": "Profit", "key": "profit_amount" },
       { "label": "Profit Margin (%)", "key": "profit_rate" }
-    ]
+    ],
+    "labels": {
+      "summary_suffix": "Summary",
+      "detail_suffix": "Details"
+    }
   },
   "analysis_product_detail": {
     "sheetName": "Customer Sales Detail",
@@ -218,7 +242,11 @@
       { "label": "Cost", "key": "cost_amount" },
       { "label": "Profit", "key": "profit_amount" },
       { "label": "Profit Margin (%)", "key": "profit_rate" }
-    ]
+    ],
+    "labels": {
+      "summary_suffix": "Summary",
+      "detail_suffix": "Details"
+    }
   },
   "analysis_detail_by_product": {
     "sheetName": "Product Analysis",
