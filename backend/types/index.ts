@@ -5,7 +5,6 @@
 // 导出配置相关类型
 export type {
   ServerConfig,
-  HttpsConfig,
   FrontendConfig,
   AppConfig
 } from './config';

@@ -1,12 +1,8 @@
 /**
- * 数据库表结构 SQL 定义
- * 供数据库初始化和升级使用
+ * Database Table Structure SQL Definition
+ * For database initialization and upgrades
  */
 
-/**
- * 数据库初始化 SQL
- * 创建所有必要的表结构
- */
 export const initSql = `
 CREATE TABLE IF NOT EXISTS inbound_records (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

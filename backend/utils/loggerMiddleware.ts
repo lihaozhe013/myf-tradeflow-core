@@ -1,109 +1,128 @@
-/**
- * Express 日志中间件
- */
-import { Request, Response, NextFunction } from 'express';
-import { logger, accessLogger } from '@/utils/logger';
+import { Request, Response, NextFunction } from "express";
+import { logger, accessLogger } from "@/utils/logger";
 
-// 静态文件扩展名过滤
-const STATIC_EXTENSIONS = ['.js', '.css', '.map', '.ico', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.woff', '.woff2', '.ttf', '.eot'];
+const STATIC_EXTENSIONS = [
+  ".js",
+  ".css",
+  ".map",
+  ".ico",
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".gif",
+  ".svg",
+  ".woff",
+  ".woff2",
+  ".ttf",
+  ".eot",
+];
 
-// 无关紧要的路径过滤 (扫描器、爬虫等)
+// Irrelevant path filtering (scanners, crawlers, etc.)
 const IGNORE_PATHS = [
-  '/plugin.php',
-  '/mag/',
-  '/robots.txt',
-  '/favicon.ico',
-  '/.well-known',
-  '/sitemap',
-  '/xmlrpc.php',
-  '/wp-',
-  '/admin',
-  '/phpmyadmin',
-  '/mysql',
-  '/sql',
-  '/test',
-  '/backup',
-  '/tmp',
-  '057707.com',
-  '.php',
-  '.asp',
-  '.jsp'
+  "/plugin.php",
+  "/mag/",
+  "/robots.txt",
+  "/favicon.ico",
+  "/.well-known",
+  "/sitemap",
+  "/xmlrpc.php",
+  "/wp-",
+  "/admin",
+  "/phpmyadmin",
+  "/mysql",
+  "/sql",
+  "/test",
+  "/backup",
+  "/tmp",
+  "057707.com",
+  ".php",
+  ".asp",
+  ".jsp",
 ];
 
 /**
- * 判断是否应该记录该请求
+ * Determine whether this request should be logged
  */
 const shouldLogRequest = (url: string, _method: string): boolean => {
-  // 静态文件过滤
-  const hasStaticExtension = STATIC_EXTENSIONS.some(ext => url.toLowerCase().includes(ext));
+  // Static File Filtering
+  const hasStaticExtension = STATIC_EXTENSIONS.some((ext) =>
+    url.toLowerCase().includes(ext)
+  );
   if (hasStaticExtension) return false;
-  
-  // 无关路径过滤
-  const isIgnoredPath = IGNORE_PATHS.some(path => url.toLowerCase().includes(path.toLowerCase()));
+
+  // Irrelevant Path Filtering
+  const isIgnoredPath = IGNORE_PATHS.some((path) =>
+    url.toLowerCase().includes(path.toLowerCase())
+  );
   if (isIgnoredPath) return false;
-  
-  // 记录所有API请求（包括GET和POST）
-  if (url.startsWith('/api/')) return true;
-  
-  // 记录重要的页面请求（根据前端路由）
-  if (url === '/' || url.startsWith('/login')) return true;
-  
+
+  // Log all API requests (including GET and POST)
+  if (url.startsWith("/api/")) return true;
+
+  // Log important page requests (based on frontend routing)
+  if (url === "/" || url.startsWith("/login")) return true;
+
   return false;
 };
 
 /**
- * 请求日志中间件
+ * Access Logger Middleware
  */
-export const requestLogger = (req: Request, res: Response, next: NextFunction): void => {
+export const requestLogger = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
   const start = Date.now();
-  
-  // 记录请求开始
+
+  // Request logging begins
   const requestInfo = {
     method: req.method,
     url: req.originalUrl,
     ip: req.ip || req.socket.remoteAddress,
-    userAgent: req.get('User-Agent'),
-    timestamp: new Date().toISOString()
+    userAgent: req.get("User-Agent"),
+    timestamp: new Date().toISOString(),
   };
 
-  // 检查是否应该记录
   const shouldLog = shouldLogRequest(req.originalUrl, req.method);
 
-  // 监听响应结束事件
-  res.on('finish', () => {
-    // 只记录需要关注的请求
+  // Listen for the end of response event
+  res.on("finish", () => {
     if (!shouldLog) return;
-    
+
     const duration = Date.now() - start;
     const responseInfo = {
       ...requestInfo,
       statusCode: res.statusCode,
       duration: `${duration}ms`,
-      contentLength: res.get('Content-Length') || 0
+      contentLength: res.get("Content-Length") || 0,
     };
 
-    // 附带用户信息
     if (req.user) {
-      Object.assign(responseInfo, { 
-        user: { username: req.user.username, role: req.user.role } 
+      Object.assign(responseInfo, {
+        user: { username: req.user.username, role: req.user.role },
       });
     }
 
-    // 记录访问日志（带用户信息）
-    const userPart = req.user ? ` user=${req.user.username} role=${req.user.role}` : ' user=anonymous';
-    accessLogger.info(`${req.method} ${req.originalUrl} ${res.statusCode}${userPart}`);
+    // Record access logs (with user information)
+    const userPart = req.user
+      ? ` user=${req.user.username} role=${req.user.role}`
+      : " user=anonymous";
+    accessLogger.info(
+      `${req.method} ${req.originalUrl} ${res.statusCode}${userPart}`
+    );
 
-    // 根据状态码决定日志级别
+    // Determine the log level based on the status code.
     if (res.statusCode >= 400) {
-      logger.warn('HTTP Request', responseInfo);
+      logger.warn("HTTP Request", responseInfo);
     } else {
-      // 记录所有成功的API请求，包括POST操作
-      logger.info('API Request', {
+      // Record all successful API requests, including POST operations.
+      logger.info("API Request", {
         method: req.method,
         url: req.originalUrl,
         statusCode: res.statusCode,
         duration: `${duration}ms`,
-        user: req.user ? req.user.username : 'anonymous'
+        user: req.user ? req.user.username : "anonymous",
       });
     }
   });
@@ -112,9 +131,14 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction): 
 };
 
 /**
- * 错误日志中间件
+ * Error Log Middleware
  */
-export const errorLogger = (err: Error, req: Request, _res: Response, next: NextFunction): void => {
+export const errorLogger = (
+  err: Error,
+  req: Request,
+  _res: Response,
+  next: NextFunction
+): void => {
   const errorInfo: Record<string, any> = {
     error: err.message,
     stack: err.stack,
@@ -124,13 +148,13 @@ export const errorLogger = (err: Error, req: Request, _res: Response, next: Next
     timestamp: new Date().toISOString(),
     body: req.body,
     params: req.params,
-    query: req.query
+    query: req.query,
   };
 
   if (req.user) {
-    errorInfo['user'] = { username: req.user.username, role: req.user.role };
+    errorInfo["user"] = { username: req.user.username, role: req.user.role };
   }
 
-  logger.error('API Error', errorInfo);
+  logger.error("API Error", errorInfo);
   next(err);
 };

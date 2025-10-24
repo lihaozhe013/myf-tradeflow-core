@@ -1,14 +1,11 @@
-/**
- * 认证和授权模块
- */
-import fs from 'fs-extra';
-import path from 'path';
-import crypto from 'crypto';
-import jwt from 'jsonwebtoken';
-import argon2 from 'argon2';
-import { Request, Response, NextFunction } from 'express';
-import { logger } from '@/utils/logger';
-import { resolveFilesInDataPath } from '@/utils/paths';
+import fs from "fs-extra";
+import path from "path";
+import crypto from "crypto";
+import jwt from "jsonwebtoken";
+import argon2 from "argon2";
+import { Request, Response, NextFunction } from "express";
+import { logger } from "@/utils/logger";
+import { resolveFilesInDataPath } from "@/utils/paths";
 
 const usersPath: string = resolveFilesInDataPath("users.json");
 const secretPath: string = resolveFilesInDataPath("jwt-secret.txt");
@@ -52,7 +49,10 @@ function readJSONSafe<T>(filePath: string, fallback: T): T {
     if (!fs.existsSync(filePath)) return fallback;
     return fs.readJSONSync(filePath) as T;
   } catch (e) {
-    logger.warn("Failed to read JSON file", { filePath, error: (e as Error).message });
+    logger.warn("Failed to read JSON file", {
+      filePath,
+      error: (e as Error).message,
+    });
     return fallback;
   }
 }
@@ -85,7 +85,9 @@ export function ensureJwtSecret(): string {
     }
     return fs.readFileSync(secretPath, "utf8").trim();
   } catch (e) {
-    logger.error("Failed to ensure JWT secret", { error: (e as Error).message });
+    logger.error("Failed to ensure JWT secret", {
+      error: (e as Error).message,
+    });
     // fallback to in-memory secret (not persisted)
     return crypto.randomBytes(64).toString("hex");
   }
@@ -101,7 +103,10 @@ export function findUser(username: string): UserData | undefined {
   return users.find((u) => u.username === username);
 }
 
-export async function verifyPassword(plain: string, hash: string): Promise<boolean> {
+export async function verifyPassword(
+  plain: string,
+  hash: string
+): Promise<boolean> {
   try {
     return await argon2.verify(hash, plain);
   } catch (e) {
@@ -109,7 +114,9 @@ export async function verifyPassword(plain: string, hash: string): Promise<boole
   }
 }
 
-export function getPublicUser(u: UserData | null | undefined): { username: string; role: string; display_name: string } | null {
+export function getPublicUser(
+  u: UserData | null | undefined
+): { username: string; role: string; display_name: string } | null {
   if (!u) return null;
   return {
     username: u.username,
@@ -118,7 +125,10 @@ export function getPublicUser(u: UserData | null | undefined): { username: strin
   };
 }
 
-export function signToken(user: UserData, expiresInHours?: number): { token: string; expires_in: number } {
+export function signToken(
+  user: UserData,
+  expiresInHours?: number
+): { token: string; expires_in: number } {
   const secret = ensureJwtSecret();
   const expSeconds =
     Math.max(1, expiresInHours || getAuthConfig().tokenExpiresInHours) * 3600;
@@ -141,7 +151,11 @@ export function signToken(user: UserData, expiresInHours?: number): { token: str
 // In-memory login attempts: key => { count, firstAt }
 const attempts = new Map<string, LoginAttempt>();
 
-export function loginRateLimiter(req: Request, res: Response, next: NextFunction): void {
+export function loginRateLimiter(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void {
   const { windowMinutes, maxAttempts } = getAuthConfig().loginRateLimit;
   const windowMs = windowMinutes * 60 * 1000;
   const ip = req.ip || req.socket?.remoteAddress || "unknown";
@@ -168,7 +182,11 @@ export function loginRateLimiter(req: Request, res: Response, next: NextFunction
   next();
 }
 
-export function authenticateToken(req: Request, res: Response, next: NextFunction): void {
+export function authenticateToken(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void {
   const { enabled } = getAuthConfig();
   if (!enabled) {
     // Auth disabled: inject a dev user
@@ -188,7 +206,7 @@ export function authenticateToken(req: Request, res: Response, next: NextFunctio
     return;
   }
 
-  const auth = req.headers['authorization'] || "";
+  const auth = req.headers["authorization"] || "";
   const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
   if (!token) {
     res.status(401).json({ success: false, message: "Unauthorized" });
@@ -196,7 +214,9 @@ export function authenticateToken(req: Request, res: Response, next: NextFunctio
   }
   try {
     const secret = ensureJwtSecret();
-    const decoded = jwt.verify(token, secret, { algorithms: ["HS256"] }) as JWTPayload;
+    const decoded = jwt.verify(token, secret, {
+      algorithms: ["HS256"],
+    }) as JWTPayload;
     const user = findUser(decoded.sub);
     if (!user || user.enabled === false) {
       res.status(401).json({ success: false, message: "Unauthorized" });
@@ -235,8 +255,12 @@ export function authorize(roles: string | string[] = ["editor", "reader"]) {
   };
 }
 
-// 检查只读用户的写操作权限
-export function checkWritePermission(req: Request, res: Response, next: NextFunction): void {
+// Check write permissions for read-only users
+export function checkWritePermission(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void {
   if (!req.user) {
     res.status(401).json({ success: false, message: "Unauthorized" });
     return;
@@ -245,21 +269,18 @@ export function checkWritePermission(req: Request, res: Response, next: NextFunc
   const method = req.method.toUpperCase();
   const { allowExportsForReader } = getAuthConfig();
 
-  // 如果是编辑者角色，允许所有操作
   if (req.user.role === "editor") {
     next();
     return;
   }
 
-  // 如果是只读用户
   if (req.user.role === "reader") {
-    // 允许GET请求
     if (method === "GET") {
       next();
       return;
     }
 
-    // 如果配置允许，reader可以使用导出功能的POST请求
+    // Reader can use the POST request for the export feature and refresh overview + analysis pages
     if (
       allowExportsForReader &&
       method === "POST" &&
@@ -271,9 +292,8 @@ export function checkWritePermission(req: Request, res: Response, next: NextFunc
       return;
     }
 
-    // 拒绝其他写操作
     if (["POST", "PUT", "DELETE", "PATCH"].includes(method)) {
-      logger.warn("只读用户尝试执行写操作", {
+      logger.warn("Read-only users attempting to perform write operations.", {
         username: req.user.username,
         method: method,
         url: req.originalUrl,
@@ -281,17 +301,18 @@ export function checkWritePermission(req: Request, res: Response, next: NextFunc
       });
       res.status(403).json({
         success: false,
-        message: "只读用户无权执行此操作",
+        message:
+          "Read-only users are not authorized to perform this operation.",
         error_code: "READ_ONLY_ACCESS_DENIED",
       });
       return;
     }
   }
 
-  // 对于其他未知角色，拒绝访问
+  // Access denied for other unknown roles.
   res.status(403).json({
     success: false,
-    message: "权限不足",
+    message: "INSUFFICIENT_PERMISSIONS",
     error_code: "INSUFFICIENT_PERMISSIONS",
   });
 }
