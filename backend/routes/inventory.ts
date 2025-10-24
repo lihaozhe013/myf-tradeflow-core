@@ -1,7 +1,3 @@
-/**
- * 库存路由
- * 提供库存查询、刷新和总成本估算功能
- */
 import express, { type Router, type Request, type Response } from 'express';
 import { 
   getInventorySummary, 
@@ -13,7 +9,6 @@ const router: Router = express.Router();
 
 /**
  * GET /api/inventory
- * 获取库存明细（支持分页和筛选）
  */
 router.get('/', (req: Request, res: Response): void => {
   const { product_model, page = 1, limit = 10 } = req.query;
@@ -35,7 +30,6 @@ router.get('/', (req: Request, res: Response): void => {
 
 /**
  * GET /api/inventory/total-cost-estimate
- * 获取总成本估算
  */
 router.get('/total-cost-estimate', (_req: Request, res: Response): void => {
   getInventoryCache((err, inventoryData) => {
@@ -53,7 +47,6 @@ router.get('/total-cost-estimate', (_req: Request, res: Response): void => {
 
 /**
  * POST /api/inventory/refresh
- * 刷新库存缓存
  */
 router.post('/refresh', (_req: Request, res: Response): void => {
   refreshInventoryCache((err, inventoryData) => {
@@ -64,7 +57,7 @@ router.post('/refresh', (_req: Request, res: Response): void => {
     
     res.json({ 
       success: true, 
-      message: '库存缓存刷新成功',
+      message: 'Inventory cache refresh completed!',
       last_updated: inventoryData!.last_updated,
       products_count: Object.keys(inventoryData!.products).length
     });

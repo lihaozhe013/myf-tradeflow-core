@@ -1,7 +1,3 @@
-/**
- * 认证路由
- * 处理用户登录、登出和身份验证
- */
 import express, { type Router, type Request, type Response } from 'express';
 import { 
   findUser, 
@@ -17,23 +13,22 @@ const router: Router = express.Router();
 
 /**
  * POST /api/auth/login
- * 用户登录
  */
 router.post('/login', loginRateLimiter, async (req: Request, res: Response): Promise<Response> => {
   const { username, password } = req.body || {};
   if (!username || !password) {
-    return res.status(400).json({ success: false, message: '用户名或密码错误' });
+    return res.status(400).json({ success: false, message: 'Incorrect username or password!' });
   }
   
   try {
     const user = findUser(username);
     if (!user || user.enabled === false || !user.password_hash) {
-      return res.status(401).json({ success: false, message: '用户名或密码错误' });
+      return res.status(401).json({ success: false, message: 'Incorrect username or password!' });
     }
     
     const ok = await verifyPassword(password, user.password_hash);
     if (!ok) {
-      return res.status(401).json({ success: false, message: '用户名或密码错误' });
+      return res.status(401).json({ success: false, message: 'Incorrect username or password!' });
     }
     
     const { token, expires_in } = signToken(user);
@@ -43,13 +38,12 @@ router.post('/login', loginRateLimiter, async (req: Request, res: Response): Pro
   } catch (e) {
     const error = e as Error;
     logger.error('Login error', { error: error.message });
-    return res.status(500).json({ success: false, message: '服务器内部错误' });
+    return res.status(500).json({ success: false, message: 'Server Error' });
   }
 });
 
 /**
  * GET /api/auth/me
- * 获取当前用户信息
  */
 router.get('/me', authenticateToken, (req: Request, res: Response): Response => {
   if (!req.user) {
@@ -68,7 +62,7 @@ router.get('/me', authenticateToken, (req: Request, res: Response): Response => 
 
 /**
  * POST /api/auth/logout
- * 用户登出（无状态JWT，客户端删除token即可）
+ * User logout (stateless JWT; simply delete the token will be fine)
  */
 router.post('/logout', (_req: Request, res: Response): Response => {
   return res.json({ success: true });

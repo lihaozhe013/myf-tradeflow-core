@@ -1,23 +1,13 @@
-/**
- * 产品路由
- * 管理产品信息，包括查询、新增、修改和删除
- */
 import express, { type Router, type Request, type Response } from 'express';
 import db from '@/db.js';
 
 const router: Router = express.Router();
 
-/**
- * 产品绑定数据接口
- */
 interface ProductBinding {
   code: string;
   product_model: string;
 }
 
-/**
- * 冲突结果接口
- */
 interface ConflictResult {
   code: string;
   product_model: string;
@@ -25,7 +15,6 @@ interface ConflictResult {
 
 /**
  * GET /api/products
- * 获取产品列表
  */
 router.get('/', (req: Request, res: Response): void => {
   const { category, product_model, code } = req.query;
@@ -59,7 +48,6 @@ router.get('/', (req: Request, res: Response): void => {
 
 /**
  * POST /api/products
- * 新增产品
  */
 router.post('/', (req: Request, res: Response): void => {
   const { code, category, product_model, remark } = req.body;
@@ -72,19 +60,18 @@ router.post('/', (req: Request, res: Response): void => {
   db.run(sql, [code, category, product_model, remark], function(err) {
     if (err) {
       if ((err as any).code === 'SQLITE_CONSTRAINT') {
-        res.status(400).json({ error: '产品代号已存在' });
+        res.status(400).json({ error: 'Product code already exists.' });
       } else {
         res.status(500).json({ error: err.message });
       }
       return;
     }
-    res.json({ code, message: '产品创建成功' });
+    res.json({ code, message: 'Product info created!' });
   });
 });
 
 /**
  * PUT /api/products/:code
- * 修改产品（按code主键）
  */
 router.put('/:code', (req: Request, res: Response): void => {
   const { code } = req.params;
@@ -99,17 +86,16 @@ router.put('/:code', (req: Request, res: Response): void => {
     }
     
     if (this.changes === 0) {
-      res.status(404).json({ error: '产品不存在' });
+      res.status(404).json({ error: 'Product dne' });
       return;
     }
     
-    res.json({ message: '产品更新成功' });
+    res.json({ message: 'Product info updated!' });
   });
 });
 
 /**
  * DELETE /api/products/:code
- * 删除产品（按code主键）
  */
 router.delete('/:code', (req: Request, res: Response): void => {
   const { code } = req.params;
@@ -121,23 +107,22 @@ router.delete('/:code', (req: Request, res: Response): void => {
     }
     
     if (this.changes === 0) {
-      res.status(404).json({ error: '产品不存在' });
+      res.status(404).json({ error: 'Product dne' });
       return;
     }
     
-    res.json({ message: '产品删除成功' });
+    res.json({ message: 'Product info deleted!' });
   });
 });
 
 /**
  * POST /api/products/bindings
- * 批量/单条设置代号-型号强绑定
  */
 router.post('/bindings', (req: Request, res: Response): void => {
   const bindings: ProductBinding[] = Array.isArray(req.body) ? req.body : [req.body];
   
   if (!bindings.length) {
-    res.status(400).json({ error: '无绑定数据' });
+    res.status(400).json({ error: 'No data binded' });
     return;
   }
   
@@ -146,18 +131,17 @@ router.post('/bindings', (req: Request, res: Response): void => {
   
   for (const b of bindings) {
     if (!b.code || !b.product_model) {
-      res.status(400).json({ error: '代号和型号均不能为空' });
+      res.status(400).json({ error: 'The code and model cannot be left blank' });
       return;
     }
     if (codes.has(b.code) || models.has(b.product_model)) {
-      res.status(400).json({ error: '批量数据内有重复' });
+      res.status(400).json({ error: 'Duplicated data' });
       return;
     }
     codes.add(b.code);
     models.add(b.product_model);
   }
   
-  // 检查数据库冲突
   const placeholders = bindings.map(() => '?').join(',');
   const checkSql = `SELECT code, product_model FROM products WHERE code IN (${placeholders}) OR product_model IN (${placeholders})`;
   const params = [...bindings.map(b => b.code), ...bindings.map(b => b.product_model)];
@@ -169,11 +153,10 @@ router.post('/bindings', (req: Request, res: Response): void => {
     }
     
     if (rows && rows.length) {
-      res.status(400).json({ error: '与现有数据冲突', conflicts: rows });
+      res.status(400).json({ error: 'Conflict data', conflicts: rows });
       return;
     }
     
-    // 插入/更新
     const stmt = db.prepare('INSERT OR REPLACE INTO products (code, product_model) VALUES (?, ?)');
     for (const b of bindings) {
       stmt.run([b.code, b.product_model]);
@@ -183,7 +166,7 @@ router.post('/bindings', (req: Request, res: Response): void => {
         res.status(500).json({ error: err2.message });
         return;
       }
-      res.json({ message: '绑定成功' });
+      res.json({ message: 'Binded' });
     });
   });
 });
