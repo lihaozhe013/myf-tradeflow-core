@@ -1,26 +1,19 @@
 {
   "compilerOptions": {
-    /* Language and Environment */
     "target": "ES2024",
     "lib": ["ES2024"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
-
-    /* Emit */
     "outDir": "./dist",
     "rootDir": "./",
     "sourceMap": true,
     "removeComments": true,
     "declaration": true,
     "declarationMap": true,
-
-    /* Interop Constraints */
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
-
-    /* Type Checking */
     "strict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
@@ -36,16 +29,9 @@
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
-
-    /* Completeness */
     "skipLibCheck": true,
-
-    /* Advanced */
     "resolveJsonModule": true,
     "allowJs": false,
-    "ignoreDeprecations": "5.0",
-
-    /* Path Mapping */
     "paths": {
       "@/*": ["./*"],
       "@/types/*": ["./types/*"],
@@ -53,15 +39,8 @@
       "@/routes/*": ["./routes/*"]
     }
   },
-  "include": [
-    "**/*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "**/*.spec.ts",
-    "**/*.test.ts"
-  ],
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts"],
   "tsc-alias": {
     "resolveFullPaths": true,
     "resolveFullExtension": ".js"
