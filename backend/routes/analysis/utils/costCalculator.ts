@@ -2,7 +2,7 @@ import db from '@/db';
 import decimalCalc from '@/utils/decimalCalculator';
 
 /**
- * 计算指定条件下已售商品的真实成本（加权平均成本法）
+ * Calculate the actual cost of goods sold under specified conditions (using the weighted average cost method)
  */
 export function calculateFilteredSoldGoodsCost(
   startDate: string,
@@ -11,7 +11,7 @@ export function calculateFilteredSoldGoodsCost(
   productModel: string | null | undefined,
   callback: (err: Error | null, totalCost?: number) => void
 ): void {
-  // 1. 构建查询条件
+  // Build query conditions
   const whereConditions: string[] = ['unit_price >= 0'];
   const params: any[] = [];
 
@@ -25,11 +25,11 @@ export function calculateFilteredSoldGoodsCost(
     params.push(productModel);
   }
 
-  // 添加时间区间条件
+  // Add time interval conditions
   whereConditions.push('date(outbound_date) BETWEEN ? AND ?');
   params.push(startDate, endDate);
 
-  // 2. 计算每个产品的加权平均入库价格（全时间范围，只计算正数单价）
+  // Calculate the weighted average purchase price for each product (across the entire time range, using only positive unit prices)
   db.all(
     `
     SELECT 
@@ -43,8 +43,7 @@ export function calculateFilteredSoldGoodsCost(
     [],
     (err: Error | null, avgCostData: any[]) => {
       if (err) return callback(err);
-
-      // 转换为Map便于查找，使用 decimal.js 处理数据
+      // Converting to a Map facilitates lookup operations
       const avgCostMap: Record<string, { avg_cost_price: number; total_inbound_quantity: number }> = {};
       avgCostData.forEach((item: any) => {
         avgCostMap[item.product_model] = {
@@ -53,7 +52,7 @@ export function calculateFilteredSoldGoodsCost(
         };
       });
 
-      // 3. 获取指定条件的出库记录
+      // Retrieve outbound records meeting specified conditions
       const outboundSql = `
         SELECT product_model, quantity, unit_price as selling_price
         FROM outbound_records
@@ -70,7 +69,7 @@ export function calculateFilteredSoldGoodsCost(
 
         let totalSoldGoodsCost = decimalCalc.decimal(0);
 
-        // 4. 使用平均成本计算每个销售记录的成本
+        // Calculate the cost of each sales record using the average cost method
         outboundRecords.forEach((outRecord: any) => {
           const prodModel = outRecord.product_model;
           const soldQuantity = decimalCalc.decimal(outRecord.quantity);
@@ -80,14 +79,14 @@ export function calculateFilteredSoldGoodsCost(
             const recordCost = decimalCalc.multiply(soldQuantity, avgCost);
             totalSoldGoodsCost = decimalCalc.add(totalSoldGoodsCost, recordCost);
           } else {
-            // 如果没有入库记录，使用出库价格作为成本（保守估计）
+            // If there is no inventory receipt record, use the issue price as the cost (conservative estimate)
             const sellingPrice = decimalCalc.fromSqlResult(outRecord.selling_price, 0, 4);
             const recordCost = decimalCalc.multiply(soldQuantity, sellingPrice);
             totalSoldGoodsCost = decimalCalc.add(totalSoldGoodsCost, recordCost);
           }
         });
 
-        // 5. 计算指定条件下入库负数单价商品的特殊收入，减少总成本
+        // Calculate the special income from goods with negative unit prices under specified conditions when entering inventory, thereby reducing total costs
         const specialIncomeConditions: string[] = ['unit_price < 0'];
         const specialIncomeParams: any[] = [];
 
@@ -96,7 +95,7 @@ export function calculateFilteredSoldGoodsCost(
           specialIncomeParams.push(productModel);
         }
 
-        // 特殊收入也按时间区间计算
+        // Special income is also calculated by time period
         specialIncomeConditions.push('date(inbound_date) BETWEEN ? AND ?');
         specialIncomeParams.push(startDate, endDate);
 
@@ -108,11 +107,9 @@ export function calculateFilteredSoldGoodsCost(
 
         db.get(specialIncomeSql, specialIncomeParams, (err3: Error | null, specialIncomeRow: any) => {
           if (err3) return callback(err3);
-
           const specialIncome = decimalCalc.fromSqlResult(specialIncomeRow?.special_income, 0, 2);
           const finalCost = decimalCalc.subtract(totalSoldGoodsCost, specialIncome);
-
-          // 确保成本不为负数并保留两位小数
+          // Ensure that costs are not negative and retain two decimal places
           const result = decimalCalc.toDbNumber(decimalCalc.decimal(Math.max(0, (finalCost as any).toNumber?.() ?? Number(finalCost))), 2);
           callback(null, result);
         });
