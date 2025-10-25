@@ -5,6 +5,7 @@ import frontendConfig from './src/config/frontendConfig.json'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: "./",
   plugins: [react()],
   resolve: {
     alias: {

@@ -1,8 +1,7 @@
-name: MYF TradeFlow System Pre Env and Dev Env build
+name: MYF TradeFlow System and Dev Env build
 on:
   push:
     branches:
-      - master
       - dev
 jobs:
   build:
