@@ -12,9 +12,23 @@ export function getAppRoot(): string {
   return process.cwd();
 }
 
-// Returns the path to the data directory under the app root.
 export function getDataDir(): string {
-  return path.resolve(getAppRoot(), "data");
+  const appRoot = getAppRoot();
+  const candidatePaths = [
+    'data',
+    '../data',
+    '../../data'
+  ];
+  for (const relativePath of candidatePaths) {
+    const fullPath = path.resolve(appRoot, relativePath);
+    try {
+      if (fs.existsSync(fullPath) && fs.statSync(fullPath).isDirectory()) {
+        return fullPath;
+      }
+    } catch (e) {
+    }
+  }
+  return path.resolve(appRoot, "data");
 }
 
 // Resolves a path inside the data directory.
