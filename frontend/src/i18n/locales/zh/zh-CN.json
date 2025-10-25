@@ -1,6 +1,6 @@
 {
   "auth": {
-    "title": "MYF TradeFlow 系统",
+    "title": "TradeFlow 系统",
     "subtitle": "请登录您的账户",
     "verifying": "正在验证登录状态...",
     "username": "用户名",
@@ -29,7 +29,7 @@
     "productPrices": "价格",
     "receivable": "应收账款",
     "payable": "应付账款",
-    "report": "导出",
+    "export": "导出",
     "analysis": "数据分析"
   },
   "common": {
@@ -491,7 +491,7 @@
     "advancedExport": {
       "title": "高级导出选项",
       "notice": "注意",
-      "noticeDescription": "你选择了全部客户和全部产品，系统将生成多工作表的详细分析报告。这可能非常慢，并且可能导致系统崩溃。",
+      "noticeDescription": "你选择了全部客户和全部产品，系统将生成多工作表的详细分析报告。",
       "exportMethod": "导出方式",
       "byCustomer": "按客户分类导出",
       "byProduct": "按产品分类导出",
@@ -506,7 +506,7 @@
       "cancel": "取消",
       "exporting": "正在生成报告...",
       "warning": "警告",
-      "warningDescription": "请注意，这个操作可能需要较长时间，并且会消耗大量内存。如果你使用的是Electron App版本，你的电脑可能因此卡死，请确保开始操作之前备份所有数据，请确保您的系统有足够的资源来处理此操作。"
+      "warningDescription": "请注意，这个操作可能需要较长时间。"
     }
   },
   "about": {

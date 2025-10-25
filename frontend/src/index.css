@@ -6,15 +6,10 @@
 body {
   margin: 0;
   font-family:
-    /* 中文（优先） */
     "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC",
-    /* 韩文 */
     "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR",
-    /* 日文 */
     "Hiragino Sans", "Meiryo", "Noto Sans JP",
-    /* 英文/国际 */
     "Segoe UI", "Roboto", "Arial", "Helvetica Neue", "Helvetica",
-    /* 最后兜底 */
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

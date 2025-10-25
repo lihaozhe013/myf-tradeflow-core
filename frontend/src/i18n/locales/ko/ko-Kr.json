@@ -1,6 +1,6 @@
 {
   "auth": {
-    "title": "MYF TradeFlow 시스템",
+    "title": "TradeFlow 시스템",
     "subtitle": "계정에 로그인하세요",
     "verifying": "로그인 상태를 확인하는 중...",
     "username": "사용자 이름",
@@ -32,7 +32,7 @@
     "productPrices": "가격",
     "receivable": "매출채권",
     "payable": "매입채무",
-    "report": "보고서",
+    "export": "보고서",
     "analysis": "데이터 분석"
   },
   "common": {
@@ -474,7 +474,7 @@
     "advancedExport": {
       "title": "고급 내보내기 옵션",
       "notice": "주의",
-      "noticeDescription": "모든 고객과 모든 제품을 선택했습니다. 시스템이 여러 워크시트로 구성된 상세 분석 보고서를 생성합니다. 이 과정은 매우 느릴 수 있으며 시스템이 충돌할 수 있습니다.",
+      "noticeDescription": "모든 고객과 모든 제품을 선택했습니다. 시스템이 여러 워크시트로 구성된 상세 분석 보고서를 생성합니다.",
       "exportMethod": "내보내기 방식",
       "byCustomer": "고객별 내보내기",
       "byProduct": "제품별 내보내기",
@@ -489,7 +489,7 @@
       "cancel": "취소",
       "exporting": "보고서 생성 중...",
       "warning": "경고",
-      "warningDescription": "이 작업은 시간이 오래 걸리고 많은 메모리를 소모할 수 있습니다. Electron App 버전을 사용하는 경우 컴퓨터가 멈출 수 있습니다. 작업을 시작하기 전에 모든 데이터를 백업하고 시스템에 이 작업을 처리할 충분한 리소스가 있는지 확인하십시오."
+      "warningDescription": "이 작업에는 시간이 오래 걸릴 수 있습니다."
     }
   },
   "about": {
