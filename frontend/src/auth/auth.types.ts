@@ -1,11 +1,9 @@
-/**
- * auth.js 的类型声明文件
- */
+export type Role = 'reader' | 'editor';
 
 export interface User {
   id: string | number;
   username: string;
-  role: 'reader' | 'editor';
+  role: Role;
   [key: string]: unknown;
 }
 
@@ -37,10 +35,3 @@ export interface AuthAPI {
   getCurrentUser(): Promise<GetCurrentUserResponse>;
   logout(): void;
 }
-
-export const tokenManager: TokenManager;
-export const userManager: UserManager;
-export const authAPI: AuthAPI;
-
-export function isAuthenticated(): boolean;
-export function hasRole(requiredRole: 'reader' | 'editor'): boolean;
