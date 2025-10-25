@@ -1,8 +1,3 @@
-/**
- * 应用配置统一导出模块
- * 从 appConfig.json 导入所有配置项
- */
-
 import { appConfigData as typedConfigData } from '@/config/data';
 import type {
   PaymentMethod,

@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import frontendConfig from './src/config/frontendConfig.json'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -26,12 +27,12 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: frontendConfig.server.url,
         changeOrigin: true,
         secure: false,
       },
       '/exported-files': {
-        target: 'http://localhost:8000',
+        target: frontendConfig.server.url,
         changeOrigin: true,
         secure: false,
       },
@@ -57,7 +58,7 @@ export default defineConfig({
     port: 4173,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: frontendConfig.server.url,
         changeOrigin: true,
         secure: false,
       }
