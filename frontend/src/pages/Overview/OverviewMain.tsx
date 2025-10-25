@@ -45,8 +45,8 @@ const OverviewMain = () => {
 
   // 处理数据格式，确保安全访问
   const resolvedStats = stats ?? DEFAULT_OVERVIEW_STATS;
-  const overview = resolvedStats.overview;
-  const outOfInventoryProducts = resolvedStats.out_of_inventory_products;
+  const overview = resolvedStats.overview ?? DEFAULT_OVERVIEW_STATS.overview;
+  const outOfInventoryProducts = resolvedStats.out_of_inventory_products ?? [];
   const outOfInventoryCount = outOfInventoryProducts.length;
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -273,9 +273,9 @@ const OverviewMain = () => {
             <div style={{ flex: 1, minWidth: 0 }}>
               <Card
                 title={<span style={{ fontWeight: 600 }}>{t('overview.inventoryStatus')}</span>}
-                bordered={false}
+                variant="outlined"
                 style={{ borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)', height: '370px', width: '100%' }}
-                bodyStyle={{ padding: 16, height: '100%', display: 'flex', flexDirection: 'column' }}
+                styles={{ body: { padding: 16, height: '100%', display: 'flex', flexDirection: 'column' } }}
               >
                 <div style={{ flex: 1, overflow: 'auto' }}>
                   <List
