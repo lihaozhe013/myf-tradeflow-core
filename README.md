@@ -4,7 +4,7 @@ A lightweight tradeflow system designed for small businesses, built with React.j
 
 Originally developed for a relative’s family business (myf), it is now open‑sourced on GitHub.
 
-The system was developed in a Chinese-language environment and extensively utilizes LLM for development support. Please note that English documentation is currently unavailable.
+Overall, the backend code is of higher quality. The frontend was developed in a Chinese-language environment and extensively utilizes LLM and Vibe Coding for development support, so the frontend code might have a lot of Chinese comment and have a lot of redundancy that looks like SHIT, but anyways it works.
 
 ## Key Features
 

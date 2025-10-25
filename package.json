@@ -1,8 +1,8 @@
 {
-  "name": "myf-tradeflow-system",
+  "name": "myf-tradeflow-core",
   "private": true,
-  "version": "0.3.0",
-  "description": "a lightweight tradeflow System",
+  "version": "0.4.2",
+  "description": "a lightweight tradeflow system core",
   "scripts": {
     "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
     "ci:all": "npm ci && cd frontend && npm ci && cd ../backend && npm ci",
