@@ -1,8 +1,9 @@
-name: Node.js CI
+name: MYF TradeFlow System Pre Env and Dev Env build
 on:
   push:
     branches:
       - master
+      - dev
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -23,7 +24,7 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: pre-env-build-artifacts
+          name: myf-tradrflow-system-build
           path: ./dist/
   cleanup:
     if: github.event_name != 'pull_request' && success()
@@ -46,8 +47,6 @@ jobs:
                 workflow_id: workflow.id,
                 per_page: 100
               });
-              
-              // 保留最新的3次运行, 删除其余的
               const runsToDelete = runs.workflow_runs.slice(3);
               
               for (const run of runsToDelete) {
@@ -73,8 +72,6 @@ jobs:
               repo: context.repo.repo,
               per_page: 100
             });
-
-            // 保留最新的3个artifact, 删除其余的
             const artifactsToDelete = artifacts.artifacts.slice(3);
 
             for (const artifact of artifactsToDelete) {
@@ -101,7 +98,6 @@ jobs:
                 per_page: 100
               });
               
-              // 保留最新的3个缓存,删除其余的
               const cachesToDelete = caches.actions_caches.slice(3);
               
               for (const cache of cachesToDelete) {
