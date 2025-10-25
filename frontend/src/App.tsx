@@ -250,7 +250,7 @@ interface AppContentInnerProps {
 }
 
 function AppContentInner({ location, t }: AppContentInnerProps): React.ReactElement {
-  const getSelectedKey = (): MenuKey => {
+  const getSelectedKey = (): MenuKey | '' => {
     const path = location.pathname;
     if (path === '/overview' || path === '/') return 'overview';
     if (path === '/inbound') return 'inbound';
@@ -262,7 +262,8 @@ function AppContentInner({ location, t }: AppContentInnerProps): React.ReactElem
     if (path === '/receivable') return 'receivable';
     if (path === '/payable') return 'payable';
     if (path === '/analysis') return 'analysis';
-    if (path === '/report' || path === '/about') return 'report';
+    if (path === '/report') return 'report';
+    if (path === '/about') return '';
     return 'overview';
   };
 
