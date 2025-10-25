@@ -1,5 +1,12 @@
-import { useState, useCallback, useEffect, useMemo, type ChangeEvent, type FC } from 'react';
-import type { ColumnsType, TableProps } from 'antd/es/table';
+import {
+  useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  type ChangeEvent,
+  type FC,
+} from "react";
+import type { ColumnsType, TableProps } from "antd/es/table";
 import {
   Table,
   Card,
@@ -12,14 +19,15 @@ import {
   Space,
   Tag,
   Divider,
-} from 'antd';
-import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
-import { useTranslation } from 'react-i18next';
-import { useSimpleApi, useSimpleApiData } from '@/hooks/useSimpleApi';
+} from "antd";
+import { SearchOutlined, ReloadOutlined } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
+import { useSimpleApi, useSimpleApiData } from "@/hooks/useSimpleApi";
+import { currency_unit_symbol } from "@/config/types";
 
 const { Title } = Typography;
 
-type InventoryStatusColor = 'green' | 'orange' | 'red';
+type InventoryStatusColor = "green" | "orange" | "red";
 
 type InventoryItem = {
   readonly product_model?: string;
@@ -49,8 +57,9 @@ const DEFAULT_PAGINATION: PaginationInfo = {
 };
 
 const Inventory: FC = () => {
-  const [productFilter, setProductFilter] = useState('');
-  const [pagination, setPagination] = useState<PaginationInfo>(DEFAULT_PAGINATION);
+  const [productFilter, setProductFilter] = useState("");
+  const [pagination, setPagination] =
+    useState<PaginationInfo>(DEFAULT_PAGINATION);
   const { t } = useTranslation();
 
   const { post, loading: actionLoading } = useSimpleApi();
@@ -61,7 +70,7 @@ const Inventory: FC = () => {
     });
 
     if (productFilter) {
-      params.append('product_model', productFilter);
+      params.append("product_model", productFilter);
     }
 
     return `/inventory?${params.toString()}`;
@@ -76,12 +85,10 @@ const Inventory: FC = () => {
     pagination: DEFAULT_PAGINATION,
   });
 
-  const {
-    data: totalCostResponse,
-    refetch: refreshTotalCost,
-  } = useSimpleApiData<TotalCostResponse>('/inventory/total-cost-estimate', {
-    total_cost_estimate: 0,
-  });
+  const { data: totalCostResponse, refetch: refreshTotalCost } =
+    useSimpleApiData<TotalCostResponse>("/inventory/total-cost-estimate", {
+      total_cost_estimate: 0,
+    });
 
   const inventoryData = useMemo<InventoryItem[]>(() => {
     return inventoryResponse?.data ?? [];
@@ -94,7 +101,7 @@ const Inventory: FC = () => {
       return;
     }
 
-    setPagination(prev => ({
+    setPagination((prev) => ({
       current: inventoryResponse.pagination?.current ?? prev.current,
       pageSize: inventoryResponse.pagination?.pageSize ?? prev.pageSize,
       total: inventoryResponse.pagination?.total ?? prev.total,
@@ -103,8 +110,8 @@ const Inventory: FC = () => {
 
   const handleRefreshCache = async (): Promise<void> => {
     try {
-      await post('/inventory/refresh', {});
-      message.success(t('inventory.recalculated'));
+      await post("/inventory/refresh", {});
+      message.success(t("inventory.recalculated"));
       refreshInventory();
       refreshTotalCost();
     } catch {
@@ -112,14 +119,18 @@ const Inventory: FC = () => {
     }
   };
 
-  const handleProductFilterChange = (event: ChangeEvent<HTMLInputElement>): void => {
+  const handleProductFilterChange = (
+    event: ChangeEvent<HTMLInputElement>
+  ): void => {
     const { value } = event.target;
     setProductFilter(value);
-    setPagination(prev => ({ ...prev, current: 1 }));
+    setPagination((prev) => ({ ...prev, current: 1 }));
   };
 
-  const handleTableChange: TableProps<InventoryItem>['onChange'] = paginationConfig => {
-    setPagination(prev => ({
+  const handleTableChange: TableProps<InventoryItem>["onChange"] = (
+    paginationConfig
+  ) => {
+    setPagination((prev) => ({
       ...prev,
       current: paginationConfig.current ?? prev.current,
     }));
@@ -127,71 +138,78 @@ const Inventory: FC = () => {
 
   const inventoryColumns: ColumnsType<InventoryItem> = [
     {
-      title: t('inventory.productModel'),
-      dataIndex: 'product_model',
-      key: 'product_model',
+      title: t("inventory.productModel"),
+      dataIndex: "product_model",
+      key: "product_model",
       width: 200,
-      sorter: (a, b) => (a.product_model ?? '').localeCompare(b.product_model ?? ''),
+      sorter: (a, b) =>
+        (a.product_model ?? "").localeCompare(b.product_model ?? ""),
     },
     {
-      title: t('inventory.currentInventory'),
-      dataIndex: 'current_inventory',
-      key: 'current_inventory',
+      title: t("inventory.currentInventory"),
+      dataIndex: "current_inventory",
+      key: "current_inventory",
       width: 120,
       sorter: (a, b) => (a.current_inventory ?? 0) - (b.current_inventory ?? 0),
-      render: quantity => {
+      render: (quantity) => {
         const value = quantity ?? 0;
-        let color: InventoryStatusColor = 'green';
+        let color: InventoryStatusColor = "green";
 
         if (value === 0) {
-          color = 'red';
+          color = "red";
         } else if (value < 10) {
-          color = 'orange';
+          color = "orange";
         }
 
         return <Tag color={color}>{value}</Tag>;
       },
     },
     {
-      title: t('inventory.status'),
-      key: 'inventory_status',
+      title: t("inventory.status"),
+      key: "inventory_status",
       width: 100,
       render: (_, record) => {
         const quantity = record.current_inventory ?? 0;
 
         if (quantity === 0) {
-          return <Tag color="red">{t('inventory.outOfInventory')}</Tag>;
+          return <Tag color="red">{t("inventory.outOfInventory")}</Tag>;
         }
 
         if (quantity < 10) {
-          return <Tag color="orange">{t('inventory.lowInventory')}</Tag>;
+          return <Tag color="orange">{t("inventory.lowInventory")}</Tag>;
         }
 
-        return <Tag color="green">{t('inventory.normal')}</Tag>;
+        return <Tag color="green">{t("inventory.normal")}</Tag>;
       },
     },
     {
-      title: t('inventory.lastUpdate'),
-      dataIndex: 'last_update',
-      key: 'last_update',
+      title: t("inventory.lastUpdate"),
+      dataIndex: "last_update",
+      key: "last_update",
       width: 180,
-      sorter: (a, b) => new Date(a.last_update ?? 0).getTime() - new Date(b.last_update ?? 0).getTime(),
+      sorter: (a, b) =>
+        new Date(a.last_update ?? 0).getTime() -
+        new Date(b.last_update ?? 0).getTime(),
     },
   ];
 
   return (
     <div>
       <Card>
-        <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
+        <Row
+          justify="space-between"
+          align="middle"
+          style={{ marginBottom: 16 }}
+        >
           <Col>
             <Title level={2} style={{ margin: 0 }}>
-              {t('inventory.title')}
+              {t("inventory.title")}
             </Title>
           </Col>
           <Col>
             <Space>
               <Input
-                placeholder={t('inventory.searchProductModel')}
+                placeholder={t("inventory.searchProductModel")}
                 prefix={<SearchOutlined />}
                 value={productFilter}
                 onChange={handleProductFilterChange}
@@ -204,7 +222,7 @@ const Inventory: FC = () => {
                 onClick={handleRefreshCache}
                 loading={actionLoading}
               >
-                {t('inventory.recalculate')}
+                {t("inventory.recalculate")}
               </Button>
             </Space>
           </Col>
@@ -216,19 +234,22 @@ const Inventory: FC = () => {
           align="middle"
           style={{
             marginBottom: 16,
-            padding: '12px 16px',
-            backgroundColor: '#ffffff',
-            borderRadius: '6px',
-            border: '1px solid #d9d9d9',
-            boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
+            padding: "12px 16px",
+            backgroundColor: "#ffffff",
+            borderRadius: "6px",
+            border: "1px solid #d9d9d9",
+            boxShadow: "0 1px 2px rgba(0, 0, 0, 0.03)",
           }}
         >
           <Col>
             <Space>
-              <strong>{t('inventory.totalCostEstimate')}: </strong>
-              <Tag color="blue" style={{ fontSize: '14px', padding: '4px 8px' }}>
-                ¥
-                {totalCostEstimate.toLocaleString('en-US', {
+              <strong>{t("inventory.totalCostEstimate")}: </strong>
+              <Tag
+                color="blue"
+                style={{ fontSize: "14px", padding: "4px 8px" }}
+              >
+                ${currency_unit_symbol}
+                {totalCostEstimate.toLocaleString("en-US", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
@@ -250,7 +271,7 @@ const Inventory: FC = () => {
               total: pagination.total,
               showQuickJumper: true,
               showTotal: (total, range) =>
-                t('inventory.paginationTotal', {
+                t("inventory.paginationTotal", {
                   start: range[0],
                   end: range[1],
                   total,

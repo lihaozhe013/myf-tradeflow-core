@@ -1,4 +1,4 @@
-import type rawConfig from "@/config/frontendConfig.json";
+import rawConfig from "@/config/frontendConfig.json";
 export type PaymentMethod =
   (typeof rawConfig)["paymentMethods"]["list"][number];
 export interface PaymentMethodConfig {
@@ -36,3 +36,5 @@ export interface SelectOption<T = string> {
   readonly value: T;
   readonly label: string;
 }
+
+export const currency_unit_symbol = rawConfig.currency_unit_symbol;

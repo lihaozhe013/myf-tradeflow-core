@@ -16,6 +16,7 @@ import type { FormInstance } from 'antd/es/form';
 import type { RadioChangeEvent } from 'antd/es/radio';
 import type { DefaultOptionType } from 'antd/es/select';
 import type { Dayjs } from 'dayjs';
+import { currency_unit_symbol } from "@/config/types";
 import type {
   InboundFormValues,
   InboundRecord,
@@ -233,7 +234,7 @@ const InboundModal: FC<InboundModalProps> = ({
                 style={{ width: '100%' }}
                 placeholder={t('inbound.inputUnitPrice') ?? ''}
                 precision={4}
-                addonBefore="¥"
+                addonBefore={currency_unit_symbol}
                 onChange={onPriceOrQuantityChange}
                 disabled={!manualPrice}
               />
@@ -252,7 +253,7 @@ const InboundModal: FC<InboundModalProps> = ({
                 placeholder={t('inbound.autoCalc') ?? ''}
                 precision={3}
                 disabled
-                addonBefore="¥"
+                addonBefore={currency_unit_symbol}
               />
             </Form.Item>
           </Col>
