@@ -4,7 +4,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import cors from "cors";
 import type { AppConfig, CustomError } from "@/types/index";
-import { resolveFilesInDataPath } from "@/utils/paths";
+import { appConfigPath } from "@/utils/paths";
 import "@/db";
 import { ensureAllTablesAndColumns } from "@/utils/dbUpgrade";
 import { logger } from "@/utils/logger";
@@ -29,8 +29,7 @@ const __dirname = path.dirname(__filename);
 
 const app: Express = express();
 
-const configPath: string = resolveFilesInDataPath("appConfig.json");
-const config: AppConfig = JSON.parse(fs.readFileSync(configPath, "utf8"));
+const config: AppConfig = JSON.parse(fs.readFileSync(appConfigPath, "utf8"));
 
 // Port Config
 const PORT: number =

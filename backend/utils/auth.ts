@@ -5,11 +5,10 @@ import jwt from "jsonwebtoken";
 import argon2 from "argon2";
 import { Request, Response, NextFunction } from "express";
 import { logger } from "@/utils/logger";
-import { resolveFilesInDataPath } from "@/utils/paths";
+import { resolveFilesInDataPath, appConfigPath } from "@/utils/paths";
 
 const usersPath: string = resolveFilesInDataPath("users.json");
 const secretPath: string = resolveFilesInDataPath("jwt-secret.txt");
-const appConfigPath: string = resolveFilesInDataPath("appConfig.json");
 
 interface UserData {
   username: string;

@@ -1,13 +1,6 @@
 import fs from "fs";
 import path from "path";
 
-/**
- * Utilities for resolving application directories and common file paths.
- * These functions intentionally resolve from process.cwd() so they work
- * both in development (repo root) and in production (dist/).
- */
-
-// Returns the application root directory (current working directory).
 export function getAppRoot(): string {
   return process.cwd();
 }
@@ -52,3 +45,15 @@ export function ensureFileDirSync(filePath: string): void {
 export function getLogDir(): string {
   return path.resolve(getDataDir(), "log");
 }
+
+
+const appConfigPath = resolveFilesInDataPath("appConfig.json");
+let currency_unit_symbol: any = {};
+try {
+  if (fs.existsSync(appConfigPath)) {
+    const temp_data = fs.readFileSync(appConfigPath, 'utf8');
+    currency_unit_symbol = JSON.parse(temp_data);
+  }
+} catch (e) {
+}
+export { currency_unit_symbol, appConfigPath };

@@ -1,4 +1,5 @@
 {
+  "currency_unit_symbol": "$",
   "auth": {
     "enabled": true,
     "tokenExpiresInHours": 12,

@@ -1,5 +1,6 @@
 import * as XLSX from "xlsx";
 import ExportUtils from "@/routes/export/utils/exportUtils";
+import { currency_unit_symbol } from "@/utils/paths";
 
 export default class AdvancedAnalysisExporter {
   private templates: any;
@@ -14,10 +15,13 @@ export default class AdvancedAnalysisExporter {
    * Format currency value for display
    */
   private formatCurrency(value: number): string {
-    return `¥${Number(value || 0).toLocaleString("zh-CN", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
+    return `${currency_unit_symbol}${Number(value || 0).toLocaleString(
+      "zh-CN",
+      {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }
+    )}`;
   }
 
   /**
