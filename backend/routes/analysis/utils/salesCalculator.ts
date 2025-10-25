@@ -1,10 +1,7 @@
-import db from '@/db';
-import decimalCalc from '@/utils/decimalCalculator';
-import type { SalesData } from '@/routes/analysis/utils/types';
+import db from "@/db";
+import decimalCalc from "@/utils/decimalCalculator";
+import type { SalesData } from "@/routes/analysis/utils/types";
 
-/**
- * 计算销售额数据
- */
 export function calculateSalesData(
   startDate: string,
   endDate: string,
@@ -12,17 +9,20 @@ export function calculateSalesData(
   productModel: string | null | undefined,
   callback: (err: Error | null, salesData?: SalesData) => void
 ): void {
-  // 1. 构建销售额查询条件
-  const salesSqlConditions: string[] = ['unit_price >= 0', 'date(outbound_date) BETWEEN ? AND ?'];
+  // Build Sales Query Conditions
+  const salesSqlConditions: string[] = [
+    "unit_price >= 0",
+    "date(outbound_date) BETWEEN ? AND ?",
+  ];
   const salesParams: any[] = [startDate, endDate];
 
-  if (customerCode && customerCode !== 'All') {
-    salesSqlConditions.push('customer_code = ?');
+  if (customerCode && customerCode !== "All") {
+    salesSqlConditions.push("customer_code = ?");
     salesParams.push(customerCode);
   }
 
-  if (productModel && productModel !== 'All') {
-    salesSqlConditions.push('product_model = ?');
+  if (productModel && productModel !== "All") {
+    salesSqlConditions.push("product_model = ?");
     salesParams.push(productModel);
   }
 
@@ -34,19 +34,27 @@ export function calculateSalesData(
         FROM outbound_records 
         WHERE unit_price < 0 
           AND date(outbound_date) BETWEEN ? AND ?
-          ${customerCode && customerCode !== 'All' ? 'AND customer_code = ?' : ''}
-          ${productModel && productModel !== 'All' ? 'AND product_model = ?' : ''}
+          ${
+            customerCode && customerCode !== "All"
+              ? "AND customer_code = ?"
+              : ""
+          }
+          ${
+            productModel && productModel !== "All"
+              ? "AND product_model = ?"
+              : ""
+          }
       ), 0) as special_expense
     FROM outbound_records 
-    WHERE ${salesSqlConditions.join(' AND ')}
+    WHERE ${salesSqlConditions.join(" AND ")}
   `;
 
-  // 构建特殊支出查询的参数
+  // Constructing Parameters for Special Expenditure Queries
   const specialExpenseParams: any[] = [startDate, endDate];
-  if (customerCode && customerCode !== 'All') {
+  if (customerCode && customerCode !== "All") {
     specialExpenseParams.push(customerCode);
   }
-  if (productModel && productModel !== 'All') {
+  if (productModel && productModel !== "All") {
     specialExpenseParams.push(productModel);
   }
 
@@ -54,19 +62,26 @@ export function calculateSalesData(
 
   db.get(salesSql, finalSalesParams, (err: Error | null, salesRow: any) => {
     if (err) {
-      console.error('计算销售额失败:', err);
+      console.error("Failed to calculate sales:", err);
       callback(err);
       return;
     }
 
     const normalSales = decimalCalc.fromSqlResult(salesRow?.normal_sales, 0, 2);
-    const specialExpense = decimalCalc.fromSqlResult(salesRow?.special_expense, 0, 2);
-    const salesAmount = decimalCalc.toDbNumber(decimalCalc.subtract(normalSales, specialExpense), 2);
+    const specialExpense = decimalCalc.fromSqlResult(
+      salesRow?.special_expense,
+      0,
+      2
+    );
+    const salesAmount = decimalCalc.toDbNumber(
+      decimalCalc.subtract(normalSales, specialExpense),
+      2
+    );
 
     callback(null, {
       normal_sales: normalSales,
       special_expense: specialExpense,
-      sales_amount: salesAmount
+      sales_amount: salesAmount,
     });
   });
 }

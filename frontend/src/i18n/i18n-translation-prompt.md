@@ -7,7 +7,7 @@ zh
     "overview": "总览",
     "inbound": "入库",
     "outbound": "出库",
-    "stock": "库存",
+    "inventory": "库存",
     "partners": "合作伙伴管理",
     "products": "产品管理",
     "productPrices": "价格管理",

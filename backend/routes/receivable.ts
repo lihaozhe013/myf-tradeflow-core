@@ -1,16 +1,9 @@
-/**
- * 应收账款路由
- * 管理客户应收账款和回款记录
- */
 import express, { type Router, type Request, type Response } from 'express';
 import db from '@/db.js';
 import decimalCalc from '@/utils/decimalCalculator.js';
 
 const router: Router = express.Router();
 
-/**
- * 数据库查询结果类型
- */
 interface CountResult {
   total: number;
 }
@@ -43,7 +36,6 @@ interface TotalResult {
 
 /**
  * GET /api/receivable
- * 获取应收账款列表（实时计算）
  */
 router.get('/', (req: Request, res: Response): void => {
   const { page = 1, limit = 10, customer_short_name, sort_field = 'balance', sort_order = 'desc' } = req.query;
@@ -56,7 +48,6 @@ router.get('/', (req: Request, res: Response): void => {
     params.push(`%${customer_short_name}%`);
   }
 
-  // 排序
   const allowedSortFields = ['customer_code', 'customer_short_name', 'total_receivable', 'total_paid', 'balance', 'last_payment_date'];
   let orderBy = 'balance DESC';
   if (sort_field && allowedSortFields.includes(sort_field as string)) {
@@ -66,7 +57,6 @@ router.get('/', (req: Request, res: Response): void => {
 
   const offset = (Number(page) - 1) * Number(limit);
 
-  // 修正聚合方式，避免金额重复累加
   const sql = `
     SELECT
       p.code AS customer_code,
@@ -102,7 +92,6 @@ router.get('/', (req: Request, res: Response): void => {
       return;
     }
 
-    // 使用 decimal.js 重新计算精确的余额
     const processedRows = rows.map(row => {
       const totalReceivable = decimalCalc.fromSqlResult(row.total_receivable, 0);
       const totalPaid = decimalCalc.fromSqlResult(row.total_paid, 0);
@@ -116,7 +105,6 @@ router.get('/', (req: Request, res: Response): void => {
       };
     });
 
-    // 获取总数
     const countSql = `
       SELECT COUNT(DISTINCT p.code) as total
       FROM partners p
@@ -143,7 +131,6 @@ router.get('/', (req: Request, res: Response): void => {
 
 /**
  * GET /api/receivable/payments/:customer_code
- * 获取指定客户的回款记录（支持分页）
  */
 router.get('/payments/:customer_code', (req: Request, res: Response): void => {
   const { customer_code } = req.params;
@@ -158,8 +145,7 @@ router.get('/payments/:customer_code', (req: Request, res: Response): void => {
       res.status(500).json({ error: err.message });
       return;
     }
-    
-    // 获取总数
+
     const countSql = 'SELECT COUNT(*) as total FROM receivable_payments WHERE customer_code = ?';
     db.get<CountResult>(countSql, [customer_code], (err, countResult) => {
       if (err) {
@@ -179,13 +165,12 @@ router.get('/payments/:customer_code', (req: Request, res: Response): void => {
 
 /**
  * POST /api/receivable/payments
- * 新增回款记录
  */
 router.post('/payments', (req: Request, res: Response): Response | void => {
   const { customer_code, amount, pay_date, pay_method, remark } = req.body;
   
   if (!customer_code || !amount || !pay_date) {
-    return res.status(400).json({ error: '客户代号、回款金额和回款日期为必填项' });
+    return res.status(400).json({ error: 'Customer ID, payment amount, and payment date are required fields' });
   }
   
   const sql = `
@@ -198,20 +183,19 @@ router.post('/payments', (req: Request, res: Response): Response | void => {
       res.status(500).json({ error: err.message });
       return;
     }
-    res.json({ id: this.lastID, message: '回款记录创建成功' });
+    res.json({ id: this.lastID, message: 'Payment record created!' });
   });
 });
 
 /**
  * PUT /api/receivable/payments/:id
- * 修改回款记录
  */
 router.put('/payments/:id', (req: Request, res: Response): Response | void => {
   const { id } = req.params;
   const { customer_code, amount, pay_date, pay_method, remark } = req.body;
   
   if (!customer_code || !amount || !pay_date) {
-    return res.status(400).json({ error: '客户代号、回款金额和回款日期为必填项' });
+    return res.status(400).json({ error: 'Customer ID, payment amount, and payment date are required fields' });
   }
   
   const sql = `
@@ -226,16 +210,15 @@ router.put('/payments/:id', (req: Request, res: Response): Response | void => {
       return;
     }
     if (this.changes === 0) {
-      res.status(404).json({ error: '回款记录不存在' });
+      res.status(404).json({ error: 'Payment records dne' });
       return;
     }
-    res.json({ message: '回款记录更新成功' });
+    res.json({ message: 'Payment record updated!' });
   });
 });
 
 /**
  * DELETE /api/receivable/payments/:id
- * 删除回款记录
  */
 router.delete('/payments/:id', (req: Request, res: Response): void => {
   const { id } = req.params;
@@ -245,19 +228,17 @@ router.delete('/payments/:id', (req: Request, res: Response): void => {
       res.status(500).json({ error: err.message });
       return;
     }
-    
     if (this.changes === 0) {
-      res.status(404).json({ error: '回款记录不存在' });
+      res.status(404).json({ error: 'Payment records dne' });
       return;
     }
     
-    res.json({ message: '回款记录删除成功' });
+    res.json({ message: 'Payment record deleted!' });
   });
 });
 
 /**
  * GET /api/receivable/details/:customer_code
- * 获取客户的应收账款详情（优化版本，出库和回款记录支持分页）
  */
 router.get('/details/:customer_code', (req: Request, res: Response): void => {
   const { customer_code } = req.params;
@@ -268,7 +249,6 @@ router.get('/details/:customer_code', (req: Request, res: Response): void => {
     payment_limit = 10 
   } = req.query;
 
-  // 获取客户信息
   const customerSql = 'SELECT * FROM partners WHERE code = ? AND type = 1';
 
   db.get<CustomerResult>(customerSql, [customer_code], (err, customer) => {
@@ -278,11 +258,10 @@ router.get('/details/:customer_code', (req: Request, res: Response): void => {
     }
 
     if (!customer) {
-      res.status(404).json({ error: '客户不存在' });
+      res.status(404).json({ error: 'Clienet dne' });
       return;
     }
 
-    // 获取出库记录（分页）
     const outboundOffset = (Number(outbound_page) - 1) * Number(outbound_limit);
     const outboundSql = 'SELECT * FROM outbound_records WHERE customer_code = ? ORDER BY outbound_date DESC LIMIT ? OFFSET ?';
     
@@ -292,7 +271,6 @@ router.get('/details/:customer_code', (req: Request, res: Response): void => {
         return;
       }
 
-      // 获取出库记录总数
       const outboundCountSql = 'SELECT COUNT(*) as total FROM outbound_records WHERE customer_code = ?';
       db.get<CountResult>(outboundCountSql, [customer_code], (err, outboundCountResult) => {
         if (err) {
@@ -300,7 +278,6 @@ router.get('/details/:customer_code', (req: Request, res: Response): void => {
           return;
         }
 
-        // 获取回款记录（分页）
         const paymentOffset = (Number(payment_page) - 1) * Number(payment_limit);
         const paymentSql = 'SELECT * FROM receivable_payments WHERE customer_code = ? ORDER BY pay_date DESC LIMIT ? OFFSET ?';
         
@@ -310,7 +287,6 @@ router.get('/details/:customer_code', (req: Request, res: Response): void => {
             return;
           }
 
-          // 获取回款记录总数
           const paymentCountSql = 'SELECT COUNT(*) as total FROM receivable_payments WHERE customer_code = ?';
           db.get<CountResult>(paymentCountSql, [customer_code], (err, paymentCountResult) => {
             if (err) {
@@ -318,7 +294,6 @@ router.get('/details/:customer_code', (req: Request, res: Response): void => {
               return;
             }
 
-            // 计算统计数据（全量统计）
             const totalReceivableSql = 'SELECT SUM(total_price) as total FROM outbound_records WHERE customer_code = ?';
             db.get<TotalResult>(totalReceivableSql, [customer_code], (err, totalReceivableResult) => {
               if (err) {

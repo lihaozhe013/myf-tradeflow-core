@@ -1,45 +1,38 @@
-import fs from 'fs';
-import { ensureFileDirSync, resolveFilesInDataPath } from '@/utils/paths';
+import fs from "fs";
+import { ensureFileDirSync, resolveFilesInDataPath } from "@/utils/paths";
 
-/**
- * 生成缓存键
- */
 export function generateCacheKey(
   startDate: string,
   endDate: string,
   customerCode?: string,
   productModel?: string
 ): string {
-  const customer = customerCode || 'All';
-  const product = productModel || 'All';
+  const customer = customerCode || "All";
+  const product = productModel || "All";
   return `${startDate}_${endDate}_${customer}_${product}`;
 }
 
-/**
- * 生成详细分析缓存键
- */
 export function generateDetailCacheKey(
   startDate: string,
   endDate: string,
   customerCode?: string,
   productModel?: string
 ): string {
-  const customer = customerCode || 'All';
-  const product = productModel || 'All';
+  const customer = customerCode || "All";
+  const product = productModel || "All";
   return `detail_${startDate}_${endDate}_${customer}_${product}`;
 }
 
-/**
- * 获取分析数据缓存文件路径
- */
 export function getCacheFilePath(): string {
-  return resolveFilesInDataPath('analysis-cache.json');
+  return resolveFilesInDataPath("analysis-cache.json");
 }
 
 /**
- * 清理过期缓存数据（30天以上）
+ * Clear expired cache data (over 30 days)
  */
-export function cleanExpiredCache<T extends Record<string, any>>(cacheData: T): T {
+export function cleanExpiredCache<T extends Record<string, any>>(
+  cacheData: T
+): T {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -61,24 +54,24 @@ export function cleanExpiredCache<T extends Record<string, any>>(cacheData: T): 
   });
 
   if (cleanedCount > 0) {
-    console.log(`清理了 ${cleanedCount} 个过期的分析缓存`);
+    console.log(`Cleared ${cleanedCount} expired analysis caches`);
   }
 
   return cleanedData as T;
 }
 
 /**
- * 读取缓存数据
+ * Read analysis Cache Data
  */
 export function readCache(): Record<string, any> {
   const cacheFile = getCacheFilePath();
   if (fs.existsSync(cacheFile)) {
     try {
-      const json = fs.readFileSync(cacheFile, 'utf-8');
+      const json = fs.readFileSync(cacheFile, "utf-8");
       const cacheData = JSON.parse(json);
       return cleanExpiredCache(cacheData);
     } catch (e) {
-      console.error('读取分析缓存失败:', e);
+      console.error("Failed to read the analysis cache:", e);
       return {};
     }
   }
@@ -86,7 +79,7 @@ export function readCache(): Record<string, any> {
 }
 
 /**
- * 写入缓存数据
+ * write analysis Cache Data
  */
 export function writeCache(cacheData: Record<string, any>): boolean {
   const cacheFile = getCacheFilePath();
@@ -94,10 +87,10 @@ export function writeCache(cacheData: Record<string, any>): boolean {
     // Ensure parent directory exists to avoid ENOENT
     ensureFileDirSync(cacheFile);
     const cleanedData = cleanExpiredCache(cacheData);
-    fs.writeFileSync(cacheFile, JSON.stringify(cleanedData, null, 2), 'utf-8');
+    fs.writeFileSync(cacheFile, JSON.stringify(cleanedData, null, 2), "utf-8");
     return true;
   } catch (e) {
-    console.error('写入分析缓存失败:', e);
+    console.error("Failed to write the analysis cache:", e);
     return false;
   }
 }

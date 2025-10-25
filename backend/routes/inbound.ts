@@ -1,22 +1,15 @@
-/**
- * 入库记录路由
- * 管理入库记录的查询、新增、修改和删除
- */
 import express, { type Router, type Request, type Response } from 'express';
 import db from '@/db.js';
 import decimalCalc from '@/utils/decimalCalculator.js';
 
 const router: Router = express.Router();
 
-/**
- * 数据库查询结果类型
- */
 interface CountResult {
   total: number;
 }
 
 /**
- * 工具函数：判断查询参数是否有效（排除 '', 'null', 'undefined' 字符串）
+ * Validate query parameters (exclude empty strings, null, and undefined)
  */
 function isProvided(val: any): boolean {
   return !(val === undefined || val === null || val === '' || val === 'null' || val === 'undefined');
@@ -24,18 +17,16 @@ function isProvided(val: any): boolean {
 
 /**
  * GET /api/inbound
- * 获取入库记录列表（支持分页和筛选）
  */
 router.get('/', (req: Request, res: Response): void => {
   let { page = 1 } = req.query;
   let pageNum = parseInt(page as string, 10);
   if (!Number.isFinite(pageNum) || pageNum < 1) pageNum = 1;
-  const limit = 10; // 固定每页10条
+  const limit = 10;
   
   let sql = 'SELECT * FROM inbound_records WHERE 1=1';
   const params: any[] = [];
   
-  // 添加过滤条件
   if (isProvided(req.query['supplier_short_name'])) {
     sql += ' AND supplier_short_name LIKE ?';
     params.push(`%${req.query['supplier_short_name']}%`);
@@ -53,7 +44,6 @@ router.get('/', (req: Request, res: Response): void => {
     params.push(req.query['end_date']);
   }
 
-  // 排序
   const allowedSortFields = ['inbound_date', 'unit_price', 'total_price', 'id'];
   let orderBy = 'id DESC';
   if (req.query['sort_field'] && allowedSortFields.includes(req.query['sort_field'] as string)) {
@@ -62,7 +52,6 @@ router.get('/', (req: Request, res: Response): void => {
   }
   sql += ` ORDER BY ${orderBy}`;
 
-  // 分页
   const offset = (pageNum - 1) * limit;
   sql += ' LIMIT ? OFFSET ?';
   params.push(limit, offset);
@@ -73,7 +62,6 @@ router.get('/', (req: Request, res: Response): void => {
       return;
     }
     
-    // 获取总数
     let countSql = 'SELECT COUNT(*) as total FROM inbound_records WHERE 1=1';
     const countParams: any[] = [];
     
@@ -115,7 +103,6 @@ router.get('/', (req: Request, res: Response): void => {
 
 /**
  * POST /api/inbound
- * 新增入库记录
  */
 router.post('/', (req: Request, res: Response): void => {
   const {
@@ -124,8 +111,7 @@ router.post('/', (req: Request, res: Response): void => {
     inbound_date, invoice_date, invoice_number, invoice_image_url, order_number,
     remark
   } = req.body;
-  
-  // 使用 decimal.js 精确计算总价
+
   const total_price = decimalCalc.calculateTotalPrice(quantity, unit_price);
   
   const sql = `
@@ -150,13 +136,12 @@ router.post('/', (req: Request, res: Response): void => {
       return;
     }
     
-    res.json({ id: this.lastID, message: '入库记录创建成功' });
+    res.json({ id: this.lastID, message: 'Inbound record created!' });
   });
 });
 
 /**
  * PUT /api/inbound/:id
- * 修改入库记录
  */
 router.put('/:id', (req: Request, res: Response): void => {
   const { id } = req.params;
@@ -167,7 +152,6 @@ router.put('/:id', (req: Request, res: Response): void => {
     remark
   } = req.body;
   
-  // 使用 decimal.js 精确计算总价
   const total_price = decimalCalc.calculateTotalPrice(quantity, unit_price);
   
   const sql = `
@@ -193,17 +177,16 @@ router.put('/:id', (req: Request, res: Response): void => {
     }
     
     if (this.changes === 0) {
-      res.status(404).json({ error: '入库记录不存在' });
+      res.status(404).json({ error: 'No inbound records exist' });
       return;
     }
     
-    res.json({ message: '入库记录更新成功' });
+    res.json({ message: 'Inbound record updated!' });
   });
 });
 
 /**
  * DELETE /api/inbound/:id
- * 删除入库记录
  */
 router.delete('/:id', (req: Request, res: Response): void => {
   const { id } = req.params;
@@ -215,11 +198,11 @@ router.delete('/:id', (req: Request, res: Response): void => {
     }
     
     if (this.changes === 0) {
-      res.status(404).json({ error: '入库记录不存在' });
+      res.status(404).json({ error: 'No inbound records exist' });
       return;
     }
     
-    res.json({ message: '入库记录删除成功' });
+    res.json({ message: 'Inbound record deleted!' });
   });
 });
 

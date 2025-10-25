@@ -1,13 +1,12 @@
-// Excel 导出核心类（TS + ESM）
-import { TEMPLATES } from '@/routes/export/utils/exportTemplates';
-import ExportQueries from '@/routes/export/utils';
-import BaseInfoExporter from '@/routes/export/utils/baseInfoExporter';
-import TransactionExporter from '@/routes/export/utils/transactionExporter';
-import FinancialExporter from '@/routes/export/utils/financialExporter';
-import AnalysisExporter from '@/routes/export/utils/analysisExporter';
-import AdvancedAnalysisExporter from '@/routes/export/utils/advancedAnalysisExporter';
-import InvoiceExporter from '@/routes/export/utils/invoiceExporter';
-import ExportUtils from '@/routes/export/utils/exportUtils';
+import { TEMPLATES } from "@/routes/export/utils/exportTemplates";
+import ExportQueries from "@/routes/export/utils";
+import BaseInfoExporter from "@/routes/export/utils/baseInfoExporter";
+import TransactionExporter from "@/routes/export/utils/transactionExporter";
+import FinancialExporter from "@/routes/export/utils/financialExporter";
+import AnalysisExporter from "@/routes/export/utils/analysisExporter";
+import AdvancedAnalysisExporter from "@/routes/export/utils/advancedAnalysisExporter";
+import InvoiceExporter from "@/routes/export/utils/invoiceExporter";
+import ExportUtils from "@/routes/export/utils/exportUtils";
 
 export default class ExcelExporter {
   private queries: ExportQueries;
@@ -24,16 +23,19 @@ export default class ExcelExporter {
     this.transactionExporter = new TransactionExporter(TEMPLATES as any);
     this.financialExporter = new FinancialExporter(TEMPLATES as any);
     this.analysisExporter = new AnalysisExporter(TEMPLATES as any);
-    this.advancedAnalysisExporter = new AdvancedAnalysisExporter(TEMPLATES as any, this.queries);
+    this.advancedAnalysisExporter = new AdvancedAnalysisExporter(
+      TEMPLATES as any,
+      this.queries
+    );
     this.invoiceExporter = new InvoiceExporter(TEMPLATES as any);
   }
 
   async exportBaseInfo(options: any = {}): Promise<Buffer> {
     try {
-      const data = await this.queries.getBaseInfoData(options.tables || '123');
+      const data = await this.queries.getBaseInfoData(options.tables || "123");
       return this.baseInfoExporter.export(data, options);
     } catch (error: any) {
-      throw new Error(`基础信息导出失败: ${error.message}`);
+      throw new Error(`Base info export failed: ${error.message}`);
     }
   }
 
@@ -42,7 +44,7 @@ export default class ExcelExporter {
       const data = await this.queries.getInboundOutboundData(options);
       return this.transactionExporter.exportInboundOutbound(data, options);
     } catch (error: any) {
-      throw new Error(`入库出库记录导出失败: ${error.message}`);
+      throw new Error(`Inbound/outbound export failed: ${error.message}`);
     }
   }
 
@@ -51,7 +53,7 @@ export default class ExcelExporter {
       const data = await this.queries.getReceivablePayableData(options);
       return this.financialExporter.exportReceivablePayable(data);
     } catch (error: any) {
-      throw new Error(`应收应付明细导出失败: ${error.message}`);
+      throw new Error(`Receivable/payable export failed: ${error.message}`);
     }
   }
 
@@ -60,7 +62,7 @@ export default class ExcelExporter {
       const data = await this.queries.getInboundOutboundData(options);
       return this.transactionExporter.exportStatement(data, options);
     } catch (error: any) {
-      throw new Error(`对账单导出失败: ${error.message}`);
+      throw new Error(`Statement export failed: ${error.message}`);
     }
   }
 
@@ -68,26 +70,32 @@ export default class ExcelExporter {
     try {
       return this.analysisExporter.exportAnalysis(options);
     } catch (error: any) {
-      throw new Error(`分析数据导出失败: ${error.message}`);
+      throw new Error(`Analysis export failed: ${error.message}`);
     }
   }
 
   async exportAdvancedAnalysis(options: any = {}): Promise<Buffer> {
     try {
-      return await this.advancedAnalysisExporter.exportAdvancedAnalysis(options);
+      return await this.advancedAnalysisExporter.exportAdvancedAnalysis(
+        options
+      );
     } catch (error: any) {
-      throw new Error(`高级分析数据导出失败: ${error.message}`);
+      throw new Error(`Advanced analysis export failed: ${error.message}`);
     }
   }
 
   async exportInvoice(options: any = {}): Promise<Buffer> {
     try {
       const { partnerCode, dateFrom, dateTo } = options || {};
-      if (!partnerCode) throw new Error('合作伙伴代号是必填项');
-      const data = await this.queries.getInvoiceData({ partnerCode, dateFrom, dateTo });
+      if (!partnerCode) throw new Error("Partner code is required");
+      const data = await this.queries.getInvoiceData({
+        partnerCode,
+        dateFrom,
+        dateTo,
+      });
       return this.invoiceExporter.exportInvoice(data, options);
     } catch (error: any) {
-      throw new Error(`发票导出失败: ${error.message}`);
+      throw new Error(`Invoice export failed: ${error.message}`);
     }
   }
 

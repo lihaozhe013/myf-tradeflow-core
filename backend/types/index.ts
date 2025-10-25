@@ -1,32 +1,11 @@
-/**
- * 后端类型定义入口文件
- */
-
-// 导出配置相关类型
+import '@/types/express.d';
 export type {
   ServerConfig,
-  HttpsConfig,
   FrontendConfig,
   AppConfig
-} from './config';
+} from '@/types/config';
 
-// 导出 Express 扩展类型
 export type {
   User,
   CustomError
-} from './express.d';
-
-// 导出数据库相关类型
-export type {
-  InboundRecord,
-  OutboundRecord,
-  Partner,
-  Product,
-  ProductPrice,
-  ReceivablePayment,
-  PayablePayment,
-  DatabaseInstance
-} from './database';
-
-// 重新导出 express.d.ts 中的全局类型扩展
-import './express.d';
+} from '@/types/express.d';

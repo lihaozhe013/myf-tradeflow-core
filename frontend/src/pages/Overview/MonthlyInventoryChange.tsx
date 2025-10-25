@@ -19,27 +19,27 @@ const { Option } = Select;
  * 本月库存变化量组件
  * 用户可以选择产品，查看该产品本月的库存变化信息
  */
-type MonthlyStockChangeData = {
+type MonthlyInventoryChangeData = {
   product_model: string;
-  month_start_stock: number;
-  current_stock: number;
+  month_start_inventory: number;
+  current_inventory: number;
   monthly_change: number;
   query_date: string;
 };
 
-type MonthlyStockChangeResponse = {
+type MonthlyInventoryChangeResponse = {
   success: boolean;
-  data?: MonthlyStockChangeData;
+  data?: MonthlyInventoryChangeData;
   message?: string;
   error?: string;
 };
 
-const MonthlyStockChange = () => {
+const MonthlyInventoryChange = () => {
   const { t } = useTranslation();
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
-  const [stockData, setStockData] = useState<MonthlyStockChangeData | null>(null);
-  const [stockLoading, setStockLoading] = useState(false);
-  const [stockError, setStockError] = useState<string | null>(null);
+  const [inventoryData, setInventoryData] = useState<MonthlyInventoryChangeData | null>(null);
+  const [inventoryLoading, setInventoryLoading] = useState(false);
+  const [inventoryError, setInventoryError] = useState<string | null>(null);
   
   const { get } = useSimpleApi();
   
@@ -62,26 +62,26 @@ const MonthlyStockChange = () => {
   }, [products, selectedProduct]);
 
   // 获取月度库存变化数据
-  const fetchMonthlyStockChange = useCallback(async (productModel: string) => {
+  const fetchMonthlyInventoryChange = useCallback(async (productModel: string) => {
     try {
-      setStockLoading(true);
-      setStockError(null);
+      setInventoryLoading(true);
+      setInventoryError(null);
       
-      const result = await get<MonthlyStockChangeResponse>(
-        `/overview/monthly-stock-change/${encodeURIComponent(productModel)}`
+      const result = await get<MonthlyInventoryChangeResponse>(
+        `/overview/monthly-inventory-change/${encodeURIComponent(productModel)}`
       );
       
       if (result.success && result.data) {
-        setStockData(result.data);
+        setInventoryData(result.data);
       } else {
-  setStockData(null);
-  setStockError((result.message ?? result.error) ?? t('overview.stockChangeFailed'));
+  setInventoryData(null);
+  setInventoryError((result.message ?? result.error) ?? t('overview.inventoryChangeFailed'));
       }
     } catch (err) {
-      console.error(t('overview.stockChangeFailed'), err);
-      setStockError(t('overview.stockChangeFailed'));
+      console.error(t('overview.inventoryChangeFailed'), err);
+      setInventoryError(t('overview.inventoryChangeFailed'));
     } finally {
-      setStockLoading(false);
+      setInventoryLoading(false);
     }
   }, [get, t]);
 
@@ -93,9 +93,9 @@ const MonthlyStockChange = () => {
   // 当默认产品设置后，自动加载数据
   useEffect(() => {
     if (selectedProduct) {
-      fetchMonthlyStockChange(selectedProduct);
+      fetchMonthlyInventoryChange(selectedProduct);
     }
-  }, [selectedProduct, fetchMonthlyStockChange]);
+  }, [selectedProduct, fetchMonthlyInventoryChange]);
 
   // 计算变化趋势图标和颜色
   const getTrendIcon = (change: number) => {
@@ -113,12 +113,12 @@ const MonthlyStockChange = () => {
     return '#666';
   };
 
-  const loading = productsLoading || stockLoading;
-  const error = productsError ?? stockError;
+  const loading = productsLoading || inventoryLoading;
+  const error = productsError ?? inventoryError;
 
   return (
     <Card
-      title={t('overview.monthlyStockChange')}
+      title={t('overview.monthlyInventoryChange')}
       variant="outlined"
       style={{ borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)', height: 370 }}
       extra={
@@ -146,7 +146,7 @@ const MonthlyStockChange = () => {
         <div style={{ textAlign: 'center', padding: '20px 0' }}>
           <Spin size="large" />
           <div style={{ marginTop: '8px' }}>
-            <Text type="secondary">{t('overview.loadingStock')}</Text>
+            <Text type="secondary">{t('overview.loadingInventory')}</Text>
           </div>
         </div>
       ) : error ? (
@@ -157,20 +157,20 @@ const MonthlyStockChange = () => {
           showIcon
           style={{ margin: '10px 0' }}
         />
-      ) : stockData ? (
+      ) : inventoryData ? (
         <Row gutter={[8, 8]}>
           <Col span={24}>
             <Statistic
-              title={t('overview.monthStartStock')}
-              value={stockData.month_start_stock || 0}
+              title={t('overview.monthStartInventory')}
+              value={inventoryData.month_start_inventory || 0}
               prefix={<InboxOutlined />}
               valueStyle={{ color: '#1677ff', fontSize: '16px' }}
             />
           </Col>
           <Col span={24}>
             <Statistic
-              title={t('overview.currentStock')}
-              value={stockData.current_stock || 0}
+              title={t('overview.currentInventory')}
+              value={inventoryData.current_inventory || 0}
               prefix={<StockOutlined />}
               valueStyle={{ color: '#722ed1', fontSize: '16px' }}
             />
@@ -178,10 +178,10 @@ const MonthlyStockChange = () => {
           <Col span={24}>
             <Statistic
               title={t('overview.monthlyChange')}
-              value={Math.abs(stockData.monthly_change || 0)}
-              prefix={getTrendIcon(stockData.monthly_change)}
-              suffix={stockData.monthly_change > 0 ? t('overview.increase') : stockData.monthly_change < 0 ? t('overview.decrease') : t('overview.noChange')}
-              valueStyle={{ color: getTrendColor(stockData.monthly_change), fontSize: '16px' }}
+              value={Math.abs(inventoryData.monthly_change || 0)}
+              prefix={getTrendIcon(inventoryData.monthly_change)}
+              suffix={inventoryData.monthly_change > 0 ? t('overview.increase') : inventoryData.monthly_change < 0 ? t('overview.decrease') : t('overview.noChange')}
+              valueStyle={{ color: getTrendColor(inventoryData.monthly_change), fontSize: '16px' }}
             />
           </Col>
         </Row>
@@ -194,4 +194,4 @@ const MonthlyStockChange = () => {
   );
 };
 
-export default MonthlyStockChange;
+export default MonthlyInventoryChange;

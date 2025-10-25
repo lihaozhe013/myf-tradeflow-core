@@ -2,7 +2,7 @@ import express, { Request, Response, Router } from 'express';
 import fs from 'fs';
 import path from 'path';
 import db from '@/db.js';
-import { getAllStockData } from '@/utils/stockCacheService.js';
+import { getAllInventoryData } from '@/utils/inventoryCacheService.js';
 import decimalCalc from '@/utils/decimalCalculator.js';
 import { resolveFilesInDataPath } from '@/utils/paths';
 
@@ -58,7 +58,7 @@ interface OverviewStats {
   total_purchase_amount: number;
   total_sales_amount: number;
   sold_goods_cost: number;
-  stocked_products: number;
+  inventoryed_products: number;
 }
 
 interface TopSalesProduct {
@@ -66,10 +66,10 @@ interface TopSalesProduct {
   total_sales: number;
 }
 
-interface MonthlyStockChange {
+interface MonthlyInventoryChange {
   product_model: string;
-  month_start_stock: number;
-  current_stock: number;
+  month_start_inventory: number;
+  current_inventory: number;
   monthly_change: number;
   query_date: string;
 }
@@ -85,10 +85,10 @@ interface MonthlyQuantityRow {
 }
 
 interface StatsCache {
-  out_of_stock_products?: { product_model: string }[];
+  out_of_inventory_products?: { product_model: string }[];
   overview?: OverviewStats;
   top_sales_products?: TopSalesProduct[];
-  monthly_stock_changes?: Record<string, MonthlyStockChange>;
+  monthly_inventory_changes?: Record<string, MonthlyInventoryChange>;
   [key: string]: any;
 }
 
@@ -207,7 +207,7 @@ router.get('/stats', (_req: Request, res: Response) => {
   return res.status(503).json({ error: '统计数据未生成，请先刷新。' });
 });
 
-// POST 强制刷新并写入缓存（含top_sales_products和monthly_stock_changes）
+// POST 强制刷新并写入缓存（含top_sales_products和monthly_inventory_changes）
 router.post('/stats', (_req: Request, res: Response) => {
   const statsFile = resolveFilesInDataPath("overview-stats.json");
   const stats: StatsCache = {};
@@ -219,14 +219,14 @@ router.post('/stats', (_req: Request, res: Response) => {
     customHandler: (callback: ErrorCallback<any>) => void;
   }> = [
     {
-      key: 'out_of_stock_products',
+      key: 'out_of_inventory_products',
       customHandler: (callback) => {
-        getAllStockData((err, stockData) => {
+        getAllInventoryData((err, inventoryData) => {
           if (err) return callback(err);
-          const outOfStockProducts = Object.entries(stockData!)
-            .filter(([, data]) => data.current_stock <= 0)
+          const outOfInventoryProducts = Object.entries(inventoryData!)
+            .filter(([, data]) => data.current_inventory <= 0)
             .map(([product_model]) => ({ product_model }));
-          callback(null, outOfStockProducts);
+          callback(null, outOfInventoryProducts);
         });
       },
     },
@@ -328,12 +328,12 @@ router.post('/stats', (_req: Request, res: Response) => {
           calculateSoldGoodsCost((costErr, soldGoodsCost) => {
             if (costErr) return callback(costErr);
 
-            getAllStockData((stockErr, stockData) => {
-              if (stockErr) return callback(stockErr);
+            getAllInventoryData((inventoryErr, inventoryData) => {
+              if (inventoryErr) return callback(inventoryErr);
               const result: OverviewStats = {
                 ...finalResult,
                 sold_goods_cost: decimalCalc.toDbNumber(soldGoodsCost!),
-                stocked_products: Object.keys(stockData!).length,
+                inventoryed_products: Object.keys(inventoryData!).length,
               };
               callback(null, result);
             });
@@ -382,7 +382,7 @@ router.post('/stats', (_req: Request, res: Response) => {
       },
     },
     {
-      key: 'monthly_stock_changes',
+      key: 'monthly_inventory_changes',
       customHandler: (callback) => {
         // 获取本月第一天的日期
         const now = new Date();
@@ -397,7 +397,7 @@ router.post('/stats', (_req: Request, res: Response) => {
             return callback(null, {});
           }
 
-          const monthlyChanges: Record<string, MonthlyStockChange> = {};
+          const monthlyChanges: Record<string, MonthlyInventoryChange> = {};
           let productCompleted = 0;
 
           products.forEach(({ product_model }) => {
@@ -453,17 +453,17 @@ router.post('/stats', (_req: Request, res: Response) => {
                   const totalInbound = decimalCalc.fromSqlResult(results['total_inbound'], 0, 0);
                   const totalOutbound = decimalCalc.fromSqlResult(results['total_outbound'], 0, 0);
 
-                  const monthStartStock = decimalCalc.toDbNumber(
+                  const monthStartInventory = decimalCalc.toDbNumber(
                     decimalCalc.subtract(beforeMonthInbound, beforeMonthOutbound),
                     0
                   );
                   const monthlyChange = decimalCalc.toDbNumber(decimalCalc.subtract(totalInbound, totalOutbound), 0);
-                  const currentStock = decimalCalc.toDbNumber(decimalCalc.add(monthStartStock, monthlyChange), 0);
+                  const currentInventory = decimalCalc.toDbNumber(decimalCalc.add(monthStartInventory, monthlyChange), 0);
 
                   monthlyChanges[product_model] = {
                     product_model,
-                    month_start_stock: monthStartStock,
-                    current_stock: currentStock,
+                    month_start_inventory: monthStartInventory,
+                    current_inventory: currentInventory,
                     monthly_change: monthlyChange,
                     query_date: new Date().toISOString(),
                   };
@@ -552,7 +552,7 @@ router.get('/top-sales-products', (_req: Request, res: Response) => {
 });
 
 // 获取指定产品的本月库存变化量（从overview-stats.json读取）
-router.get('/monthly-stock-change/:productModel', (req: Request, res: Response) => {
+router.get('/monthly-inventory-change/:productModel', (req: Request, res: Response) => {
   const productModel = req.params['productModel'];
 
   if (!productModel) {
@@ -569,10 +569,10 @@ router.get('/monthly-stock-change/:productModel', (req: Request, res: Response) 
       const stats: StatsCache = JSON.parse(json);
 
       // 从缓存中查找指定产品的本月库存变化数据
-      if (stats.monthly_stock_changes && stats.monthly_stock_changes[productModel]) {
+      if (stats.monthly_inventory_changes && stats.monthly_inventory_changes[productModel]) {
         return res.json({
           success: true,
-          data: stats.monthly_stock_changes[productModel],
+          data: stats.monthly_inventory_changes[productModel],
         });
       } else {
         return res.json({

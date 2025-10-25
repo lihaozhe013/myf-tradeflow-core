@@ -8,7 +8,7 @@ The system was developed in a Chinese-language environment and extensively utili
 
 ## Key Features
 
-- **Inventory Management**: Track stock levels, inbound and outbound operations
+- **Inventory Management**: Track inventory levels, inbound and outbound operations
 - **Product Management**: Manage product information and pricing strategies
 - **Financial Tracking**: Monitor accounts payable and accounts receivable
 - **Sales Analysis**: Generate reports and analyze sales data
