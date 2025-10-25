@@ -26,7 +26,7 @@ async function main() {
     format: "esm",
     target: ["node22"],
     sourcemap: true,
-    minify: false,
+    minify: true,
     // Externalize all npm packages so node_modules aren't bundled
     packages: "external",
     external: [
