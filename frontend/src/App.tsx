@@ -19,7 +19,7 @@ import Inventory from '@/pages/Inventory';
 import Partners from '@/pages/Partners';
 import Products from '@/pages/Products';
 import ProductPrices from '@/pages/ProductPrices';
-import Report from '@/pages/Report';
+import Export from '@/pages/Export';
 import Overview from '@/pages/Overview';
 import Receivable from '@/pages/Receivable';
 import Payable from '@/pages/Payable';
@@ -242,7 +242,7 @@ type MenuKey =
   | 'receivable'
   | 'payable'
   | 'analysis'
-  | 'report';
+  | 'export';
 
 interface AppContentInnerProps {
   readonly location: Location;
@@ -250,7 +250,7 @@ interface AppContentInnerProps {
 }
 
 function AppContentInner({ location, t }: AppContentInnerProps): React.ReactElement {
-  const getSelectedKey = (): MenuKey => {
+  const getSelectedKey = (): MenuKey | '' => {
     const path = location.pathname;
     if (path === '/overview' || path === '/') return 'overview';
     if (path === '/inbound') return 'inbound';
@@ -262,7 +262,8 @@ function AppContentInner({ location, t }: AppContentInnerProps): React.ReactElem
     if (path === '/receivable') return 'receivable';
     if (path === '/payable') return 'payable';
     if (path === '/analysis') return 'analysis';
-    if (path === '/report' || path === '/about') return 'report';
+    if (path === '/export') return 'export';
+    if (path === '/about') return '';
     return 'overview';
   };
 
@@ -348,10 +349,10 @@ function AppContentInner({ location, t }: AppContentInnerProps): React.ReactElem
       ),
     },
     {
-      key: 'report',
+      key: 'export',
       label: (
-        <Link to="/report" style={{ fontWeight: 'bold' }}>
-          {t('nav.report')}
+        <Link to="/export" style={{ fontWeight: 'bold' }}>
+          {t('nav.export')}
         </Link>
       ),
     },
@@ -405,7 +406,7 @@ function AppContentInner({ location, t }: AppContentInnerProps): React.ReactElem
               <Route path="/receivable" element={<Receivable />} />
               <Route path="/payable" element={<Payable />} />
               <Route path="/analysis" element={<Analysis />} />
-              <Route path="/report" element={<Report />} />
+              <Route path="/export" element={<Export />} />
               <Route path="/about" element={<About />} />
               <Route path="*" element={<Navigate to="/overview" replace />} />
             </Routes>

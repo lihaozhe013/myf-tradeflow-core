@@ -15,6 +15,7 @@ import type { FC, Dispatch, SetStateAction } from 'react';
 import type { FormInstance } from 'antd/es/form';
 import type { RadioChangeEvent } from 'antd/es/radio';
 import type { DefaultOptionType } from 'antd/es/select';
+import { currency_unit_symbol } from "@/config/types";
 import type { Dayjs } from 'dayjs';
 import type {
   OutboundFormValues,
@@ -233,7 +234,7 @@ const OutboundModal: FC<OutboundModalProps> = ({
                 style={{ width: '100%' }}
                 placeholder={t('outbound.inputUnitPrice') ?? ''}
                 precision={4}
-                addonBefore="¥"
+                addonBefore={currency_unit_symbol}
                 onChange={onPriceOrQuantityChange}
                 disabled={!manualPrice}
               />
@@ -252,7 +253,7 @@ const OutboundModal: FC<OutboundModalProps> = ({
                 placeholder={t('outbound.autoCalc') ?? ''}
                 precision={3}
                 disabled
-                addonBefore="¥"
+                addonBefore={currency_unit_symbol}
               />
             </Form.Item>
           </Col>

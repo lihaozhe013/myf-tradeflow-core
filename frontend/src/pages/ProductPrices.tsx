@@ -5,6 +5,7 @@ import type { FormProps } from 'antd';
 import type { AutoCompleteProps } from 'antd/es/auto-complete';
 import type { SelectProps } from 'antd/es/select';
 import type { Dayjs } from 'dayjs';
+import { currency_unit_symbol } from "@/config/types";
 import {
   Table,
   Button,
@@ -226,7 +227,7 @@ const ProductPrices: FC = () => {
       dataIndex: 'unit_price',
       key: 'unit_price',
       width: 120,
-      render: price => `¥${price}`,
+      render: price => `${currency_unit_symbol}${price}`,
     },
     {
       title: t('productPrices.effectiveDate'),
@@ -546,7 +547,7 @@ const ProductPrices: FC = () => {
               placeholder={t('productPrices.inputUnitPrice')}
               precision={4}
               min={0}
-              addonBefore="¥"
+              addonBefore={currency_unit_symbol}
             />
           </Form.Item>
 

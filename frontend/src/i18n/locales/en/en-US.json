@@ -1,6 +1,6 @@
 {
   "auth": {
-    "title": "MYF TradeFlow System",
+    "title": "TradeFlow System",
     "subtitle": "Login to your account",
     "verifying": "Verifying login status...",
     "username": "Username",
@@ -32,7 +32,7 @@
     "productPrices": "Product Prices",
     "receivable": "Receivable",
     "payable": "Payable",
-    "report": "Export",
+    "export": "Export",
     "analysis": "Data Analysis"
   },
   "common": {
@@ -473,7 +473,7 @@
     "advancedExport": {
       "title": "Advanced Export Options",
       "notice": "Notice",
-      "noticeDescription": "You have selected all customers and all products. The system will generate a multi-worksheet detailed analysis report. This may be very slow and could cause the system to crash.",
+      "noticeDescription": "You have selected all customers and all products. The system will generate a multi-worksheet detailed analysis export.",
       "exportMethod": "Export Method",
       "byCustomer": "Export by Customer",
       "byProduct": "Export by Product",
@@ -486,9 +486,9 @@
       "sheets": "sheets",
       "startExport": "Start Export",
       "cancel": "Cancel",
-      "exporting": "Generating report...",
+      "exporting": "Generating export...",
       "warning": "Warning",
-      "warningDescription": "Be aware that this operation may take a long time and consume a large amount of memory. If you are using the Electron App version, your computer may freeze. Ensure you back up all data before starting the operation and that your system has sufficient resources to handle this operation."
+      "warningDescription": "Be aware that this operation may take a long time"
     }
   },
   "about": {

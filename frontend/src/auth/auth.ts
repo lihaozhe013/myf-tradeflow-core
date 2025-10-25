@@ -1,14 +1,17 @@
+import type { User, LoginResponse, GetCurrentUserResponse } from '@/auth/auth.types';
+export type { User, LoginResponse, GetCurrentUserResponse, TokenManager, UserManager, AuthAPI } from '@/auth/auth.types';
+
 // 认证工具函数
 const TOKEN_KEY = 'auth_token';
 const USER_KEY = 'auth_user';
 
 // Token 管理
 export const tokenManager = {
-  getToken() {
+  getToken(): string | null {
     return localStorage.getItem(TOKEN_KEY);
   },
   
-  setToken(token) {
+  setToken(token: string | null) {
     if (token) {
       localStorage.setItem(TOKEN_KEY, token);
     } else {
@@ -24,12 +27,19 @@ export const tokenManager = {
 
 // 用户信息管理
 export const userManager = {
-  getUser() {
+  getUser(): User | null {
     const userData = localStorage.getItem(USER_KEY);
-    return userData ? JSON.parse(userData) : null;
+    if (!userData) return null;
+    try {
+      return JSON.parse(userData) as User;
+    } catch {
+      // 存储被污染或版本变更导致解析失败时，清理并返回 null
+      localStorage.removeItem(USER_KEY);
+      return null;
+    }
   },
   
-  setUser(user) {
+  setUser(user: User | null) {
     if (user) {
       localStorage.setItem(USER_KEY, JSON.stringify(user));
     } else {
@@ -46,7 +56,7 @@ export const isAuthenticated = () => {
 };
 
 // 检查用户角色
-export const hasRole = (requiredRole) => {
+export const hasRole = (requiredRole: 'reader' | 'editor') => {
   const user = userManager.getUser();
   if (!user) return false;
   
@@ -61,7 +71,7 @@ export const hasRole = (requiredRole) => {
 
 // API 调用
 export const authAPI = {
-  async login(username, password) {
+  async login(username: string, password: string): Promise<LoginResponse> {
     const response = await fetch('/api/auth/login', {
       method: 'POST',
       headers: {
@@ -72,13 +82,13 @@ export const authAPI = {
     
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || '登录失败');
+      throw new Error(error.message ?? 'Log in failed');
     }
     
-    return response.json();
+    return response.json() as Promise<LoginResponse>;
   },
   
-  async getCurrentUser() {
+  async getCurrentUser(): Promise<GetCurrentUserResponse> {
     const token = tokenManager.getToken();
     if (!token) {
       throw new Error('No token found');
@@ -94,7 +104,7 @@ export const authAPI = {
       throw new Error('Failed to get user info');
     }
     
-    return response.json();
+    return response.json() as Promise<GetCurrentUserResponse>;
   },
   
   logout() {

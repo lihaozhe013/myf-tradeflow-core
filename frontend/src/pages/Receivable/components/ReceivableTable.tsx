@@ -1,6 +1,7 @@
 import { useState, useMemo, type FC, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Table, Button, Popconfirm, Tag, message, Modal, Input, Space, Typography, Row, Col } from 'antd';
+import { currency_unit_symbol } from "@/config/types";
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import type { TableProps } from 'antd/es/table';
 import type { SortOrder } from 'antd/es/table/interface';
@@ -47,9 +48,9 @@ const DEFAULT_MODAL_PAGINATION: ModalPaginationState = {
 
 const formatCurrency = (amount: number | null | undefined): string => {
   if (amount === null || amount === undefined || Number.isNaN(Number(amount))) {
-    return '¥0.00';
+    return '${currency_unit_symbol}0.00';
   }
-  return `¥${Number(amount).toLocaleString('zh-CN', {
+  return `${currency_unit_symbol}${Number(amount).toLocaleString('zh-CN', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;

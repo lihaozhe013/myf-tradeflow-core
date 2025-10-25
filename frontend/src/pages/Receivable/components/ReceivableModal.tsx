@@ -2,6 +2,7 @@ import { useMemo, type FC } from 'react';
 import { Modal, Form, Input, InputNumber, DatePicker, Select } from 'antd';
 import type { FormInstance } from 'antd/es/form';
 import type { DefaultOptionType } from 'antd/es/select';
+import { currency_unit_symbol } from "@/config/types";
 import { useTranslation } from 'react-i18next';
 import { PAYMENT_METHODS, DEFAULT_PAYMENT_METHOD } from '@/config';
 import type {
@@ -108,10 +109,18 @@ const ReceivableModal: FC<ReceivableModalProps> = ({
             precision={2}
             formatter={value =>
               value !== undefined && value !== null
-                ? `¥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                ? `${currency_unit_symbol} ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                 : ''
             }
-            parser={value => (value ? value.replace(/¥\s?|(,*)/g, '') : '')}
+            parser={value => {
+              if (!value) return '';
+              const symbol = currency_unit_symbol ?? '';
+              // Escape regex special chars in symbol (e.g., $, ¥, €, /, etc.)
+              const escaped = symbol.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              // Remove currency symbol (optionally followed by a space) and any commas
+              const re = new RegExp(`(${escaped}\\s?|,)`, 'g');
+              return value.replace(re, '');
+            }}
           />
         </Form.Item>
 

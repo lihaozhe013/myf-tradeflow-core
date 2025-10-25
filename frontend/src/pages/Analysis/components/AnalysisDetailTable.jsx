@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, Table } from 'antd';
 import { useTranslation } from 'react-i18next';
+import { currency_unit_symbol } from "@/config/types";
 
 const AnalysisDetailTable = ({
   detailData,
@@ -12,7 +13,7 @@ const AnalysisDetailTable = ({
 
   // 格式化金额
   const formatCurrency = (amount) => {
-    return `¥${Number(amount || 0).toLocaleString('zh-CN', {
+    return `${currency_unit_symbol}${Number(amount || 0).toLocaleString('zh-CN', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     })}`;

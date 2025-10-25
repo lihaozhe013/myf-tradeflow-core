@@ -6,7 +6,7 @@ import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import type { FC, Key, Dispatch, SetStateAction } from 'react';
 import type { InboundRecord, Partner, Product } from '../types';
-
+import { currency_unit_symbol } from "@/config/types";
 interface InboundTableProps {
   readonly inboundRecords: InboundRecord[];
   readonly loading: boolean;
@@ -79,7 +79,7 @@ const InboundTable: FC<InboundTableProps> = ({
       dataIndex: 'unit_price',
       key: 'unit_price',
       width: 100,
-      render: price => `¥${price}`,
+      render: price => `${currency_unit_symbol}${price}`,
       sorter: true,
     },
     {
@@ -87,7 +87,7 @@ const InboundTable: FC<InboundTableProps> = ({
       dataIndex: 'total_price',
       key: 'total_price',
       width: 100,
-      render: price => `¥${price}`,
+      render: price => `${currency_unit_symbol}${price}`,
       sorter: true,
     },
     {

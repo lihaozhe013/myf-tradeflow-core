@@ -6,8 +6,6 @@ const { Title, Paragraph, Text } = Typography;
 
 function About() {
   const { t } = useTranslation();
-  
-  // 使用简化API hook获取关于页面数据
   const {
     data: aboutData,
     loading,

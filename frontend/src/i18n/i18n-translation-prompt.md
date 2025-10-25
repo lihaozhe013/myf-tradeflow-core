@@ -13,7 +13,7 @@ zh
     "productPrices": "价格管理",
     "receivable": "应收账款",
     "payable": "应付账款",
-    "report": "报表导出"
+    "export": "报表导出"
 }
 
 

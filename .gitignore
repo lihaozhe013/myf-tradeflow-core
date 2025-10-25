@@ -25,7 +25,7 @@ node_modules
 data/
 frontend/public/logo.svg
 .npmrc
-frontend/src/config/appConfig.json
+frontend/src/config/frontendConfig.json
 ecosystem.config.json
 # Dist
 dist/
