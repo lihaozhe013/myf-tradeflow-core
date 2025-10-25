@@ -4,13 +4,13 @@ export type OverviewMetrics = {
   total_purchase_amount: number;
 };
 
-export type OutOfStockProduct = {
+export type OutOfInventoryProduct = {
   product_model: string;
 };
 
 export type OverviewStatsResponse = {
   overview: OverviewMetrics;
-  out_of_stock_products: OutOfStockProduct[];
+  out_of_inventory_products: OutOfInventoryProduct[];
 };
 
 export const DEFAULT_OVERVIEW_STATS: OverviewStatsResponse = {
@@ -19,7 +19,7 @@ export const DEFAULT_OVERVIEW_STATS: OverviewStatsResponse = {
     sold_goods_cost: 0,
     total_purchase_amount: 0,
   },
-  out_of_stock_products: [],
+  out_of_inventory_products: [],
 };
 
 export type TopSalesRecord = {

@@ -1,6 +1,6 @@
-## `/api/stock/total-cost-estimate`
+## `/api/inventory/total-cost-estimate`
 ### GET
-GET /api/stock/total-cost-estimate
+GET /api/inventory/total-cost-estimate
 
 Authorization: Bearer <token>
 

@@ -1,16 +1,9 @@
-/**
- * 应付账款路由
- * 管理供应商应付账款和付款记录
- */
 import express, { type Router, type Request, type Response } from 'express';
 import db from '@/db.js';
 import decimalCalc from '@/utils/decimalCalculator.js';
 
 const router: Router = express.Router();
 
-/**
- * 数据库查询结果类型
- */
 interface CountResult {
   total: number;
 }
@@ -43,7 +36,6 @@ interface TotalResult {
 
 /**
  * GET /api/payable
- * 获取应付账款列表（实时计算）
  */
 router.get('/', (req: Request, res: Response): void => {
   const { page = 1, limit = 10, supplier_short_name, sort_field = 'balance', sort_order = 'desc' } = req.query;
@@ -56,7 +48,6 @@ router.get('/', (req: Request, res: Response): void => {
     params.push(`%${supplier_short_name}%`);
   }
 
-  // 排序
   const allowedSortFields = ['supplier_code', 'supplier_short_name', 'total_payable', 'total_paid', 'balance', 'last_payment_date'];
   let orderBy = 'balance DESC';
   if (sort_field && allowedSortFields.includes(sort_field as string)) {
@@ -66,7 +57,6 @@ router.get('/', (req: Request, res: Response): void => {
 
   const offset = (Number(page) - 1) * Number(limit);
 
-  // 修正聚合方式，避免金额重复累加
   const sql = `
     SELECT
       p.code AS supplier_code,
@@ -102,7 +92,6 @@ router.get('/', (req: Request, res: Response): void => {
       return;
     }
 
-    // 使用 decimal.js 重新计算精确的余额
     const processedRows = rows.map(row => {
       const totalPayable = decimalCalc.fromSqlResult(row.total_payable, 0);
       const totalPaid = decimalCalc.fromSqlResult(row.total_paid, 0);
@@ -116,7 +105,6 @@ router.get('/', (req: Request, res: Response): void => {
       };
     });
 
-    // 获取总数
     const countSql = `
       SELECT COUNT(DISTINCT p.code) as total
       FROM partners p
@@ -143,7 +131,6 @@ router.get('/', (req: Request, res: Response): void => {
 
 /**
  * GET /api/payable/payments/:supplier_code
- * 获取指定供应商的付款记录（支持分页）
  */
 router.get('/payments/:supplier_code', (req: Request, res: Response): void => {
   const { supplier_code } = req.params;
@@ -159,7 +146,6 @@ router.get('/payments/:supplier_code', (req: Request, res: Response): void => {
       return;
     }
     
-    // 获取总数
     const countSql = 'SELECT COUNT(*) as total FROM payable_payments WHERE supplier_code = ?';
     db.get<CountResult>(countSql, [supplier_code], (err, countResult) => {
       if (err) {
@@ -179,13 +165,12 @@ router.get('/payments/:supplier_code', (req: Request, res: Response): void => {
 
 /**
  * POST /api/payable/payments
- * 新增付款记录
  */
 router.post('/payments', (req: Request, res: Response): Response | void => {
   const { supplier_code, amount, pay_date, pay_method, remark } = req.body;
   
   if (!supplier_code || !amount || !pay_date) {
-    return res.status(400).json({ error: '供应商代号、付款金额和付款日期为必填项' });
+    return res.status(400).json({ error: 'Supplier ID, payment amount, and payment date are required fields' });
   }
   
   const sql = `
@@ -198,20 +183,19 @@ router.post('/payments', (req: Request, res: Response): Response | void => {
       res.status(500).json({ error: err.message });
       return;
     }
-    res.json({ id: this.lastID, message: '付款记录创建成功' });
+    res.json({ id: this.lastID, message: 'Payment record created!' });
   });
 });
 
 /**
  * PUT /api/payable/payments/:id
- * 修改付款记录
  */
 router.put('/payments/:id', (req: Request, res: Response): Response | void => {
   const { id } = req.params;
   const { supplier_code, amount, pay_date, pay_method, remark } = req.body;
   
   if (!supplier_code || !amount || !pay_date) {
-    return res.status(400).json({ error: '供应商代号、付款金额和付款日期为必填项' });
+    return res.status(400).json({ error: 'Supplier ID, payment amount, and payment date are required fields' });
   }
   
   const sql = `
@@ -226,16 +210,15 @@ router.put('/payments/:id', (req: Request, res: Response): Response | void => {
       return;
     }
     if (this.changes === 0) {
-      res.status(404).json({ error: '付款记录不存在' });
+      res.status(404).json({ error: 'Payement record dne' });
       return;
     }
-    res.json({ message: '付款记录更新成功' });
+    res.json({ message: 'Payment record updated!' });
   });
 });
 
 /**
  * DELETE /api/payable/payments/:id
- * 删除付款记录
  */
 router.delete('/payments/:id', (req: Request, res: Response): void => {
   const { id } = req.params;
@@ -247,17 +230,16 @@ router.delete('/payments/:id', (req: Request, res: Response): void => {
     }
     
     if (this.changes === 0) {
-      res.status(404).json({ error: '付款记录不存在' });
+      res.status(404).json({ error: 'Payment record dne' });
       return;
     }
     
-    res.json({ message: '付款记录删除成功' });
+    res.json({ message: 'Payment record deleted!' });
   });
 });
 
 /**
  * GET /api/payable/details/:supplier_code
- * 获取供应商的应付账款详情（优化版本，入库和付款记录支持分页）
  */
 router.get('/details/:supplier_code', (req: Request, res: Response): void => {
   const { supplier_code } = req.params;
@@ -268,7 +250,6 @@ router.get('/details/:supplier_code', (req: Request, res: Response): void => {
     payment_limit = 10 
   } = req.query;
 
-  // 获取供应商信息
   const supplierSql = 'SELECT * FROM partners WHERE code = ? AND type = 0';
 
   db.get<SupplierResult>(supplierSql, [supplier_code], (err, supplier) => {
@@ -278,11 +259,10 @@ router.get('/details/:supplier_code', (req: Request, res: Response): void => {
     }
 
     if (!supplier) {
-      res.status(404).json({ error: '供应商不存在' });
+      res.status(404).json({ error: 'Supplier dne' });
       return;
     }
 
-    // 获取入库记录（分页）
     const inboundOffset = (Number(inbound_page) - 1) * Number(inbound_limit);
     const inboundSql = 'SELECT * FROM inbound_records WHERE supplier_code = ? ORDER BY inbound_date DESC LIMIT ? OFFSET ?';
     
@@ -292,7 +272,6 @@ router.get('/details/:supplier_code', (req: Request, res: Response): void => {
         return;
       }
 
-      // 获取入库记录总数
       const inboundCountSql = 'SELECT COUNT(*) as total FROM inbound_records WHERE supplier_code = ?';
       db.get<CountResult>(inboundCountSql, [supplier_code], (err, inboundCountResult) => {
         if (err) {
@@ -300,7 +279,6 @@ router.get('/details/:supplier_code', (req: Request, res: Response): void => {
           return;
         }
 
-        // 获取付款记录（分页）
         const paymentOffset = (Number(payment_page) - 1) * Number(payment_limit);
         const paymentSql = 'SELECT * FROM payable_payments WHERE supplier_code = ? ORDER BY pay_date DESC LIMIT ? OFFSET ?';
         
@@ -310,7 +288,6 @@ router.get('/details/:supplier_code', (req: Request, res: Response): void => {
             return;
           }
 
-          // 获取付款记录总数
           const paymentCountSql = 'SELECT COUNT(*) as total FROM payable_payments WHERE supplier_code = ?';
           db.get<CountResult>(paymentCountSql, [supplier_code], (err, paymentCountResult) => {
             if (err) {
@@ -318,7 +295,6 @@ router.get('/details/:supplier_code', (req: Request, res: Response): void => {
               return;
             }
 
-            // 计算统计数据（全量统计）
             const totalPayableSql = 'SELECT SUM(total_price) as total FROM inbound_records WHERE supplier_code = ?';
             db.get<TotalResult>(totalPayableSql, [supplier_code], (err, totalPayableResult) => {
               if (err) {

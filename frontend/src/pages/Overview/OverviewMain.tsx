@@ -13,8 +13,8 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useSimpleApi, useSimpleApiData } from '@/hooks/useSimpleApi';
 
-import MonthlyStockChange from '@/pages/Overview/MonthlyStockChange';
-import OutOfStockModal from '@/pages/Overview/OutOfStockModal';
+import MonthlyInventoryChange from '@/pages/Overview/MonthlyInventoryChange';
+import OutOfInventoryModal from '@/pages/Overview/OutOfInventoryModal';
 import TopSalesPieChart from '@/pages/Overview/TopSalesPieChart';
 import { DEFAULT_OVERVIEW_STATS } from '@/pages/Overview/types';
 import type { OverviewStatsResponse } from '@/pages/Overview/types';
@@ -45,9 +45,9 @@ const OverviewMain = () => {
 
   // 处理数据格式，确保安全访问
   const resolvedStats = stats ?? DEFAULT_OVERVIEW_STATS;
-  const overview = resolvedStats.overview;
-  const outOfStockProducts = resolvedStats.out_of_stock_products;
-  const outOfStockCount = outOfStockProducts.length;
+  const overview = resolvedStats.overview ?? DEFAULT_OVERVIEW_STATS.overview;
+  const outOfInventoryProducts = resolvedStats.out_of_inventory_products ?? [];
+  const outOfInventoryCount = outOfInventoryProducts.length;
   const [modalVisible, setModalVisible] = useState(false);
 
   // 快速操作函数
@@ -268,20 +268,20 @@ const OverviewMain = () => {
           {/* 下半部分：本月库存变化量和库存状态，各占1/2宽度 */}
           <div style={{ flex: 1, minHeight: 0, display: 'flex', gap: 24 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <MonthlyStockChange />
+              <MonthlyInventoryChange />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <Card
-                title={<span style={{ fontWeight: 600 }}>{t('overview.stockStatus')}</span>}
-                bordered={false}
+                title={<span style={{ fontWeight: 600 }}>{t('overview.inventoryStatus')}</span>}
+                variant="outlined"
                 style={{ borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)', height: '370px', width: '100%' }}
-                bodyStyle={{ padding: 16, height: '100%', display: 'flex', flexDirection: 'column' }}
+                styles={{ body: { padding: 16, height: '100%', display: 'flex', flexDirection: 'column' } }}
               >
                 <div style={{ flex: 1, overflow: 'auto' }}>
                   <List
                     size="small"
-                    dataSource={outOfStockProducts.slice(0, 5)}
-                    locale={{ emptyText: t('overview.noOutOfStock') }}
+                    dataSource={outOfInventoryProducts.slice(0, 5)}
+                    locale={{ emptyText: t('overview.noOutOfInventory') }}
                     renderItem={item => (
                       <List.Item style={{ padding: '4px 0', alignItems: 'center' }}>
                         <List.Item.Meta
@@ -292,7 +292,7 @@ const OverviewMain = () => {
                     )}
                     style={{ marginBottom: 8, maxHeight: 140, overflow: 'hidden', width: '100%', background: 'none' }}
                   />
-                  {outOfStockCount > 5 && (
+                  {outOfInventoryCount > 5 && (
                     <div style={{ color: '#999', fontSize: 12, marginBottom: 8 }}>
                       {t('overview.partialDisplay')}
                     </div>
@@ -302,10 +302,10 @@ const OverviewMain = () => {
                       {t('overview.viewDetails')}
                     </Button>
                   </div>
-                  <OutOfStockModal
+                  <OutOfInventoryModal
                     visible={modalVisible}
                     onClose={() => setModalVisible(false)}
-                    products={outOfStockProducts}
+                    products={outOfInventoryProducts}
                   />
                 </div>
               </Card>

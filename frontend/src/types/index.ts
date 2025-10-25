@@ -79,7 +79,7 @@ export interface Product {
 }
 
 // 库存相关类型
-export interface StockItem {
+export interface InventoryItem {
   id: string;
   productId: string;
   product?: Product;

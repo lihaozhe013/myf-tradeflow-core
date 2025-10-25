@@ -14,7 +14,7 @@ Response:
     "customer_count": 25,
     "supplier_count": 15
   },
-  "out_of_stock_products": [
+  "out_of_inventory_products": [
     { "product_model": "iPhone 15 Pro" }
   ]
 }
@@ -33,9 +33,9 @@ Response:
 }
 ```
 
-## `/api/overview/monthly-stock-change`
+## `/api/overview/monthly-inventory-change`
 ### GET
-GET /api/overview/monthly-stock-change/:productModel
+GET /api/overview/monthly-inventory-change/:productModel
 
 Authorization: Bearer <token>
 
@@ -44,8 +44,8 @@ Response:
 {
   "success": true,
   "data": {
-    "month_start_stock": 50,
-    "current_stock": 30,
+    "month_start_inventory": 50,
+    "current_inventory": 30,
     "monthly_change": -20
   }
 }

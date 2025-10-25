@@ -1,95 +1,203 @@
-// 高级分析导出器（TS + ESM）
-import * as XLSX from 'xlsx';
-import ExportUtils from '@/routes/export/utils/exportUtils';
+import * as XLSX from "xlsx";
+import ExportUtils from "@/routes/export/utils/exportUtils";
 
 export default class AdvancedAnalysisExporter {
   private templates: any;
   private queries: any;
+
   constructor(templates: any, queries: any) {
     this.templates = templates;
     this.queries = queries;
   }
 
+  /**
+   * Format currency value for display
+   */
+  private formatCurrency(value: number): string {
+    return `¥${Number(value || 0).toLocaleString("zh-CN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  }
+
+  /**
+   * Format percentage value for display
+   */
+  private formatPercentage(value: number): string {
+    return `${Number(value || 0).toFixed(2)}%`;
+  }
+
+  /**
+   * Truncate sheet name to Excel's 31 character limit
+   */
+  private truncateSheetName(name: string, maxLength: number = 30): string {
+    return name.substring(0, maxLength);
+  }
+
+  /**
+   * Export advanced analysis data
+   */
   async exportAdvancedAnalysis(options: any = {}): Promise<Buffer> {
     const { exportType, startDate, endDate } = options || {};
-    if (!exportType || !['customer', 'product'].includes(exportType)) {
-      throw new Error('导出类型必须是 customer 或 product');
+    if (!exportType || !["customer", "product"].includes(exportType)) {
+      throw new Error("Export type must be customer or product");
     }
     const workbook = XLSX.utils.book_new();
-    if (exportType === 'customer') {
+    if (exportType === "customer") {
       await this.createCustomerSheets(workbook, startDate, endDate);
     } else {
       await this.createProductSheets(workbook, startDate, endDate);
     }
-    return XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' }) as unknown as Buffer;
+    return XLSX.write(workbook, {
+      type: "buffer",
+      bookType: "xlsx",
+    }) as unknown as Buffer;
   }
 
-  private async createCustomerSheets(workbook: XLSX.WorkBook, startDate: string, endDate: string) {
-    const customerData = await this.queries.getCustomerAnalysisData(startDate, endDate);
+  /**
+   * Create customer analysis sheets
+   */
+  private async createCustomerSheets(
+    workbook: XLSX.WorkBook,
+    startDate: string,
+    endDate: string
+  ) {
+    const customerData = await this.queries.getCustomerAnalysisData(
+      startDate,
+      endDate
+    );
+    const summaryLabels = this.templates.analysis_customer_summary.labels || {};
+    const detailLabels = this.templates.analysis_customer_detail.labels || {};
+
     for (const customer of customerData) {
       if (customer.sales_amount > 0) {
-        const summaryData = [{
-          customer_code: customer.customer_code,
-          customer_name: customer.customer_name,
-          sales_amount: `¥${Number(customer.sales_amount || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-          cost_amount: `¥${Number(customer.cost_amount || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-          profit_amount: `¥${Number(customer.profit_amount || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-          profit_rate: `${Number(customer.profit_rate || 0).toFixed(2)}%`
-        }];
-        const summaryWorksheet = ExportUtils.createWorksheet(summaryData, this.templates.analysis_customer_summary);
-        const summarySheetName = `${customer.customer_name}-汇总`.substring(0, 30);
-        XLSX.utils.book_append_sheet(workbook, summaryWorksheet, summarySheetName);
+        // Create summary sheet
+        const summaryData = [
+          {
+            customer_code: customer.customer_code,
+            customer_name: customer.customer_name,
+            sales_amount: this.formatCurrency(customer.sales_amount),
+            cost_amount: this.formatCurrency(customer.cost_amount),
+            profit_amount: this.formatCurrency(customer.profit_amount),
+            profit_rate: this.formatPercentage(customer.profit_rate),
+          },
+        ];
+        const summaryWorksheet = ExportUtils.createWorksheet(
+          summaryData,
+          this.templates.analysis_customer_summary
+        );
+        const summarySheetName = this.truncateSheetName(
+          `${customer.customer_name}-${
+            summaryLabels.summary_suffix || "Summary"
+          }`
+        );
+        XLSX.utils.book_append_sheet(
+          workbook,
+          summaryWorksheet,
+          summarySheetName
+        );
 
+        // Create detail sheet if product details exist
         if (customer.product_details && customer.product_details.length > 0) {
           const detailData = customer.product_details
             .filter((item: any) => item.sales_amount > 0)
             .map((item: any) => ({
               product_model: item.product_model,
-              sales_amount: `¥${Number(item.sales_amount || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-              cost_amount: `¥${Number(item.cost_amount || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-              profit_amount: `¥${Number(item.profit_amount || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-              profit_rate: `${Number(item.profit_rate || 0).toFixed(2)}%`
+              sales_amount: this.formatCurrency(item.sales_amount),
+              cost_amount: this.formatCurrency(item.cost_amount),
+              profit_amount: this.formatCurrency(item.profit_amount),
+              profit_rate: this.formatPercentage(item.profit_rate),
             }));
           if (detailData.length > 0) {
-            const detailWorksheet = ExportUtils.createWorksheet(detailData, this.templates.analysis_customer_detail);
-            const detailSheetName = `${customer.customer_name}-明细`.substring(0, 30);
-            XLSX.utils.book_append_sheet(workbook, detailWorksheet, detailSheetName);
+            const detailWorksheet = ExportUtils.createWorksheet(
+              detailData,
+              this.templates.analysis_customer_detail
+            );
+            const detailSheetName = this.truncateSheetName(
+              `${customer.customer_name}-${
+                detailLabels.detail_suffix || "Details"
+              }`
+            );
+            XLSX.utils.book_append_sheet(
+              workbook,
+              detailWorksheet,
+              detailSheetName
+            );
           }
         }
       }
     }
   }
 
-  private async createProductSheets(workbook: XLSX.WorkBook, startDate: string, endDate: string) {
-    const productData = await this.queries.getProductAnalysisData(startDate, endDate);
+  /**
+   * Create product analysis sheets
+   */
+  private async createProductSheets(
+    workbook: XLSX.WorkBook,
+    startDate: string,
+    endDate: string
+  ) {
+    const productData = await this.queries.getProductAnalysisData(
+      startDate,
+      endDate
+    );
+    const summaryLabels = this.templates.analysis_product_summary.labels || {};
+    const detailLabels = this.templates.analysis_product_detail.labels || {};
+
     for (const product of productData) {
       if (product.sales_amount > 0) {
-        const summaryData = [{
-          product_model: product.product_model,
-          sales_amount: `¥${Number(product.sales_amount || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-          cost_amount: `¥${Number(product.cost_amount || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-          profit_amount: `¥${Number(product.profit_amount || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-          profit_rate: `${Number(product.profit_rate || 0).toFixed(2)}%`
-        }];
-        const summaryWorksheet = ExportUtils.createWorksheet(summaryData, this.templates.analysis_product_summary);
-        const summarySheetName = `${product.product_model}-汇总`.substring(0, 30);
-        XLSX.utils.book_append_sheet(workbook, summaryWorksheet, summarySheetName);
+        // Create summary sheet
+        const summaryData = [
+          {
+            product_model: product.product_model,
+            sales_amount: this.formatCurrency(product.sales_amount),
+            cost_amount: this.formatCurrency(product.cost_amount),
+            profit_amount: this.formatCurrency(product.profit_amount),
+            profit_rate: this.formatPercentage(product.profit_rate),
+          },
+        ];
+        const summaryWorksheet = ExportUtils.createWorksheet(
+          summaryData,
+          this.templates.analysis_product_summary
+        );
+        const summarySheetName = this.truncateSheetName(
+          `${product.product_model}-${
+            summaryLabels.summary_suffix || "Summary"
+          }`
+        );
+        XLSX.utils.book_append_sheet(
+          workbook,
+          summaryWorksheet,
+          summarySheetName
+        );
 
+        // Create detail sheet if customer details exist
         if (product.customer_details && product.customer_details.length > 0) {
           const detailData = product.customer_details
             .filter((item: any) => item.sales_amount > 0)
             .map((item: any) => ({
               customer_code: item.customer_code,
               customer_name: item.customer_name,
-              sales_amount: `¥${Number(item.sales_amount || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-              cost_amount: `¥${Number(item.cost_amount || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-              profit_amount: `¥${Number(item.profit_amount || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-              profit_rate: `${Number(item.profit_rate || 0).toFixed(2)}%`
+              sales_amount: this.formatCurrency(item.sales_amount),
+              cost_amount: this.formatCurrency(item.cost_amount),
+              profit_amount: this.formatCurrency(item.profit_amount),
+              profit_rate: this.formatPercentage(item.profit_rate),
             }));
           if (detailData.length > 0) {
-            const detailWorksheet = ExportUtils.createWorksheet(detailData, this.templates.analysis_product_detail);
-            const detailSheetName = `${product.product_model}-明细`.substring(0, 30);
-            XLSX.utils.book_append_sheet(workbook, detailWorksheet, detailSheetName);
+            const detailWorksheet = ExportUtils.createWorksheet(
+              detailData,
+              this.templates.analysis_product_detail
+            );
+            const detailSheetName = this.truncateSheetName(
+              `${product.product_model}-${
+                detailLabels.detail_suffix || "Details"
+              }`
+            );
+            XLSX.utils.book_append_sheet(
+              workbook,
+              detailWorksheet,
+              detailSheetName
+            );
           }
         }
       }

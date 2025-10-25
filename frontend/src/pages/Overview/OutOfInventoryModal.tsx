@@ -1,28 +1,28 @@
 import { Modal, List, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
-import type { OutOfStockProduct } from '@/pages/Overview/types';
+import type { OutOfInventoryProduct } from '@/pages/Overview/types';
 
 const { Text } = Typography;
 
-type OutOfStockModalProps = {
+type OutOfInventoryModalProps = {
   visible: boolean;
   onClose: () => void;
-  products: OutOfStockProduct[];
+  products: OutOfInventoryProduct[];
 };
 
-const OutOfStockModal = ({ visible, onClose, products }: OutOfStockModalProps) => {
+const OutOfInventoryModal = ({ visible, onClose, products }: OutOfInventoryModalProps) => {
   const { t } = useTranslation();
 
   return (
     <Modal
-      title={t('overview.outOfStockDetails')}
+      title={t('overview.outOfInventoryDetails')}
       open={visible}
       onCancel={onClose}
       footer={null}
       width={480}
     >
       {products && products.length > 0 ? (
-        <List<OutOfStockProduct>
+        <List<OutOfInventoryProduct>
           dataSource={products}
           renderItem={item => (
             <List.Item>
@@ -32,11 +32,11 @@ const OutOfStockModal = ({ visible, onClose, products }: OutOfStockModalProps) =
         />
       ) : (
         <div style={{ textAlign: 'center', color: '#52c41a', fontSize: 18, padding: '32px 0' }}>
-          {t('overview.stockNormal')}
+          {t('overview.inventoryNormal')}
         </div>
       )}
     </Modal>
   );
 };
 
-export default OutOfStockModal;
+export default OutOfInventoryModal;

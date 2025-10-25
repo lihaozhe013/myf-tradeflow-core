@@ -1,15 +1,8 @@
-/**
- * 产品价格路由
- * 管理产品价格信息，包括查询、新增、修改和删除
- */
 import express, { type Router, type Request, type Response } from 'express';
 import db from '@/db.js';
 
 const router: Router = express.Router();
 
-/**
- * 数据库查询结果类型
- */
 interface CountResult {
   total: number;
 }
@@ -18,14 +11,10 @@ interface UnitPriceResult {
   unit_price: number;
 }
 
-/**
- * GET /api/product-prices
- * 获取产品价格列表（支持分页与筛选）
- */
 router.get('/', (req: Request, res: Response): void => {
   const { partner_short_name, product_model, effective_date } = req.query;
   let { page = 1 } = req.query;
-  const limit = 10; // 固定每页10条
+  const limit = 10;
 
   let baseWhere = ' FROM product_prices WHERE 1=1';
   const whereParams: any[] = [];
@@ -45,7 +34,6 @@ router.get('/', (req: Request, res: Response): void => {
 
   const orderBy = ' ORDER BY effective_date DESC, partner_short_name, product_model';
 
-  // 分页
   const offset = (Number(page) - 1) * limit;
   const listSql = `SELECT *${baseWhere}${orderBy} LIMIT ? OFFSET ?`;
   const listParams = [...whereParams, limit, offset];
@@ -56,7 +44,6 @@ router.get('/', (req: Request, res: Response): void => {
       return;
     }
 
-    // 统计总数
     const countSql = `SELECT COUNT(*) as total${baseWhere}`;
     db.get<CountResult>(countSql, whereParams, (countErr, countResult) => {
       if (countErr) {
@@ -79,13 +66,12 @@ router.get('/', (req: Request, res: Response): void => {
 
 /**
  * GET /api/product-prices/current
- * 获取特定产品在特定日期的价格
  */
 router.get('/current', (req: Request, res: Response): void => {
   const { partner_short_name, product_model, date } = req.query;
   
   if (!partner_short_name || !product_model) {
-    res.status(400).json({ error: '缺少必要参数：partner_short_name 和 product_model' });
+    res.status(400).json({ error: 'Missing required argument: partner_short_name & product_model' });
     return;
   }
   
@@ -105,7 +91,7 @@ router.get('/current', (req: Request, res: Response): void => {
     }
     
     if (!row) {
-      res.status(404).json({ error: '未找到有效价格' });
+      res.status(404).json({ error: 'No valid price found' });
       return;
     }
     
@@ -115,7 +101,6 @@ router.get('/current', (req: Request, res: Response): void => {
 
 /**
  * POST /api/product-prices
- * 新增产品价格
  */
 router.post('/', (req: Request, res: Response): void => {
   const { partner_short_name, product_model, effective_date, unit_price } = req.body;
@@ -131,13 +116,12 @@ router.post('/', (req: Request, res: Response): void => {
       return;
     }
     
-    res.json({ id: this.lastID, message: '产品价格创建成功' });
+    res.json({ id: this.lastID, message: 'Product price created!' });
   });
 });
 
 /**
  * PUT /api/product-prices/:id
- * 修改产品价格
  */
 router.put('/:id', (req: Request, res: Response): void => {
   const { id } = req.params;
@@ -155,17 +139,16 @@ router.put('/:id', (req: Request, res: Response): void => {
     }
     
     if (this.changes === 0) {
-      res.status(404).json({ error: '产品价格不存在' });
+      res.status(404).json({ error: 'Product price dne' });
       return;
     }
     
-    res.json({ message: '产品价格更新成功' });
+    res.json({ message: 'Product price updated!' });
   });
 });
 
 /**
  * DELETE /api/product-prices/:id
- * 删除产品价格
  */
 router.delete('/:id', (req: Request, res: Response): void => {
   const { id } = req.params;
@@ -177,23 +160,24 @@ router.delete('/:id', (req: Request, res: Response): void => {
     }
     
     if (this.changes === 0) {
-      res.status(404).json({ error: '产品价格不存在' });
+      res.status(404).json({ error: 'Product price dne' });
       return;
     }
     
-    res.json({ message: '产品价格删除成功' });
+    res.json({ message: 'Product price delete!' });
   });
 });
 
 /**
  * GET /api/product-prices/auto
- * 自动获取产品价格（完全匹配且生效日期<=指定日期，取最晚的）
+ * Automatically get product prices
+ * (exact match and effective date <= specified date, take the latest one)
  */
 router.get('/auto', (req: Request, res: Response): void => {
   const { partner_short_name, product_model, date } = req.query;
   
   if (!partner_short_name || !product_model || !date) {
-    res.status(400).json({ error: '缺少必要参数：partner_short_name, product_model, date' });
+    res.status(400).json({ error: 'Missing required argument: partner_short_name, product_model, date' });
     return;
   }
   
@@ -211,7 +195,7 @@ router.get('/auto', (req: Request, res: Response): void => {
     }
     
     if (!row) {
-      res.status(404).json({ error: '未找到匹配的单价' });
+      res.status(404).json({ error: 'No valid price found' });
       return;
     }
     
