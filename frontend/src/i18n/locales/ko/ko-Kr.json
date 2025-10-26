@@ -66,7 +66,7 @@
     "profitMargin": "총 이익률",
     "totalPurchase": "총 구매액",
     "inventoryStatus": "재고 상태",
-    "noOutOfInventory": "품절 없음",
+    "noOutOfStock": "품절 없음",
     "partialDisplay": "일부만 표시, 자세한 내용은 클릭하세요",
     "viewDetails": "세부 정보 보기",
     "monthlyInventoryChange": "월별 재고 변동량",
@@ -80,7 +80,7 @@
     "salesAmount": "판매 금액",
     "noChange": "변동 없음",
     "decrease": "(감소)",
-    "outOfInventoryDetails": "품절 제품 목록",
+    "outOfStockDetails": "품절 제품 목록",
     "inventoryNormal": "품절 없음"
   },
   "inbound": {
@@ -283,7 +283,7 @@
     "lastUpdate": "마지막 업데이트",
     "currentInventory": "현재 재고",
     "status": "상태",
-    "outOfInventory": "품절",
+    "outOfStock": "품절",
     "lowInventory": "재고 부족",
     "normal": "정상",
     "searchProductModel": "제품 모델 검색",

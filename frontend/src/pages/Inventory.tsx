@@ -172,7 +172,7 @@ const Inventory: FC = () => {
         const quantity = record.current_inventory ?? 0;
 
         if (quantity === 0) {
-          return <Tag color="red">{t("inventory.outOfInventory")}</Tag>;
+          return <Tag color="red">{t("inventory.outOfStock")}</Tag>;
         }
 
         if (quantity < 10) {
@@ -248,7 +248,7 @@ const Inventory: FC = () => {
                 color="blue"
                 style={{ fontSize: "14px", padding: "4px 8px" }}
               >
-                ${currency_unit_symbol}
+                {currency_unit_symbol}
                 {totalCostEstimate.toLocaleString("en-US", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
