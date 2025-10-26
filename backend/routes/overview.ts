@@ -223,10 +223,10 @@ router.post('/stats', (_req: Request, res: Response) => {
       customHandler: (callback) => {
         getAllInventoryData((err, inventoryData) => {
           if (err) return callback(err);
-          const outOfInventoryProducts = Object.entries(inventoryData!)
+          const outOfStockProducts = Object.entries(inventoryData!)
             .filter(([, data]) => data.current_inventory <= 0)
             .map(([product_model]) => ({ product_model }));
-          callback(null, outOfInventoryProducts);
+          callback(null, outOfStockProducts);
         });
       },
     },

@@ -66,7 +66,7 @@
     "profitMargin": "Profit Margin",
     "totalPurchase": "Total Purchase",
     "inventoryStatus": "Inventory Status",
-    "noOutOfInventory": "No out of inventory",
+    "noOutOfStock": "No out of stock items",
     "partialDisplay": "Partial display, click for more details",
     "viewDetails": "View Details",
     "monthlyInventoryChange": "Monthly Inventory Change",
@@ -82,7 +82,7 @@
     "salesAmount": "Sales Amount",
     "noChange": "No Change",
     "decrease": "(Decrease)",
-    "outOfInventoryDetails": "Out-of-Inventory Product List",
+    "outOfStockDetails": "Out of Stock Product List",
     "inventoryNormal": "No out-of-inventory items"
   },
   "inbound": {
@@ -282,7 +282,7 @@
     "productModel": "Product Model",
     "currentInventory": "Current Inventory",
     "lastUpdate": "Last Update",
-    "outOfInventory": "Out of Inventory",
+    "outOfStock": "Out of Stock",
     "lowInventory": "Low Inventory",
     "normal": "Normal",
     "searchProductModel": "Search Product Model",

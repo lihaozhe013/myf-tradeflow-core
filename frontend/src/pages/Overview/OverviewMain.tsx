@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { useSimpleApi, useSimpleApiData } from '@/hooks/useSimpleApi';
 
 import MonthlyInventoryChange from '@/pages/Overview/MonthlyInventoryChange';
-import OutOfInventoryModal from '@/pages/Overview/OutOfInventoryModal';
+import OutOfStockModal from '@/pages/Overview/OutOfStockModal';
 import TopSalesPieChart from '@/pages/Overview/TopSalesPieChart';
 import { DEFAULT_OVERVIEW_STATS } from '@/pages/Overview/types';
 import type { OverviewStatsResponse } from '@/pages/Overview/types';
@@ -46,8 +46,8 @@ const OverviewMain = () => {
   // 处理数据格式，确保安全访问
   const resolvedStats = stats ?? DEFAULT_OVERVIEW_STATS;
   const overview = resolvedStats.overview ?? DEFAULT_OVERVIEW_STATS.overview;
-  const outOfInventoryProducts = resolvedStats.out_of_inventory_products ?? [];
-  const outOfInventoryCount = outOfInventoryProducts.length;
+  const outOfStockProducts = resolvedStats.out_of_inventory_products ?? [];
+  const outOfStockCount = outOfStockProducts.length;
   const [modalVisible, setModalVisible] = useState(false);
 
   // 快速操作函数
@@ -280,8 +280,8 @@ const OverviewMain = () => {
                 <div style={{ flex: 1, overflow: 'auto' }}>
                   <List
                     size="small"
-                    dataSource={outOfInventoryProducts.slice(0, 5)}
-                    locale={{ emptyText: t('overview.noOutOfInventory') }}
+                    dataSource={outOfStockProducts.slice(0, 5)}
+                    locale={{ emptyText: t('overview.noOutOfStock') }}
                     renderItem={item => (
                       <List.Item style={{ padding: '4px 0', alignItems: 'center' }}>
                         <List.Item.Meta
@@ -292,7 +292,7 @@ const OverviewMain = () => {
                     )}
                     style={{ marginBottom: 8, maxHeight: 140, overflow: 'hidden', width: '100%', background: 'none' }}
                   />
-                  {outOfInventoryCount > 5 && (
+                  {outOfStockCount > 5 && (
                     <div style={{ color: '#999', fontSize: 12, marginBottom: 8 }}>
                       {t('overview.partialDisplay')}
                     </div>
@@ -302,10 +302,10 @@ const OverviewMain = () => {
                       {t('overview.viewDetails')}
                     </Button>
                   </div>
-                  <OutOfInventoryModal
+                  <OutOfStockModal
                     visible={modalVisible}
                     onClose={() => setModalVisible(false)}
-                    products={outOfInventoryProducts}
+                    products={outOfStockProducts}
                   />
                 </div>
               </Card>
