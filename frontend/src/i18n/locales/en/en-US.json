@@ -83,7 +83,8 @@
     "noChange": "No Change",
     "decrease": "(Decrease)",
     "outOfStockDetails": "Out of Stock Product List",
-    "inventoryNormal": "No out-of-inventory items"
+    "inventoryNormal": "No out-of-inventory items",
+    "includesOnlyTheModtRecentYear": "Note: Data is calculated for the most recent year only"
   },
   "inbound": {
     "id": "ID",

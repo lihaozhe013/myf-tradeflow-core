@@ -89,7 +89,8 @@
     "inventoryChangeFailed": "获取库存变化数据失败，请先刷新统计数据",
     "requestFailed": "请求失败",
     "dataFetchFailed": "数据获取失败，请先刷新统计数据",
-    "totalCost": "总成本"
+    "totalCost": "总成本",
+    "includesOnlyTheModtRecentYear": "注意：数据仅计算最近一年"
   },
   "inbound": {
     "id": "ID",
