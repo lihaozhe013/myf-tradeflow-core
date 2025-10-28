@@ -81,7 +81,8 @@
     "noChange": "변동 없음",
     "decrease": "(감소)",
     "outOfStockDetails": "품절 제품 목록",
-    "inventoryNormal": "품절 없음"
+    "inventoryNormal": "품절 없음",
+    "includesOnlyTheModtRecentYear": "주의: 데이터는 최근 1년 동안만 계산됩니다"
   },
   "inbound": {
     "id": "ID",

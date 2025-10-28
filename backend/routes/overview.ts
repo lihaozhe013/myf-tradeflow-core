@@ -97,12 +97,18 @@ type ErrorCallback<T> = (err: Error | null, result?: T) => void;
 // ========== Helper Functions ==========
 
 /**
- * 计算已售商品的真实成本（加权平均成本法）
- * 入库负数单价商品作为特殊收入，减少成本
- * @param callback 回调函数 (err, totalCost)
+ * Calculate the real cost of sold goods (weighted average cost method)
+ * Inbound records with negative unit prices are treated as special income, reducing costs
+ * Only calculates data from the past year
+ * @param callback Callback function (err, totalCost)
  */
 function calculateSoldGoodsCost(callback: ErrorCallback<number>): void {
-  // 1. 计算每个产品的加权平均入库价格（只计算正数单价的入库记录）
+  // Get the date one year ago from now
+  const oneYearAgo = new Date();
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+  const oneYearAgoStr = oneYearAgo.toISOString().split('T')[0];
+
+  // 1. Calculate weighted average inbound price for each product (only positive unit price records from past year)
   db.all<AvgCostRow>(
     `
     SELECT 
@@ -110,14 +116,14 @@ function calculateSoldGoodsCost(callback: ErrorCallback<number>): void {
       SUM(quantity * unit_price) / SUM(quantity) as avg_cost_price,
       SUM(quantity) as total_inbound_quantity
     FROM inbound_records 
-    WHERE unit_price >= 0
+    WHERE unit_price >= 0 AND date(inbound_date) >= ?
     GROUP BY product_model
   `,
-    [],
+    [oneYearAgoStr],
     (err, avgCostData) => {
       if (err) return callback(err);
 
-      // 转换为Map便于查找，使用 decimal.js 处理数据
+      // Convert to Map for easy lookup, use decimal.js to handle data
       const avgCostMap: Record<string, AvgCostData> = {};
       avgCostData.forEach((item) => {
         avgCostMap[item.product_model] = {
@@ -126,14 +132,14 @@ function calculateSoldGoodsCost(callback: ErrorCallback<number>): void {
         };
       });
 
-      // 2. 获取所有出库记录（只计算正数单价的记录用于成本计算）
+      // 2. Get all outbound records from the past year (only positive unit price records for cost calculation)
       db.all<OutboundCostRow>(
         `
       SELECT product_model, quantity, unit_price as selling_price
       FROM outbound_records
-      WHERE unit_price >= 0
+      WHERE unit_price >= 0 AND date(outbound_date) >= ?
     `,
-        [],
+        [oneYearAgoStr],
         (err2, outboundRecords) => {
           if (err2) return callback(err2);
 
@@ -143,39 +149,39 @@ function calculateSoldGoodsCost(callback: ErrorCallback<number>): void {
 
           let totalSoldGoodsCost = decimalCalc.decimal(0);
 
-          // 3. 使用平均成本计算每个销售记录的成本（只计算正数单价商品）
+          // 3. Use average cost to calculate cost for each sales record (only positive unit price items)
           outboundRecords.forEach((outRecord) => {
             const productModel = outRecord.product_model;
             const soldQuantity = decimalCalc.decimal(outRecord.quantity);
             const sellingPrice = decimalCalc.fromSqlResult(outRecord.selling_price, 0, 4);
 
             if (avgCostMap[productModel]) {
-              // 使用该产品的加权平均入库价格
+              // Use weighted average inbound price for this product
               const avgCost = decimalCalc.decimal(avgCostMap[productModel].avg_cost_price);
               const cost = decimalCalc.multiply(soldQuantity, avgCost);
               totalSoldGoodsCost = totalSoldGoodsCost.add(cost);
             } else {
-              // 如果没有对应的入库记录，使用出库价格作为成本（保守估计）
+              // If no corresponding inbound records, use outbound price as cost (conservative estimate)
               const cost = decimalCalc.multiply(soldQuantity, sellingPrice);
               totalSoldGoodsCost = totalSoldGoodsCost.add(cost);
             }
           });
 
-          // 4. 计算入库负数单价商品的特殊收入，减少总成本
+          // 4. Calculate special income from inbound negative unit price items from past year, reduce total cost
           db.get<SpecialIncomeRow>(
             `
         SELECT COALESCE(SUM(ABS(quantity * unit_price)), 0) as special_income
         FROM inbound_records 
-        WHERE unit_price < 0
+        WHERE unit_price < 0 AND date(inbound_date) >= ?
       `,
-            [],
+            [oneYearAgoStr],
             (err3, specialIncomeRow) => {
               if (err3) return callback(err3);
 
               const specialIncome = decimalCalc.fromSqlResult(specialIncomeRow!.special_income, 0, 2);
               const finalCost = decimalCalc.subtract(totalSoldGoodsCost, specialIncome);
 
-              // 确保成本不为负数并保留两位小数
+              // Ensure cost is not negative and keep two decimal places
               const result = decimalCalc.toDbNumber(
                 decimalCalc.decimal(Math.max(0, finalCost.toNumber())),
                 2
@@ -192,7 +198,7 @@ function calculateSoldGoodsCost(callback: ErrorCallback<number>): void {
 // ========== Route Handlers ==========
 
 // 获取系统统计数据
-// GET 只读缓存
+// GET Read cache only
 router.get('/stats', (_req: Request, res: Response) => {
   const statsFile = resolveFilesInDataPath("overview-stats.json");
   if (fs.existsSync(statsFile)) {
@@ -200,19 +206,24 @@ router.get('/stats', (_req: Request, res: Response) => {
       const json = fs.readFileSync(statsFile, 'utf-8');
       return res.json(JSON.parse(json));
     } catch (e) {
-      // 读取失败则继续重新计算
+      // If reading fails, continue to recalculate
     }
   }
-  // 缓存不存在或读取失败，返回空或错误
-  return res.status(503).json({ error: '统计数据未生成，请先刷新。' });
+  // Cache doesn't exist or reading failed, return empty or error
+  return res.status(503).json({ error: 'Statistics data not generated, please refresh first.' });
 });
 
-// POST 强制刷新并写入缓存（含top_sales_products和monthly_inventory_changes）
+// POST Force refresh and write to cache (including top_sales_products and monthly_inventory_changes)
 router.post('/stats', (_req: Request, res: Response) => {
   const statsFile = resolveFilesInDataPath("overview-stats.json");
   const stats: StatsCache = {};
   let completed = 0;
-  const totalQueries = 4; // 增加到4个查询
+  const totalQueries = 4; // Keep 4 queries
+
+  // Get the date one year ago from now
+  const oneYearAgo = new Date();
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+  const oneYearAgoStr = oneYearAgo.toISOString().split('T')[0];
 
   const queries: Array<{
     key: string;
@@ -233,12 +244,12 @@ router.post('/stats', (_req: Request, res: Response) => {
     {
       key: 'overview',
       customHandler: (callback) => {
-        // 分别查询各个统计数据，避免复杂的嵌套查询
+        // Query each statistic separately to avoid complex nested queries, only include past year data
         const queries: Record<string, string> = {
           counts: `
             SELECT 
-              (SELECT COUNT(*) FROM inbound_records) as total_inbound,
-              (SELECT COUNT(*) FROM outbound_records) as total_outbound,
+              (SELECT COUNT(*) FROM inbound_records WHERE date(inbound_date) >= '${oneYearAgoStr}') as total_inbound,
+              (SELECT COUNT(*) FROM outbound_records WHERE date(outbound_date) >= '${oneYearAgoStr}') as total_outbound,
               (SELECT COUNT(*) FROM partners WHERE type = 0) as suppliers_count,
               (SELECT COUNT(*) FROM partners WHERE type = 1) as customers_count,
               (SELECT COUNT(*) FROM products) as products_count
@@ -246,16 +257,16 @@ router.post('/stats', (_req: Request, res: Response) => {
           purchase_amount: `
             SELECT 
               COALESCE(SUM(quantity * unit_price), 0) as normal_purchase,
-              COALESCE((SELECT SUM(ABS(quantity * unit_price)) FROM inbound_records WHERE unit_price < 0), 0) as special_income
+              COALESCE((SELECT SUM(ABS(quantity * unit_price)) FROM inbound_records WHERE unit_price < 0 AND date(inbound_date) >= '${oneYearAgoStr}'), 0) as special_income
             FROM inbound_records 
-            WHERE unit_price >= 0
+            WHERE unit_price >= 0 AND date(inbound_date) >= '${oneYearAgoStr}'
           `,
           sales_amount: `
             SELECT 
               COALESCE(SUM(quantity * unit_price), 0) as normal_sales,
-              COALESCE((SELECT SUM(ABS(quantity * unit_price)) FROM outbound_records WHERE unit_price < 0), 0) as special_expense
+              COALESCE((SELECT SUM(ABS(quantity * unit_price)) FROM outbound_records WHERE unit_price < 0 AND date(outbound_date) >= '${oneYearAgoStr}'), 0) as special_expense
             FROM outbound_records 
-            WHERE unit_price >= 0
+            WHERE unit_price >= 0 AND date(outbound_date) >= '${oneYearAgoStr}'
           `,
         };
 
@@ -310,7 +321,7 @@ router.post('/stats', (_req: Request, res: Response) => {
         });
 
         function processOverviewResults(results: Record<string, any>, callback: ErrorCallback<OverviewStats>) {
-          // 合并结果，使用 decimal.js 精确计算
+          // Merge results, use decimal.js for precise calculation
           const normalPurchase = decimalCalc.fromSqlResult(results['purchase_amount'].normal_purchase, 0);
           const specialIncome = decimalCalc.fromSqlResult(results['purchase_amount'].special_income, 0);
           const normalSales = decimalCalc.fromSqlResult(results['sales_amount'].normal_sales, 0);
@@ -318,13 +329,13 @@ router.post('/stats', (_req: Request, res: Response) => {
 
           const finalResult = {
             ...results['counts'],
-            // 总采购金额 = 正常采购 - 特殊收入（入库负数商品）
+            // Total purchase amount = normal purchase - special income (inbound negative price items)
             total_purchase_amount: decimalCalc.toDbNumber(decimalCalc.subtract(normalPurchase, specialIncome)),
-            // 总销售额 = 正常销售 - 特殊支出（出库负数商品）
+            // Total sales amount = normal sales - special expense (outbound negative price items)
             total_sales_amount: decimalCalc.toDbNumber(decimalCalc.subtract(normalSales, specialExpense)),
           };
 
-          // 计算已售商品的真实成本
+          // Calculate real cost of sold goods
           calculateSoldGoodsCost((costErr, soldGoodsCost) => {
             if (costErr) return callback(costErr);
 
@@ -344,19 +355,19 @@ router.post('/stats', (_req: Request, res: Response) => {
     {
       key: 'top_sales_products',
       customHandler: (callback) => {
-        // 查询所有商品销售额，按降序排列（只计算正数单价的商品）
+        // Query all product sales amounts from past year, order by descending (only positive unit price items)
         const sql = `
           SELECT product_model, SUM(quantity * unit_price) as total_sales
           FROM outbound_records
-          WHERE unit_price >= 0
+          WHERE unit_price >= 0 AND date(outbound_date) >= ?
           GROUP BY product_model
           ORDER BY total_sales DESC
         `;
         const dbLimit = 100;
-        db.all<TopSalesProduct>(sql + ` LIMIT ${dbLimit}`, [], (err, rows) => {
+        db.all<TopSalesProduct>(sql + ` LIMIT ${dbLimit}`, [oneYearAgoStr], (err, rows) => {
           if (err) return callback(err);
 
-          // 使用 decimal.js 处理销售额数据，确保精度
+          // Use decimal.js to process sales amount data, ensure precision
           const processedRows = rows.map((row) => ({
             product_model: row.product_model,
             total_sales: decimalCalc.fromSqlResult(row.total_sales, 0, 2),
@@ -366,7 +377,7 @@ router.post('/stats', (_req: Request, res: Response) => {
           const top = processedRows.slice(0, topN);
           const others = processedRows.slice(topN);
 
-          // 使用 decimal.js 计算"其他"类别的总和
+          // Use decimal.js to calculate sum for "others" category
           let otherTotalDecimal = decimalCalc.decimal(0);
           others.forEach(r => {
             otherTotalDecimal = decimalCalc.add(otherTotalDecimal, r.total_sales);
@@ -375,7 +386,7 @@ router.post('/stats', (_req: Request, res: Response) => {
 
           const result: TopSalesProduct[] = [...top];
           if (otherTotal > 0) {
-            result.push({ product_model: '其他', total_sales: otherTotal });
+            result.push({ product_model: 'Others', total_sales: otherTotal });
           }
           callback(null, result);
         });
@@ -384,12 +395,12 @@ router.post('/stats', (_req: Request, res: Response) => {
     {
       key: 'monthly_inventory_changes',
       customHandler: (callback) => {
-        // 获取本月第一天的日期
+        // Get first day of current month
         const now = new Date();
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
         const monthStartStr = monthStart.toISOString().split('T')[0];
 
-        // 获取所有产品型号
+        // Get all product models
         db.all<ProductModelRow>('SELECT DISTINCT product_model FROM products', [], (err, products) => {
           if (err) return callback(err);
 
@@ -447,7 +458,7 @@ router.post('/stats', (_req: Request, res: Response) => {
 
                 queryCompleted++;
                 if (queryCompleted === totalSubQueries) {
-                  // 使用 decimal.js 计算该产品的本月库存变化，确保精度
+                  // Use decimal.js to calculate monthly inventory change for this product, ensure precision
                   const beforeMonthInbound = decimalCalc.fromSqlResult(results['before_month_inbound'], 0, 0);
                   const beforeMonthOutbound = decimalCalc.fromSqlResult(results['before_month_outbound'], 0, 0);
                   const totalInbound = decimalCalc.fromSqlResult(results['total_inbound'], 0, 0);
@@ -495,7 +506,7 @@ router.post('/stats', (_req: Request, res: Response) => {
           fs.mkdirSync(path.dirname(statsFile), { recursive: true });
           fs.writeFileSync(statsFile, JSON.stringify(stats, null, 2), 'utf-8');
         } catch (e) {
-          console.error('写入 overview-stats.json 失败:', e);
+          console.error('Failed to write overview-stats.json:', e);
         }
         res.json(stats);
       }
@@ -503,38 +514,38 @@ router.post('/stats', (_req: Request, res: Response) => {
   });
 });
 
-// 调试接口：获取所有表的数据（保留原有功能）
-router.get('/all-tables', (_req: Request, res: Response) => {
-  const queries: Record<string, string> = {
-    inbound_records: 'SELECT * FROM inbound_records ORDER BY id DESC',
-    outbound_records: 'SELECT * FROM outbound_records ORDER BY id DESC',
-    partners: 'SELECT * FROM partners ORDER BY short_name',
-    product_prices: 'SELECT * FROM product_prices ORDER BY effective_date DESC',
-  };
+// Debug interface: Get all table data (preserve original functionality)
+// router.get('/all-tables', (_req: Request, res: Response) => {
+//   const queries: Record<string, string> = {
+//     inbound_records: 'SELECT * FROM inbound_records ORDER BY id DESC',
+//     outbound_records: 'SELECT * FROM outbound_records ORDER BY id DESC',
+//     partners: 'SELECT * FROM partners ORDER BY short_name',
+//     product_prices: 'SELECT * FROM product_prices ORDER BY effective_date DESC',
+//   };
 
-  const results: Record<string, any> = {};
-  const tableNames = Object.keys(queries);
-  let completed = 0;
+//   const results: Record<string, any> = {};
+//   const tableNames = Object.keys(queries);
+//   let completed = 0;
 
-  tableNames.forEach((tableName) => {
-    const sql = queries[tableName]!;
-    db.all(sql, [], (err, rows) => {
-      if (err) {
-        console.error(`Error querying ${tableName}:`, err);
-        results[tableName] = { error: err.message };
-      } else {
-        results[tableName] = rows;
-      }
+//   tableNames.forEach((tableName) => {
+//     const sql = queries[tableName]!;
+//     db.all(sql, [], (err, rows) => {
+//       if (err) {
+//         console.error(`Error querying ${tableName}:`, err);
+//         results[tableName] = { error: err.message };
+//       } else {
+//         results[tableName] = rows;
+//       }
 
-      completed++;
-      if (completed === tableNames.length) {
-        res.json(results);
-      }
-    });
-  });
-});
+//       completed++;
+//       if (completed === tableNames.length) {
+//         res.json(results);
+//       }
+//     });
+//   });
+// });
 
-// 获取销售额前10的商品及"其他"合计（从overview-stats.json读取）
+// Get top 10 products by sales amount and "Others" total (read from overview-stats.json)
 router.get('/top-sales-products', (_req: Request, res: Response) => {
   const statsFile = resolveFilesInDataPath("overview-stats.json");
   if (fs.existsSync(statsFile)) {
@@ -545,20 +556,20 @@ router.get('/top-sales-products', (_req: Request, res: Response) => {
         return res.json({ success: true, data: stats.top_sales_products });
       }
     } catch (e) {
-      // 读取失败
+      // Reading failed
     }
   }
-  return res.status(503).json({ error: '统计数据未生成，请先刷新。' });
+  return res.status(503).json({ error: 'Statistics data not generated, please refresh first.' });
 });
 
-// 获取指定产品的本月库存变化量（从overview-stats.json读取）
+// Get monthly inventory change for specified product (read from overview-stats.json)
 router.get('/monthly-inventory-change/:productModel', (req: Request, res: Response) => {
   const productModel = req.params['productModel'];
 
   if (!productModel) {
     return res.status(400).json({
       success: false,
-      message: '产品型号不能为空',
+      message: 'Product model cannot be empty',
     });
   }
 
@@ -568,7 +579,7 @@ router.get('/monthly-inventory-change/:productModel', (req: Request, res: Respon
       const json = fs.readFileSync(statsFile, 'utf-8');
       const stats: StatsCache = JSON.parse(json);
 
-      // 从缓存中查找指定产品的本月库存变化数据
+      // Find monthly inventory change data for specified product from cache
       if (stats.monthly_inventory_changes && stats.monthly_inventory_changes[productModel]) {
         return res.json({
           success: true,
@@ -577,17 +588,17 @@ router.get('/monthly-inventory-change/:productModel', (req: Request, res: Respon
       } else {
         return res.json({
           success: false,
-          message: '未找到该产品的本月库存变化数据，请先刷新统计数据',
+          message: 'Monthly inventory change data not found for this product, please refresh statistics first',
         });
       }
     } catch (e) {
-      // 读取失败
+      // Reading failed
     }
   }
 
   return res.status(503).json({
     success: false,
-    error: '统计数据未生成，请先刷新。',
+    error: 'Statistics data not generated, please refresh first.',
   });
 });
 
