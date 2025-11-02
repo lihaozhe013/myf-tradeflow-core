@@ -1,6 +1,12 @@
 # Change Log
+## v0.4.3
+- Replace the UI Text "Stock" with Inventory
+- Enable ESBuild minification in the backend
+- Fully customizable export filenames
+- Fully customizable currency unit ($, ¥, €, ..)
+
 ## v0.4.2
-- Refactored the backend by removing redundancy, changing all comments in the utils function to English
+- Refactor the backend by removing redundancy, changing all comments in the utils function to English
 
 ## v0.4.1
 - Upgrade Vite to 7.1.12, which includes several critical bug fixes.
