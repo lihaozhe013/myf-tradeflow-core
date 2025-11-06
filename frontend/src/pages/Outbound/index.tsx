@@ -357,12 +357,7 @@ const Outbound: FC = () => {
             pageSize: pagination.pageSize,
             total: pagination.total,
             showQuickJumper: true,
-            showTotal: (total: number, range: [number, number]) =>
-              t('outbound.paginationTotal', {
-                start: range[0],
-                end: range[1],
-                total,
-              }),
+            showSizeChanger: false,
           }}
         />
       </Card>
