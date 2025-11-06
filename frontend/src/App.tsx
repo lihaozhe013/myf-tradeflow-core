@@ -28,7 +28,7 @@ import About from '@/pages/About';
 import { AuthProvider } from '@/auth/AuthContext';
 import { useAuth } from '@/auth/useAuth';
 import ProtectedRoute from '@/auth/ProtectedRoute';
-import LoginPage from '@/auth/LoginPage';
+import LoginPage from '@/pages/Login/LoginPage';
 import type { User } from '@/auth/auth';
 import '@/App.css';
 

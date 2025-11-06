@@ -8,7 +8,7 @@ import {
 } from "@ant-design/icons";
 import { useAuth } from "@/auth/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
-import "@/auth/LoginPage.css";
+import "@/pages/Login/LoginPage.css";
 import { useTranslation } from "react-i18next";
 
 /**

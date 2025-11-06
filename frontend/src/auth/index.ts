@@ -7,7 +7,7 @@
 // 导出组件
 export { AuthProvider } from '@/auth/AuthContext';
 export { default as AuthContext } from '@/auth/AuthContext';
-export { default as LoginPage } from '@/auth/LoginPage';
+export { default as LoginPage } from '@/pages/Login/LoginPage';
 export { default as ProtectedRoute } from '@/auth/ProtectedRoute';
 
 // 导出 Hooks
