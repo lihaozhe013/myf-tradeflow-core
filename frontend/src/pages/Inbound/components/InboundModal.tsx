@@ -271,10 +271,10 @@ const InboundModal: FC<InboundModalProps> = ({
           </Col>
           <Col span={8}>
             <Form.Item
-              label={t('inbound.invoiceNumber')}
+              label={t('inbound.receiptNumber')}
               name="invoice_number"
             >
-              <Input placeholder={t('inbound.inputInvoiceNumber') ?? ''} />
+              <Input placeholder={t('inbound.inputReceiptNumber') ?? ''} />
             </Form.Item>
           </Col>
         </Row>

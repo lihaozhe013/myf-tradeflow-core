@@ -271,10 +271,10 @@ const OutboundModal: FC<OutboundModalProps> = ({
           </Col>
           <Col span={8}>
             <Form.Item
-              label={t('outbound.invoiceNumber')}
+              label={t('outbound.receiptNumber')}
               name="invoice_number"
             >
-              <Input placeholder={t('outbound.inputInvoiceNumber') ?? ''} />
+              <Input placeholder={t('outbound.inputReceiptNumber') ?? ''} />
             </Form.Item>
           </Col>
         </Row>
