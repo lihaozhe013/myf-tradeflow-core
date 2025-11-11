@@ -259,12 +259,12 @@ const OutboundModal: FC<OutboundModalProps> = ({
           </Col>
           <Col span={8}>
             <Form.Item
-              label={t('outbound.invoiceDate')}
-              name="invoice_date"
+              label={t('outbound.receiptDate')}
+              name="receipt_date"
             >
               <DatePicker
                 style={{ width: '100%' }}
-                placeholder={t('outbound.selectInvoiceDate') ?? ''}
+                placeholder={t('outbound.selectReceiptDate') ?? ''}
                 format="YYYY-MM-DD"
               />
             </Form.Item>
@@ -272,7 +272,7 @@ const OutboundModal: FC<OutboundModalProps> = ({
           <Col span={8}>
             <Form.Item
               label={t('outbound.receiptNumber')}
-              name="invoice_number"
+              name="receipt_number"
             >
               <Input placeholder={t('outbound.inputReceiptNumber') ?? ''} />
             </Form.Item>
@@ -290,10 +290,10 @@ const OutboundModal: FC<OutboundModalProps> = ({
           </Col>
           <Col span={8}>
             <Form.Item
-              label={t('outbound.invoiceImageUrl')}
-              name="invoice_image_url"
+              label={t('outbound.receiptImageUrl')}
+              name="receipt_image_url"
             >
-              <Input placeholder={t('outbound.inputInvoiceImageUrl') ?? ''} />
+              <Input placeholder={t('outbound.inputReceiptImageUrl') ?? ''} />
             </Form.Item>
           </Col>
         </Row>

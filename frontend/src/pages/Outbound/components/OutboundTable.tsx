@@ -98,25 +98,11 @@ const OutboundTable: FC<OutboundTableProps> = ({
       sorter: true,
     },
     {
-      title: t('outbound.invoiceLink'),
-      key: 'invoice_link',
+      title: t('outbound.receiptNumber'),
+      dataIndex: 'receipt_number',
+      key: 'receipt_number',
       width: 120,
-      render: (_value, record) => {
-        const invoiceUrl = record.invoice_image_url?.trim();
-        if (invoiceUrl) {
-          return (
-            <Button
-              type="link"
-              size="small"
-              onClick={() => window.open(invoiceUrl, '_blank')}
-              style={{ padding: 0 }}
-            >
-              {t('outbound.viewInvoice')}
-            </Button>
-          );
-        }
-        return <span style={{ color: '#999' }}>{t('outbound.noInvoice')}</span>;
-      },
+      render: (receiptNumber) => receiptNumber ?? '-',
     },
     {
       title: t('outbound.actions'),
