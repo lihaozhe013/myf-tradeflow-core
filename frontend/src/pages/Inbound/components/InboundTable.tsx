@@ -154,6 +154,7 @@ const InboundTable: FC<InboundTableProps> = ({
 
   const rowSelection: TableRowSelection<InboundRecord> = {
     selectedRowKeys,
+    preserveSelectedRowKeys: true,
     onChange: (keys: Key[]) => {
       setSelectedRowKeys(keys);
     },
