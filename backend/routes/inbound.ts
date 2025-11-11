@@ -47,9 +47,9 @@ function mapApiToDb(data: any): any {
  */
 router.get('/', (req: Request, res: Response): void => {
   let { page = 1 } = req.query;
-  let pageNum = parseInt(page as string, 10);
+  let pageNum = parseInt(page as string, 20);
   if (!Number.isFinite(pageNum) || pageNum < 1) pageNum = 1;
-  const limit = 10;
+  const limit = 20;
   
   let sql = 'SELECT * FROM inbound_records WHERE 1=1';
   const params: any[] = [];
