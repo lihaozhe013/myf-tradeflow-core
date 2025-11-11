@@ -8,7 +8,6 @@ COPY package*.json ./
 
 RUN apk add --no-cache python3 build-base sqlite-dev
 
-RUN npm install
 COPY . .
 
 EXPOSE 8000
