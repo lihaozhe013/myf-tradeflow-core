@@ -206,4 +206,132 @@ router.delete('/:id', (req: Request, res: Response): void => {
   });
 });
 
+/**
+ * POST /api/inbound/batch
+ * Batch update multiple inbound records
+ */
+router.post('/batch', (req: Request, res: Response): void => {
+  const { ids, updates } = req.body;
+  
+  // Validate request
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    res.status(400).json({ error: 'ids array is required and must not be empty' });
+    return;
+  }
+  
+  if (!updates || typeof updates !== 'object') {
+    res.status(400).json({ error: 'updates object is required' });
+    return;
+  }
+  
+  // Build dynamic UPDATE statement based on provided fields
+  const updateFields: string[] = [];
+  const updateValues: any[] = [];
+  
+  const allowedFields = [
+    'supplier_code', 'supplier_short_name', 'supplier_full_name',
+    'product_code', 'product_model', 'quantity', 'unit_price',
+    'inbound_date', 'invoice_date', 'invoice_number', 'invoice_image_url', 
+    'order_number', 'remark'
+  ];
+  
+  // Track if we need to recalculate total_price
+  let needsRecalculation = false;
+  let hasQuantity = false;
+  let hasUnitPrice = false;
+  
+  for (const field of allowedFields) {
+    if (isProvided(updates[field])) {
+      updateFields.push(`${field}=?`);
+      updateValues.push(updates[field]);
+      
+      if (field === 'quantity') hasQuantity = true;
+      if (field === 'unit_price') hasUnitPrice = true;
+    }
+  }
+  
+  if (updateFields.length === 0) {
+    res.status(400).json({ error: 'No valid update fields provided' });
+    return;
+  }
+  
+  needsRecalculation = hasQuantity || hasUnitPrice;
+  
+  // Execute batch update
+  let completed = 0;
+  let errors = 0;
+  const notFound: number[] = [];
+  
+  const processRecord = (index: number) => {
+    if (index >= ids.length) {
+      // All records processed
+      res.json({
+        message: 'Batch update completed!',
+        updated: completed,
+        notFound: notFound,
+        errors: errors
+      });
+      return;
+    }
+    
+    const recordId = ids[index];
+    
+    // If we need to recalculate total_price, we need to fetch current values first
+    if (needsRecalculation) {
+      db.get('SELECT quantity, unit_price FROM inbound_records WHERE id = ?', [recordId], (err, row: any) => {
+        if (err) {
+          errors++;
+          processRecord(index + 1);
+          return;
+        }
+        
+        if (!row) {
+          notFound.push(recordId);
+          processRecord(index + 1);
+          return;
+        }
+        
+        // Calculate new total_price
+        const finalQuantity = hasQuantity ? updates.quantity : row.quantity;
+        const finalUnitPrice = hasUnitPrice ? updates.unit_price : row.unit_price;
+        const total_price = decimalCalc.calculateTotalPrice(finalQuantity, finalUnitPrice);
+        
+        // Add total_price to update
+        const finalUpdateFields = [...updateFields, 'total_price=?'];
+        const finalUpdateValues = [...updateValues, total_price, recordId];
+        
+        const sql = `UPDATE inbound_records SET ${finalUpdateFields.join(', ')} WHERE id=?`;
+        
+        db.run(sql, finalUpdateValues, function(err) {
+          if (err) {
+            errors++;
+          } else if (this.changes === 0) {
+            notFound.push(recordId);
+          } else {
+            completed++;
+          }
+          processRecord(index + 1);
+        });
+      });
+    } else {
+      // No recalculation needed, direct update
+      const finalUpdateValues = [...updateValues, recordId];
+      const sql = `UPDATE inbound_records SET ${updateFields.join(', ')} WHERE id=?`;
+      
+      db.run(sql, finalUpdateValues, function(err) {
+        if (err) {
+          errors++;
+        } else if (this.changes === 0) {
+          notFound.push(recordId);
+        } else {
+          completed++;
+        }
+        processRecord(index + 1);
+      });
+    }
+  };
+  
+  processRecord(0);
+});
+
 export default router;
