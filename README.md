@@ -44,14 +44,14 @@ This is the detailed page for my demo link:
 ![6.png](https://lihaozhe013.github.io/lihaozhe-website/posts/tradeflow-system/6.png)
 
 ![7.png](https://lihaozhe013.github.io/lihaozhe-website/posts/tradeflow-system/7.png)
-## ⚡ Quick Start
+## Quick Start
 
 ### Prerequisites
 
 - Node.js 22+
 - npm
-
-### Installation
+- Docker (Optional)
+### Development (Without Docker)
 
 1.  **Clone the project**:
 
@@ -87,6 +87,27 @@ npm run build
 npm run dev
 ```
 
+### Development (With Docker)
+#### All in one command (build image and start image)
+```bash
+make build
+```
+
+#### Start
+```bash
+make start
+```
+
+#### Stop
+```bash
+make stop
+```
+
+#### Use shell in docker
+```bash
+make sh
+```
+
 ## Production Deployment
 First, ensure that a functional build artifact is available
 ```bash
@@ -119,7 +140,7 @@ This will:
 
 > Internal access logs have been simplified. If you require detailed access logs, I recommend using Nginx as a proxy and reviewing Nginx's logs.
 
-## Docker
+### Docker (Prod)
 To create docker image, first build the project
 ```bash
 npm run build

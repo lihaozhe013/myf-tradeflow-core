@@ -1,0 +1,25 @@
+name: myf-tradeflow-core
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: myf-tradeflow-core
+    container_name: myf-tradeflow-core-container
+    command: sh -c "while true; do sleep 3600; done"
+    environment:
+      - NODE_ENV=development
+    ports:
+      - "8000:8000"
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - nm-root:/app/node_modules
+      - nm-backend:/app/backend/node_modules
+      - nm-frontend:/app/frontend/node_modules
+
+volumes:
+  nm-root:
+  nm-backend:
+  nm-frontend:
