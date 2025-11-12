@@ -23,6 +23,7 @@ import exportRoutes from "@/routes/export";
 import analysisRoutes from "@/routes/analysis/analysis";
 import aboutRoutes from "@/routes/about";
 import authRoutes from "@/routes/auth";
+import dbBackupRoutes from "@/routes/dbBackup";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -106,6 +107,7 @@ app.use("/api/payable", payableRoutes);
 app.use("/api/export", exportRoutes);
 app.use("/api/analysis", analysisRoutes);
 app.use("/api/about", aboutRoutes);
+app.use("/api/db-backup", dbBackupRoutes);
 
 // =============================================================================
 // Error Message Middleware

@@ -1,60 +1,61 @@
+## `/api/inbound`
 
-## `/api/outbound`
 ### GET
-GET /api/outbound?page=1&pageSize=10&customer_code=C001&product_model=iPhone
+
+GET /api/inbound?page=1&pageSize=10&customer_code=C001&product_model=iPhone
 
 Authorization: Bearer <token>
 
 ### POST
-POST /api/outbound
+POST /api/inbound
 
 Authorization: Bearer <token>
 ```json
 {
-  "customer_code": "C001",
-  "customer_short_name": "Company A",
+  "supplier_code": "C001",
+  "supplier_short_name": "Company A",
   "product_model": "Product A",
   "quantity": 5,
   "unit_price": 9000.00,
-  "outbound_date": "2025-08-18"
+  "inbound_date": "2025-08-18"
 }
 ```
 
 ### PUT
-POST /api/outbound/:id
+PUT /api/inbound/:id
 
 Authorization: Bearer <token>
 ```json
 {
-  "customer_code": "C001",
-  "customer_short_name": "Company A",
+  "supplier_code": "C001",
+  "supplier_short_name": "Company A",
   "product_model": "Product A",
   "quantity": 5,
   "unit_price": 9000.00,
-  "outbound_date": "2025-08-18"
+  "inbound_date": "2025-08-18"
 }
 ```
 
 ### DELETE
-DELETE /api/outbound/:id
+DELETE /api/inbound/:id
 
 Authorization: Bearer <token>
 
 ### BATCH UPDATE
-POST /api/outbound/batch
+POST /api/inbound/batch
 
 Authorization: Bearer <token>
 
-Batch update multiple outbound records. Only provided fields will be updated, empty/null fields will be ignored.
+Batch update multiple inbound records. Only provided fields will be updated, empty/null fields will be ignored.
 
 ```json
 {
   "ids": [1, 2, 3],
   "updates": {
-    "customer_code": "C002",
-    "customer_short_name": "Company B",
+    "supplier_code": "C002",
+    "supplier_short_name": "Company B",
     "unit_price": 8500.00,
-    "outbound_date": "2025-08-20"
+    "inbound_date": "2025-08-20"
   }
 }
 ```
@@ -62,14 +63,14 @@ Batch update multiple outbound records. Only provided fields will be updated, em
 **Request Body:**
 - `ids` (required): Array of record IDs to update
 - `updates` (required): Object containing fields to update. Only provided fields will be updated:
-  - `customer_code`: Customer code
-  - `customer_short_name`: Customer short name
-  - `customer_full_name`: Customer full name
+  - `supplier_code`: Supplier code
+  - `supplier_short_name`: Supplier short name
+  - `supplier_full_name`: Supplier full name
   - `product_code`: Product code
   - `product_model`: Product model
   - `quantity`: Quantity (will recalculate total_price)
   - `unit_price`: Unit price (will recalculate total_price)
-  - `outbound_date`: Outbound date
+  - `inbound_date`: Inbound date
   - `invoice_date`: Invoice date
   - `invoice_number`: Invoice number
   - `invoice_image_url`: Invoice image URL

@@ -259,12 +259,12 @@ const InboundModal: FC<InboundModalProps> = ({
           </Col>
           <Col span={8}>
             <Form.Item
-              label={t('inbound.invoiceDate')}
-              name="invoice_date"
+              label={t('inbound.receiptDate')}
+              name="receipt_date"
             >
               <DatePicker
                 style={{ width: '100%' }}
-                placeholder={t('inbound.selectInvoiceDate') ?? ''}
+                placeholder={t('inbound.selectReceiptDate') ?? ''}
                 format="YYYY-MM-DD"
               />
             </Form.Item>
@@ -272,7 +272,7 @@ const InboundModal: FC<InboundModalProps> = ({
           <Col span={8}>
             <Form.Item
               label={t('inbound.receiptNumber')}
-              name="invoice_number"
+              name="receipt_number"
             >
               <Input placeholder={t('inbound.inputReceiptNumber') ?? ''} />
             </Form.Item>
@@ -290,10 +290,10 @@ const InboundModal: FC<InboundModalProps> = ({
           </Col>
           <Col span={8}>
             <Form.Item
-              label={t('inbound.invoiceImageUrl')}
-              name="invoice_image_url"
+              label={t('inbound.receiptImageUrl')}
+              name="receipt_image_url"
             >
-              <Input placeholder={t('inbound.inputInvoiceImageUrl') ?? ''} />
+              <Input placeholder={t('inbound.inputReceiptImageUrl') ?? ''} />
             </Form.Item>
           </Col>
         </Row>
