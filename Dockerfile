@@ -8,12 +8,13 @@ COPY package*.json ./
 
 RUN apt update \
     && apt install -y --no-install-recommends \
+    ca-certificates \
     python3 \
     curl \
     git \
     && apt clean \
-    && rm -rf /var/lib/apt/lists/*
-
+    && rm -rf /var/lib/apt/lists/* \
+    && update-ca-certificates
 COPY . .
 
 EXPOSE 8000
