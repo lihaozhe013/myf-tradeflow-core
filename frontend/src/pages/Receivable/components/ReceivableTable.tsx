@@ -6,6 +6,7 @@ import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import type { TableProps } from 'antd/es/table';
 import type { SortOrder } from 'antd/es/table/interface';
 import { PlusOutlined, EyeOutlined, DeleteOutlined } from '@ant-design/icons';
+import InvoicedModal from './InvoicedModal';
 import type { UseSimpleApiReturn } from '@/hooks/types';
 import type {
   PaginationState,
@@ -76,6 +77,7 @@ const ReceivableTable: FC<ReceivableTableProps> = ({
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [paymentPagination, setPaymentPagination] = useState<ModalPaginationState>(DEFAULT_MODAL_PAGINATION);
   const [outboundPagination, setOutboundPagination] = useState<ModalPaginationState>(DEFAULT_MODAL_PAGINATION);
+  const [invoicedModalVisible, setInvoicedModalVisible] = useState(false);
 
   const getBalanceTag = (balance: number | null | undefined): ReactNode => {
     const numeric = Number(balance ?? 0);
@@ -96,16 +98,26 @@ const ReceivableTable: FC<ReceivableTableProps> = ({
     outboundPage = 1
   ): Promise<void> => {
     try {
-      const query = new URLSearchParams({
-        payment_page: String(paymentPage),
-        payment_limit: String(DEFAULT_MODAL_PAGINATION.pageSize),
-        outbound_page: String(outboundPage),
-        outbound_limit: String(DEFAULT_MODAL_PAGINATION.pageSize),
+      const outboundQuery = new URLSearchParams({
+        page: String(outboundPage),
+        limit: String(DEFAULT_MODAL_PAGINATION.pageSize),
       });
 
-      const result = await apiInstance.get<ReceivableDetailResponse>(
-        `/receivable/details/${customerCode}?${query.toString()}`
+      // Fetch payment records from details endpoint
+      const detailsResult = await apiInstance.get<ReceivableDetailResponse>(
+        `/receivable/details/${customerCode}?payment_page=${paymentPage}&payment_limit=${DEFAULT_MODAL_PAGINATION.pageSize}`
       );
+
+      // Fetch uninvoiced records
+      const uninvoicedResult = await apiInstance.get<{ data: any[], total: number, page: number, limit: number }>(
+        `/receivable/uninvoiced/${customerCode}?${outboundQuery.toString()}`
+      );
+
+      const result = {
+        ...detailsResult,
+        outbound_records: { data: uninvoicedResult?.data ?? [] },
+        outbound_pagination: { page: uninvoicedResult?.page ?? outboundPage, total: uninvoicedResult?.total ?? 0 },
+      };
 
       setCustomerDetails(result ?? null);
 
@@ -428,7 +440,17 @@ const ReceivableTable: FC<ReceivableTableProps> = ({
             </div>
 
             <div>
-              <Title level={5}>{t('receivable.outboundRecords')}</Title>
+              <Title level={5}>
+                未开票明细
+                <Button
+                  type="default"
+                  size="small"
+                  style={{ marginLeft: 16 }}
+                  onClick={() => setInvoicedModalVisible(true)}
+                >
+                  查看已开票明细
+                </Button>
+              </Title>
               <Table<ReceivableOutboundRecord>
                 size="small"
                 dataSource={customerDetails.outbound_records?.data ?? []}
@@ -467,6 +489,14 @@ const ReceivableTable: FC<ReceivableTableProps> = ({
           </div>
         ) : null}
       </Modal>
+
+      <InvoicedModal
+        visible={invoicedModalVisible}
+        customerCode={selectedCustomer?.customer_code ?? null}
+        customerName={selectedCustomer?.customer_short_name ?? null}
+        onCancel={() => setInvoicedModalVisible(false)}
+        apiInstance={apiInstance}
+      />
     </>
   );
 };
