@@ -59,9 +59,23 @@ class InvoiceCacheService {
   }
 
   /**
-   * Refresh cache for a specific customer
+   * Refresh cache for a specific customer (outbound/receivable)
    */
   public refreshCustomerCache(customer_code: string): Promise<InvoicedRecord[]> {
+    return this.refreshCache(customer_code, 'outbound_records', 'customer_code');
+  }
+
+  /**
+   * Refresh cache for a specific supplier (inbound/payable)
+   */
+  public refreshSupplierCache(supplier_code: string): Promise<InvoicedRecord[]> {
+    return this.refreshCache(supplier_code, 'inbound_records', 'supplier_code');
+  }
+
+  /**
+   * Generic refresh cache method
+   */
+  private refreshCache(code: string, tableName: string, codeColumn: string): Promise<InvoicedRecord[]> {
     return new Promise((resolve, reject) => {
       const sql = `
         SELECT 
@@ -69,8 +83,8 @@ class InvoiceCacheService {
           MIN(invoice_date) as invoice_date,
           SUM(total_price) as total_amount,
           COUNT(*) as record_count
-        FROM outbound_records
-        WHERE customer_code = ? 
+        FROM ${tableName}
+        WHERE ${codeColumn} = ? 
           AND invoice_number IS NOT NULL 
           AND invoice_number != ''
         GROUP BY invoice_number
@@ -82,9 +96,9 @@ class InvoiceCacheService {
         invoice_date: string | null;
         total_amount: number | null;
         record_count: number;
-      }>(sql, [customer_code], (err, rows) => {
+      }>(sql, [code], (err, rows) => {
         if (err) {
-          logger.error(`Failed to refresh invoice cache for ${customer_code}: ${err.message}`);
+          logger.error(`Failed to refresh invoice cache for ${code}: ${err.message}`);
           reject(err);
           return;
         }
@@ -96,7 +110,7 @@ class InvoiceCacheService {
           record_count: row.record_count,
         }));
 
-        this.cache[customer_code] = {
+        this.cache[code] = {
           invoiced_records: invoicedRecords,
           last_updated: new Date().toISOString(),
         };

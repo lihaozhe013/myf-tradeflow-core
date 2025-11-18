@@ -1,6 +1,7 @@
 import express, { type Router, type Request, type Response } from 'express';
 import db from '@/db.js';
 import decimalCalc from '@/utils/decimalCalculator.js';
+import invoiceCacheService from '@/utils/invoiceCacheService.js';
 
 const router: Router = express.Router();
 
@@ -338,6 +339,109 @@ router.get('/details/:supplier_code', (req: Request, res: Response): void => {
       });
     });
   });
+});
+
+/**
+ * GET /api/payable/uninvoiced/:supplier_code
+ * Get uninvoiced inbound records for a supplier (invoice_number is NULL or empty)
+ */
+router.get('/uninvoiced/:supplier_code', (req: Request, res: Response): void => {
+  const supplier_code = req.params['supplier_code'] as string;
+  const { page = 1, limit = 10 } = req.query;
+  
+  const offset = (Number(page) - 1) * Number(limit);
+  
+  const sql = `
+    SELECT * FROM inbound_records 
+    WHERE supplier_code = ? 
+      AND (invoice_number IS NULL OR invoice_number = '')
+    ORDER BY inbound_date DESC 
+    LIMIT ? OFFSET ?
+  `;
+  
+  db.all(sql, [supplier_code, Number(limit), offset], (err, rows) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+
+    const countSql = `
+      SELECT COUNT(*) as total FROM inbound_records 
+      WHERE supplier_code = ? 
+        AND (invoice_number IS NULL OR invoice_number = '')
+    `;
+    
+    db.get<CountResult>(countSql, [supplier_code], (err, countResult) => {
+      if (err) {
+        res.status(500).json({ error: err.message });
+        return;
+      }
+      
+      res.json({
+        data: rows,
+        total: countResult!.total,
+        page: Number(page),
+        limit: Number(limit)
+      });
+    });
+  });
+});
+
+/**
+ * GET /api/payable/invoiced/:supplier_code
+ * Get invoiced records grouped by invoice_number (from cache)
+ */
+router.get('/invoiced/:supplier_code', (req: Request, res: Response): void => {
+  const supplier_code = req.params['supplier_code'] as string;
+  const { page = 1, limit = 10 } = req.query;
+  
+  const cachedRecords = invoiceCacheService.getCachedInvoicedRecords(supplier_code);
+  
+  if (!cachedRecords) {
+    res.status(404).json({ 
+      error: 'No cached data found. Please refresh the cache first.',
+      message: 'Cache not initialized'
+    });
+    return;
+  }
+  
+  const offset = (Number(page) - 1) * Number(limit);
+  const paginatedRecords = cachedRecords.slice(offset, offset + Number(limit));
+  const lastUpdated = invoiceCacheService.getLastUpdateTime(supplier_code);
+  
+  res.json({
+    data: paginatedRecords,
+    total: cachedRecords.length,
+    page: Number(page),
+    limit: Number(limit),
+    last_updated: lastUpdated
+  });
+});
+
+/**
+ * POST /api/payable/invoices/refresh/:supplier_code
+ * Refresh invoice cache for a supplier
+ */
+router.post('/invoices/refresh/:supplier_code', async (req: Request, res: Response): Promise<void> => {
+  const supplier_code = req.params['supplier_code'] as string;
+  
+  try {
+    const invoicedRecords = await invoiceCacheService.refreshSupplierCache(supplier_code);
+    const lastUpdated = invoiceCacheService.getLastUpdateTime(supplier_code);
+    
+    res.json({
+      message: 'Invoice cache refreshed successfully',
+      total: invoicedRecords.length,
+      last_updated: lastUpdated,
+      data: invoicedRecords
+    });
+  } catch (error) {
+    const err = error as Error;
+    res.status(500).json({ 
+      error: err.message,
+      message: 'Failed to refresh invoice cache'
+    });
+  }
 });
 
 export default router;

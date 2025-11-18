@@ -6,6 +6,7 @@ import type { SortOrder } from 'antd/es/table/interface';
 import type { TableProps } from 'antd/es/table';
 import { PlusOutlined, EyeOutlined, DeleteOutlined } from '@ant-design/icons';
 import { currency_unit_symbol } from "@/config/types";
+import InvoicedModal from './InvoicedModal';
 import type { UseSimpleApiReturn } from '@/hooks/types';
 import type {
   PaginationState,
@@ -75,6 +76,7 @@ const PayableTable: FC<PayableTableProps> = ({
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [paymentPagination, setPaymentPagination] = useState<ModalPaginationState>(DEFAULT_MODAL_PAGINATION);
   const [inboundPagination, setInboundPagination] = useState<ModalPaginationState>(DEFAULT_MODAL_PAGINATION);
+  const [invoicedModalVisible, setInvoicedModalVisible] = useState(false);
 
   const getBalanceTag = (balance: number | null | undefined): ReactNode => {
     const numeric = Number(balance ?? 0);
@@ -95,16 +97,30 @@ const PayableTable: FC<PayableTableProps> = ({
     inboundPage = 1
   ): Promise<void> => {
     try {
-      const query = new URLSearchParams({
-        payment_page: String(paymentPage),
-        payment_limit: String(DEFAULT_MODAL_PAGINATION.pageSize),
-        inbound_page: String(inboundPage),
-        inbound_limit: String(DEFAULT_MODAL_PAGINATION.pageSize),
+      const inboundQuery = new URLSearchParams({
+        page: String(inboundPage),
+        limit: String(DEFAULT_MODAL_PAGINATION.pageSize),
       });
 
-      const result = await apiInstance.get<PayableDetailResponse>(
-        `/payable/details/${supplierCode}?${query.toString()}`
+      // Fetch payment records from details endpoint
+      const detailsResult = await apiInstance.get<PayableDetailResponse>(
+        `/payable/details/${supplierCode}?payment_page=${paymentPage}&payment_limit=${DEFAULT_MODAL_PAGINATION.pageSize}`
       );
+
+      // Fetch uninvoiced records
+      const uninvoicedResult = await apiInstance.get<{ data: any[], total: number, page: number, limit: number }>(
+        `/payable/uninvoiced/${supplierCode}?${inboundQuery.toString()}`
+      );
+
+      const result = {
+        ...detailsResult,
+        inbound_records: { 
+          data: uninvoicedResult?.data ?? [], 
+          total: uninvoicedResult?.total ?? 0, 
+          page: uninvoicedResult?.page ?? inboundPage, 
+          limit: DEFAULT_MODAL_PAGINATION.pageSize 
+        },
+      };
 
       setSupplierDetails(result ?? null);
 
@@ -427,7 +443,17 @@ const PayableTable: FC<PayableTableProps> = ({
             </div>
 
             <div>
-              <Title level={5}>{t('payable.inboundRecords')}</Title>
+              <Title level={5}>
+                未开票明细
+                <Button
+                  type="default"
+                  size="small"
+                  style={{ marginLeft: 16 }}
+                  onClick={() => setInvoicedModalVisible(true)}
+                >
+                  查看已开票明细
+                </Button>
+              </Title>
               <Table
                 size="small"
                 dataSource={supplierDetails.inbound_records?.data ?? []}
@@ -466,6 +492,14 @@ const PayableTable: FC<PayableTableProps> = ({
           </div>
         ) : null}
       </Modal>
+
+      <InvoicedModal
+        visible={invoicedModalVisible}
+        supplierCode={selectedSupplier?.supplier_code ?? null}
+        supplierName={selectedSupplier?.supplier_short_name ?? null}
+        onCancel={() => setInvoicedModalVisible(false)}
+        apiInstance={apiInstance}
+      />
     </>
   );
 };

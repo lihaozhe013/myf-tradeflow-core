@@ -69,6 +69,23 @@ export interface PayableInboundRecord {
   readonly total_price?: number | null;
   readonly order_number?: string | null;
   readonly remark?: string | null;
+  readonly invoice_number?: string | null;
+  readonly invoice_date?: string | null;
+}
+
+export interface InvoicedRecord {
+  readonly invoice_number: string;
+  readonly invoice_date: string | null;
+  readonly total_amount: number;
+  readonly record_count: number;
+}
+
+export interface InvoicedRecordsResponse {
+  readonly data: InvoicedRecord[];
+  readonly total: number;
+  readonly page: number;
+  readonly limit: number;
+  readonly last_updated?: string;
 }
 
 export interface PaginatedData<T> {
