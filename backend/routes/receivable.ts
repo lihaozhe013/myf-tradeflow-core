@@ -391,7 +391,7 @@ router.get('/uninvoiced/:customer_code', (req: Request, res: Response): void => 
  * Get invoiced records grouped by invoice_number (from cache)
  */
 router.get('/invoiced/:customer_code', (req: Request, res: Response): void => {
-  const { customer_code } = req.params;
+  const customer_code  = req.params['customer_code'] as string;
   const { page = 1, limit = 10 } = req.query;
   
   const cachedRecords = invoiceCacheService.getCachedInvoicedRecords(customer_code);
@@ -422,7 +422,7 @@ router.get('/invoiced/:customer_code', (req: Request, res: Response): void => {
  * Refresh invoice cache for a customer
  */
 router.post('/invoices/refresh/:customer_code', async (req: Request, res: Response): Promise<void> => {
-  const { customer_code } = req.params;
+  const customer_code  = req.params['customer_code'] as string;
   
   try {
     const invoicedRecords = await invoiceCacheService.refreshCustomerCache(customer_code);
