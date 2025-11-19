@@ -110,7 +110,7 @@ router.post('/', (req: Request, res: Response): void => {
   const {
     supplier_code, supplier_short_name, supplier_full_name, 
     product_code, product_model, quantity, unit_price,
-    inbound_date, invoice_date, invoice_number, invoice_image_url, order_number,
+    inbound_date, invoice_date, invoice_number, receipt_number, order_number,
     remark
   } = req.body;
 
@@ -120,7 +120,7 @@ router.post('/', (req: Request, res: Response): void => {
     INSERT INTO inbound_records 
     (supplier_code, supplier_short_name, supplier_full_name, 
      product_code, product_model, quantity, unit_price, total_price, 
-     inbound_date, invoice_date, invoice_number, invoice_image_url, order_number, 
+     inbound_date, invoice_date, invoice_number, receipt_number, order_number, 
      remark)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
@@ -128,7 +128,7 @@ router.post('/', (req: Request, res: Response): void => {
   const params = [
     supplier_code, supplier_short_name, supplier_full_name, 
     product_code, product_model, quantity, unit_price, total_price,
-    inbound_date, invoice_date, invoice_number, invoice_image_url, order_number,
+    inbound_date, invoice_date, invoice_number, receipt_number, order_number,
     remark
   ];
   
@@ -151,7 +151,7 @@ router.put('/:id', (req: Request, res: Response): void => {
   const {
     supplier_code, supplier_short_name, supplier_full_name, 
     product_code, product_model, quantity, unit_price,
-    inbound_date, invoice_date, invoice_number, invoice_image_url, order_number,
+    inbound_date, invoice_date, invoice_number, receipt_number, order_number,
     remark
   } = req.body;
   
@@ -161,7 +161,7 @@ router.put('/:id', (req: Request, res: Response): void => {
     UPDATE inbound_records SET
     supplier_code=?, supplier_short_name=?, supplier_full_name=?, 
     product_code=?, product_model=?, quantity=?, unit_price=?, total_price=?,
-    inbound_date=?, invoice_date=?, invoice_number=?, invoice_image_url=?, order_number=?,
+    inbound_date=?, invoice_date=?, invoice_number=?, receipt_number=?, order_number=?,
     remark=?
     WHERE id=?
   `;
@@ -169,7 +169,7 @@ router.put('/:id', (req: Request, res: Response): void => {
   const params = [
     supplier_code, supplier_short_name, supplier_full_name, 
     product_code, product_model, quantity, unit_price, total_price,
-    inbound_date, invoice_date, invoice_number, invoice_image_url, order_number,
+    inbound_date, invoice_date, invoice_number, receipt_number, order_number,
     remark, id
   ];
   
@@ -234,7 +234,7 @@ router.post('/batch', (req: Request, res: Response): void => {
   const allowedFields = [
     'supplier_code', 'supplier_short_name', 'supplier_full_name',
     'product_code', 'product_model', 'quantity', 'unit_price',
-    'inbound_date', 'invoice_date', 'invoice_number', 'invoice_image_url', 
+    'inbound_date', 'invoice_date', 'invoice_number', 'receipt_number', 
     'order_number', 'remark'
   ];
   

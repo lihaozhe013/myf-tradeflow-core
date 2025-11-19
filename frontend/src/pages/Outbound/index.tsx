@@ -182,7 +182,7 @@ const Outbound: FC = () => {
       product_code: product?.code ?? "",
       outbound_date: record.outbound_date ? dayjs(record.outbound_date) : null,
       invoice_date: record.invoice_date ? dayjs(record.invoice_date) : null,
-      receipt_number: (record as any).invoice_image_url ?? null,
+      receipt_number: record.receipt_number ?? null,
     });
 
     setManualPrice(Boolean(form.getFieldValue("manual_price")));
@@ -242,7 +242,6 @@ const Outbound: FC = () => {
         invoice_date: values.invoice_date
           ? values.invoice_date.format("YYYY-MM-DD")
           : null,
-        invoice_image_url: values.receipt_number ?? null,
         total_price: quantity * unitPrice,
       };
 
@@ -385,7 +384,7 @@ const Outbound: FC = () => {
       if (values.invoice_number)
         updates["invoice_number"] = values.invoice_number;
       if (values.receipt_number)
-        updates["invoice_image_url"] = values.receipt_number;
+        updates["receipt_number"] = values.receipt_number;
       if (values.order_number) updates["order_number"] = values.order_number;
       if (values.remark) updates["remark"] = values.remark;
 

@@ -181,8 +181,7 @@ const Inbound: FC = () => {
       product_code: product?.code ?? "",
       inbound_date: record.inbound_date ? dayjs(record.inbound_date) : null,
       invoice_date: record.invoice_date ? dayjs(record.invoice_date) : null,
-      // Map backend invoice_image_url into UI receipt_number field
-      receipt_number: (record as any).invoice_image_url ?? null,
+      receipt_number: record.receipt_number ?? null,
     });
 
     setManualPrice(Boolean(form.getFieldValue("manual_price")));
@@ -241,8 +240,6 @@ const Inbound: FC = () => {
         invoice_date: values.invoice_date
           ? values.invoice_date.format("YYYY-MM-DD")
           : null,
-        // Send receipt_number (UI) as invoice_image_url to backend
-        invoice_image_url: values.receipt_number ?? null,
         total_price: quantity * unitPrice,
       };
 
@@ -384,7 +381,7 @@ const Inbound: FC = () => {
       if (values.invoice_number)
         updates["invoice_number"] = values.invoice_number;
       if (values.receipt_number)
-        updates["invoice_image_url"] = values.receipt_number;
+        updates["receipt_number"] = values.receipt_number;
       if (values.order_number) updates["order_number"] = values.order_number;
       if (values.remark) updates["remark"] = values.remark;
 

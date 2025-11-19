@@ -27,9 +27,7 @@ export type InboundRecord = {
   readonly inbound_date: string;
   readonly invoice_date?: string | null;
   readonly invoice_number?: string | null;
-  // Special case: use this field in UI to represent receipt number,
-  // persisted in backend as invoice_image_url column.
-  readonly invoice_image_url?: string | null;
+  readonly receipt_number?: string | null;
   readonly order_number?: string | null;
   readonly remark?: string | null;
 };
@@ -62,7 +60,6 @@ export type InboundFormValues = {
   readonly total_price?: number | undefined;
   readonly invoice_number?: string | null | undefined;
   readonly order_number?: string | null | undefined;
-  // UI input for receipt number, will be sent as invoice_image_url to backend
   readonly receipt_number?: string | null | undefined;
   readonly remark?: string | null | undefined;
 };
