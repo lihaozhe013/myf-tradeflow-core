@@ -246,10 +246,10 @@ const OutboundBatchModal: FC<OutboundBatchModalProps> = ({
 
         <Row gutter={16}>
           <Col span={8}>
-            <Form.Item label={t("outbound.receiptDate")} name="receipt_date">
+            <Form.Item label={t("outbound.invoiceDate")} name="invoice_date">
               <DatePicker
                 style={{ width: "100%" }}
-                placeholder={t("outbound.selectReceiptDate") ?? ""}
+                placeholder={t("outbound.selectInvoiceDate") ?? ""}
                 format="YYYY-MM-DD"
                 allowClear
               />
@@ -257,10 +257,10 @@ const OutboundBatchModal: FC<OutboundBatchModalProps> = ({
           </Col>
           <Col span={8}>
             <Form.Item
-              label={t("outbound.receiptNumber")}
-              name="receipt_number"
+              label={t("outbound.invoiceNumber")}
+              name="invoice_number"
             >
-              <Input placeholder={t("outbound.inputReceiptNumber") ?? ""} />
+              <Input placeholder={t("outbound.inputInvoiceNumber") ?? ""} />
             </Form.Item>
           </Col>
           <Col span={8}>
@@ -273,10 +273,10 @@ const OutboundBatchModal: FC<OutboundBatchModalProps> = ({
         <Row gutter={16}>
           <Col span={8}>
             <Form.Item
-              label={t("outbound.receiptImageUrl")}
-              name="receipt_image_url"
+              label={t("outbound.receiptNumber")}
+              name="receipt_number"
             >
-              <Input placeholder={t("outbound.inputReceiptImageUrl") ?? ""} />
+              <Input placeholder={t("outbound.inputReceiptNumber") ?? ""} />
             </Form.Item>
           </Col>
         </Row>

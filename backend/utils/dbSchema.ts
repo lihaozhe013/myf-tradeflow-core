@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS inbound_records (
   inbound_date TEXT,
   invoice_date TEXT,
   invoice_number TEXT,
-  invoice_image_url TEXT,
+  receipt_number TEXT,
   order_number TEXT,
   remark TEXT
 );
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS outbound_records (
   outbound_date TEXT,
   invoice_date TEXT,
   invoice_number TEXT,
-  invoice_image_url TEXT,
+  receipt_number TEXT,
   order_number TEXT,
   remark TEXT
 );

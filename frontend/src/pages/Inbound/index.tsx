@@ -180,7 +180,8 @@ const Inbound: FC = () => {
       supplier_code: supplier?.code ?? "",
       product_code: product?.code ?? "",
       inbound_date: record.inbound_date ? dayjs(record.inbound_date) : null,
-      receipt_date: record.receipt_date ? dayjs(record.receipt_date) : null,
+      invoice_date: record.invoice_date ? dayjs(record.invoice_date) : null,
+      receipt_number: record.receipt_number ?? null,
     });
 
     setManualPrice(Boolean(form.getFieldValue("manual_price")));
@@ -236,8 +237,8 @@ const Inbound: FC = () => {
         inbound_date: values.inbound_date
           ? values.inbound_date.format("YYYY-MM-DD")
           : null,
-        receipt_date: values.receipt_date
-          ? values.receipt_date.format("YYYY-MM-DD")
+        invoice_date: values.invoice_date
+          ? values.invoice_date.format("YYYY-MM-DD")
           : null,
         total_price: quantity * unitPrice,
       };
@@ -375,12 +376,12 @@ const Inbound: FC = () => {
         updates["unit_price"] = values.unit_price;
       if (values.inbound_date)
         updates["inbound_date"] = values.inbound_date.format("YYYY-MM-DD");
-      if (values.receipt_date)
-        updates["receipt_date"] = values.receipt_date.format("YYYY-MM-DD");
+      if (values.invoice_date)
+        updates["invoice_date"] = values.invoice_date.format("YYYY-MM-DD");
+      if (values.invoice_number)
+        updates["invoice_number"] = values.invoice_number;
       if (values.receipt_number)
         updates["receipt_number"] = values.receipt_number;
-      if (values.receipt_image_url)
-        updates["receipt_image_url"] = values.receipt_image_url;
       if (values.order_number) updates["order_number"] = values.order_number;
       if (values.remark) updates["remark"] = values.remark;
 
