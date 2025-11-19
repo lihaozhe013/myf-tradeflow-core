@@ -98,11 +98,11 @@ const OutboundTable: FC<OutboundTableProps> = ({
       sorter: true,
     },
     {
-      title: t('outbound.receiptNumber'),
+      title: t('outbound.invoiceNumber'),
       dataIndex: 'receipt_number',
       key: 'receipt_number',
       width: 120,
-      render: (receiptNumber) => receiptNumber ?? '-',
+      render: (invoiceNumber) => invoiceNumber ?? '-',
     },
     {
       title: t('outbound.actions'),

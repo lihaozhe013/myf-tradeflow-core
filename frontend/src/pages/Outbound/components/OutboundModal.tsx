@@ -271,10 +271,10 @@ const OutboundModal: FC<OutboundModalProps> = ({
           </Col>
           <Col span={8}>
             <Form.Item
-              label={t('outbound.receiptNumber')}
+              label={t('outbound.invoiceNumber')}
               name="receipt_number"
             >
-              <Input placeholder={t('outbound.inputReceiptNumber') ?? ''} />
+              <Input placeholder={t('outbound.inputInvoiceNumber') ?? ''} />
             </Form.Item>
           </Col>
         </Row>
@@ -290,10 +290,10 @@ const OutboundModal: FC<OutboundModalProps> = ({
           </Col>
           <Col span={8}>
             <Form.Item
-              label={t('outbound.receiptImageUrl')}
+              label={t('outbound.receiptNumber')}
               name="receipt_image_url"
             >
-              <Input placeholder={t('outbound.inputReceiptImageUrl') ?? ''} />
+              <Input placeholder={t('outbound.inputReceiptNumber') ?? ''} />
             </Form.Item>
           </Col>
         </Row>

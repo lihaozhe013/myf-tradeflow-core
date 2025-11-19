@@ -256,8 +256,8 @@ const InboundBatchModal: FC<InboundBatchModalProps> = ({
             </Form.Item>
           </Col>
           <Col span={8}>
-            <Form.Item label={t("inbound.receiptNumber")} name="receipt_number">
-              <Input placeholder={t("inbound.inputReceiptNumber") ?? ""} />
+            <Form.Item label={t("inbound.invoiceNumber")} name="receipt_number">
+              <Input placeholder={t("inbound.inputInvoiceNumber") ?? ""} />
             </Form.Item>
           </Col>
           <Col span={8}>
@@ -270,10 +270,10 @@ const InboundBatchModal: FC<InboundBatchModalProps> = ({
         <Row gutter={16}>
           <Col span={8}>
             <Form.Item
-              label={t("inbound.receiptImageUrl")}
+              label={t("inbound.receiptNumber")}
               name="receipt_image_url"
             >
-              <Input placeholder={t("inbound.inputReceiptImageUrl") ?? ""} />
+              <Input placeholder={t("inbound.inputReceiptNumber") ?? ""} />
             </Form.Item>
           </Col>
         </Row>
