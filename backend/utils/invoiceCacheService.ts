@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import db from '@/db.js';
-import decimalCalc from '@/utils/decimalCalculator';
+import decimalCalc from '@/utils/decimalCalculator.js';
 import { logger } from '@/utils/logger';
 import { getDataDir } from '@/utils/paths';
 
