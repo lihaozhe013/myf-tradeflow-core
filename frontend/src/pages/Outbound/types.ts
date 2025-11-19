@@ -25,9 +25,10 @@ export type OutboundRecord = {
   readonly unit_price: number;
   readonly total_price: number;
   readonly outbound_date: string;
-  readonly receipt_date?: string | null;
-  readonly receipt_number?: string | null;
-  readonly receipt_image_url?: string | null;
+  readonly invoice_date?: string | null;
+  readonly invoice_number?: string | null;
+  // Special case storage: invoice_image_url holds receipt_number value
+  readonly invoice_image_url?: string | null;
   readonly order_number?: string | null;
   readonly remark?: string | null;
 };
@@ -53,14 +54,15 @@ export type OutboundFormValues = {
   readonly product_model?: string | null | undefined;
   readonly product_category?: string | null | undefined;
   readonly outbound_date?: Dayjs | null;
-  readonly receipt_date?: Dayjs | null;
+  readonly invoice_date?: Dayjs | null;
   readonly manual_price?: boolean | undefined;
   readonly quantity?: number | undefined;
   readonly unit_price?: number | undefined;
   readonly total_price?: number | undefined;
-  readonly receipt_number?: string | null | undefined;
+  readonly invoice_number?: string | null | undefined;
   readonly order_number?: string | null | undefined;
-  readonly receipt_image_url?: string | null | undefined;
+  // UI receipt number input; mapped to invoice_image_url when submitting
+  readonly receipt_number?: string | null | undefined;
   readonly remark?: string | null | undefined;
 };
 

@@ -15,32 +15,7 @@ function isProvided(val: any): boolean {
   return !(val === undefined || val === null || val === '' || val === 'null' || val === 'undefined');
 }
 
-/**
- * Map database record (with invoice_* fields) to API response (with receipt_* fields)
- */
-function mapDbToApi(record: any): any {
-  if (!record) return record;
-  const { invoice_date, invoice_number, invoice_image_url, ...rest } = record;
-  return {
-    ...rest,
-    receipt_date: invoice_date,
-    receipt_number: invoice_number,
-    receipt_image_url: invoice_image_url
-  };
-}
-
-/**
- * Map API request (with receipt_* fields) to database fields (with invoice_* fields)
- */
-function mapApiToDb(data: any): any {
-  const { receipt_date, receipt_number, receipt_image_url, ...rest } = data;
-  return {
-    ...rest,
-    invoice_date: receipt_date,
-    invoice_number: receipt_number,
-    invoice_image_url: receipt_image_url
-  };
-}
+// No mapping between invoice_* and receipt_*; API uses invoice_* directly.
 
 /**
  * GET /api/inbound
@@ -89,9 +64,6 @@ router.get('/', (req: Request, res: Response): void => {
       return;
     }
     
-    // Map database fields to API fields
-    const mappedRows = rows.map(mapDbToApi);
-    
     let countSql = 'SELECT COUNT(*) as total FROM inbound_records WHERE 1=1';
     const countParams: any[] = [];
     
@@ -119,7 +91,7 @@ router.get('/', (req: Request, res: Response): void => {
       }
       
       res.json({
-        data: mappedRows,
+        data: rows,
         pagination: {
           page: pageNum,
           limit: limit,
@@ -135,15 +107,12 @@ router.get('/', (req: Request, res: Response): void => {
  * POST /api/inbound
  */
 router.post('/', (req: Request, res: Response): void => {
-  // Map receipt_* fields from frontend to invoice_* for database
-  const dbData = mapApiToDb(req.body);
-  
   const {
     supplier_code, supplier_short_name, supplier_full_name, 
     product_code, product_model, quantity, unit_price,
     inbound_date, invoice_date, invoice_number, invoice_image_url, order_number,
     remark
-  } = dbData;
+  } = req.body;
 
   const total_price = decimalCalc.calculateTotalPrice(quantity, unit_price);
   
@@ -179,15 +148,12 @@ router.post('/', (req: Request, res: Response): void => {
 router.put('/:id', (req: Request, res: Response): void => {
   const { id } = req.params;
   
-  // Map receipt_* fields from frontend to invoice_* for database
-  const dbData = mapApiToDb(req.body);
-  
   const {
     supplier_code, supplier_short_name, supplier_full_name, 
     product_code, product_model, quantity, unit_price,
     inbound_date, invoice_date, invoice_number, invoice_image_url, order_number,
     remark
-  } = dbData;
+  } = req.body;
   
   const total_price = decimalCalc.calculateTotalPrice(quantity, unit_price);
   
@@ -261,9 +227,6 @@ router.post('/batch', (req: Request, res: Response): void => {
     return;
   }
   
-  // Map receipt_* fields from frontend to invoice_* for database
-  const dbUpdates = mapApiToDb(updates);
-  
   // Build dynamic UPDATE statement based on provided fields
   const updateFields: string[] = [];
   const updateValues: any[] = [];
@@ -281,9 +244,9 @@ router.post('/batch', (req: Request, res: Response): void => {
   let hasUnitPrice = false;
   
   for (const field of allowedFields) {
-    if (isProvided(dbUpdates[field])) {
+    if (isProvided(updates[field])) {
       updateFields.push(`${field}=?`);
-      updateValues.push(dbUpdates[field]);
+      updateValues.push(updates[field]);
       
       if (field === 'quantity') hasQuantity = true;
       if (field === 'unit_price') hasUnitPrice = true;
@@ -332,8 +295,8 @@ router.post('/batch', (req: Request, res: Response): void => {
         }
         
         // Calculate new total_price
-        const finalQuantity = hasQuantity ? dbUpdates.quantity : row.quantity;
-        const finalUnitPrice = hasUnitPrice ? dbUpdates.unit_price : row.unit_price;
+        const finalQuantity = hasQuantity ? updates.quantity : row.quantity;
+        const finalUnitPrice = hasUnitPrice ? updates.unit_price : row.unit_price;
         const total_price = decimalCalc.calculateTotalPrice(finalQuantity, finalUnitPrice);
         
         // Add total_price to update

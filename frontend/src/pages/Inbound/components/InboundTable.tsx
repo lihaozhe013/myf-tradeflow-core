@@ -99,8 +99,8 @@ const InboundTable: FC<InboundTableProps> = ({
     },
     {
       title: t('inbound.invoiceNumber'),
-      dataIndex: 'receipt_number',
-      key: 'receipt_number',
+      dataIndex: 'invoice_number',
+      key: 'invoice_number',
       width: 120,
       render: (invoiceNumber) => invoiceNumber ?? '-',
     },

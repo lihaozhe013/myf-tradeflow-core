@@ -246,17 +246,17 @@ const InboundBatchModal: FC<InboundBatchModalProps> = ({
 
         <Row gutter={16}>
           <Col span={8}>
-            <Form.Item label={t("inbound.receiptDate")} name="receipt_date">
+            <Form.Item label={t("inbound.invoiceDate")} name="invoice_date">
               <DatePicker
                 style={{ width: "100%" }}
-                placeholder={t("inbound.selectReceiptDate") ?? ""}
+                placeholder={t("inbound.selectInvoiceDate") ?? ""}
                 format="YYYY-MM-DD"
                 allowClear
               />
             </Form.Item>
           </Col>
           <Col span={8}>
-            <Form.Item label={t("inbound.invoiceNumber")} name="receipt_number">
+            <Form.Item label={t("inbound.invoiceNumber")} name="invoice_number">
               <Input placeholder={t("inbound.inputInvoiceNumber") ?? ""} />
             </Form.Item>
           </Col>
@@ -271,7 +271,7 @@ const InboundBatchModal: FC<InboundBatchModalProps> = ({
           <Col span={8}>
             <Form.Item
               label={t("inbound.receiptNumber")}
-              name="receipt_image_url"
+              name="receipt_number"
             >
               <Input placeholder={t("inbound.inputReceiptNumber") ?? ""} />
             </Form.Item>
