@@ -136,7 +136,11 @@
     "requestFailed": "Request failed",
     "dataFetchFailed": "Data fetch failed, refresh statistics first",
     "totalCost": "Total Cost",
-    "paginationTotal": "Showing {{start}}-{{end}} of {{total}} results."
+    "paginationTotal": "Showing {{start}}-{{end}} of {{total}} results.",
+    "batchEdit": "Batch Edit",
+    "recordsSelected": "records selected",
+    "onlyFieldsFilledWillBeUpdated": "Only fields you fill in will be updated. Empty fields will remain unchanged for all selected records.",
+    "batchUpdate": "Batch Update {{selectedCount}} Records"
   },
   "outbound": {
     "id": "ID",
@@ -186,7 +190,11 @@
     "filter": "Filter",
     "selectSupplier": "Select Supplier",
     "title": "Outbound",
-    "paginationTotal": "Showing {{start}}-{{end}} of {{total}} results."
+    "paginationTotal": "Showing {{start}}-{{end}} of {{total}} results.",
+    "batchEdit": "Batch Edit",
+    "recordsSelected": "records selected",
+    "onlyFieldsFilledWillBeUpdated": "Only fields you fill in will be updated. Empty fields will remain unchanged for all selected records.",
+    "batchUpdate": "Batch Update {{selectedCount}} Records"
   },
   "productPrices": {
     "title": "Product Prices",
@@ -380,7 +388,9 @@
     "saveFailed": "Save failed, check network connection",
     "deleteSuccess": "Payment record deleted successfully",
     "deleteFailed": "Delete failed, check network connection",
-    "paginationTotal": "Showing {{start}}-{{end}} of {{total}} results."
+    "paginationTotal": "Showing {{start}}-{{end}} of {{total}} results.",
+    "uninvoicedDetails": "Uninvoiced Details",
+    "viewInvoicedDetails": "View Invoiced Details"
   },
   "receivable": {
     "title": "Receivable",
@@ -433,7 +443,9 @@
     "saveSuccess": "Payment record {{action}} successfully",
     "saveFailed": "Save failed, check your network connection",
     "deleteSuccess": "Payment record deleted successfully",
-    "paginationTotal": "Showing {{start}}-{{end}} of {{total}} results."
+    "paginationTotal": "Showing {{start}}-{{end}} of {{total}} results.",
+    "uninvoicedDetails": "Uninvoiced Details",
+    "viewInvoicedDetails": "View Invoiced Details"
   },
   "analysis": {
     "title": "Data Analysis",

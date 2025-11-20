@@ -588,7 +588,7 @@ const Inbound: FC = () => {
               disabled={selectedRowKeys.length === 0}
               style={{ marginLeft: 8 }}
             >
-              {`Batch Edit${
+              {`${t("inbound.batchEdit")}${
                 selectedRowKeys.length > 0 ? ` (${selectedRowKeys.length})` : ""
               }`}
             </Button>

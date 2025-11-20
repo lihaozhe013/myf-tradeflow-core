@@ -136,7 +136,11 @@
     "requestFailed": "요청 실패",
     "dataFetchFailed": "데이터 가져오기 실패, 먼저 통계를 새로고침하세요",
     "totalCost": "총 비용",
-    "paginationTotal": "{{total}}개 중 {{start}}-{{end}}번째 결과"
+    "paginationTotal": "{{total}}개 중 {{start}}-{{end}}번째 결과",
+    "batchEdit": "일괄 편집",
+    "recordsSelected": "개 기록 선택됨",
+    "onlyFieldsFilledWillBeUpdated": "입력한 필드만 업데이트됩니다. 빈 필드는 선택한 모든 기록에 대해 변경되지 않은 상태로 유지됩니다.",
+    "batchUpdate": "일괄 업데이트 {{selectedCount}}개 기록"
   },
   "outbound": {
     "id": "ID",
@@ -186,7 +190,11 @@
     "filter": "필터",
     "selectSupplier": "공급업체 선택",
     "paginationTotal": "{{total}}개 중 {{start}}-{{end}}번째 결과",
-    "title": "출고"
+    "title": "출고",
+    "batchEdit": "일괄 편집",
+    "recordsSelected": "개 기록 선택됨",
+    "onlyFieldsFilledWillBeUpdated": "입력한 필드만 업데이트됩니다. 빈 필드는 선택한 모든 기록에 대해 변경되지 않은 상태로 유지됩니다.",
+    "batchUpdate": "일괄 업데이트 {{selectedCount}}개 기록"
   },
   "productPrices": {
     "title": "제품 가격 목록",
@@ -380,7 +388,9 @@
     "saveFailed": "저장 실패, 네트워크 연결을 확인하세요",
     "deleteSuccess": "지급 기록이 성공적으로 삭제되었습니다",
     "deleteFailed": "삭제 실패, 네트워크 연결을 확인하세요",
-    "paginationTotal": "{{total}}개 중 {{start}}-{{end}}번째 결과"
+    "paginationTotal": "{{total}}개 중 {{start}}-{{end}}번째 결과",
+    "uninvoicedDetails": "미발행 세금계산서 내역",
+    "viewInvoicedDetails": "발행된 세금계산서 내역 보기"
   },
   "receivable": {
     "title": "외상매출금",
@@ -434,7 +444,9 @@
     "saveFailed": "저장에 실패했습니다. 네트워크 연결을 확인하세요",
     "deleteSuccess": "입금 기록이 성공적으로 삭제되었습니다",
     "deleteFailed": "삭제에 실패했습니다. 네트워크 연결을 확인하세요",
-    "paginationTotal": "{{total}}개 중 {{start}}-{{end}}번째 결과"
+    "paginationTotal": "{{total}}개 중 {{start}}-{{end}}번째 결과",
+    "uninvoicedDetails": "미발행 세금계산서 내역",
+    "viewInvoicedDetails": "발행된 세금계산서 내역 보기"
   },
   "analysis": {
     "title": "데이터 분석",

@@ -441,14 +441,14 @@ const ReceivableTable: FC<ReceivableTableProps> = ({
 
             <div>
               <Title level={5}>
-                未开票明细
+                {t('receivable.uninvoicedDetails')}
                 <Button
                   type="default"
                   size="small"
                   style={{ marginLeft: 16 }}
                   onClick={() => setInvoicedModalVisible(true)}
                 >
-                  查看已开票明细
+                  {t('receivable.viewInvoicedDetails')}
                 </Button>
               </Title>
               <Table<ReceivableOutboundRecord>

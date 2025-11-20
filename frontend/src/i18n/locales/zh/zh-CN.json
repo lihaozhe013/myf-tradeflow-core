@@ -107,7 +107,7 @@
     "noInvoice": "暂无发票链接",
     "actions": "操作",
     "deleteConfirm": "确定要删除这条入库记录吗？",
-
+    "batchEdit": "批量编辑",
     "editInboundRecord": "编辑入库记录",
     "addInboundRecord": "新增入库记录",
     "inputSupplierCode": "请输入供应商代号",
@@ -138,7 +138,10 @@
     "selectProductModel": "选择产品型号",
     "startDate": "开始日期",
     "endDate": "结束日期",
-    "filter": "筛选"
+    "filter": "筛选",
+    "recordsSelected": "条记录已选择",
+    "onlyFieldsFilledWillBeUpdated": "仅会更新您填写的字段。空字段将保持所有选定记录不变。",
+    "batchUpdate": "批量更新 {{selectedCount}} 条记录"
   },
   "productPrices": {
     "title": "价格列表",
@@ -306,7 +309,11 @@
     "deleteFailed": "删除失败",
     "paginationTotal": "第 {{start}}-{{end}} 条/共 {{total}} 条",
     "autoPriceFailed": "自动获取单价失败，已置为0，请手动输入",
-    "consoleRender": "[出库] 渲染: 记录数/分页"
+    "consoleRender": "[出库] 渲染: 记录数/分页",
+    "batchEdit": "批量编辑",
+    "recordsSelected": "条记录已选择",
+    "onlyFieldsFilledWillBeUpdated": "仅会更新您填写的字段。空字段将保持所有选定记录不变。",
+    "batchUpdate": "批量更新 {{selectedCount}} 条记录"
   },
   "export": {
     "baseInfo": "基础信息",
@@ -397,7 +404,9 @@
     "saveFailed": "保存失败，请检查网络连接",
     "deleteSuccess": "付款记录删除成功",
     "deleteFailed": "删除失败，请检查网络连接",
-    "paginationTotal": "第 {{start}}-{{end}} 条/共 {{total}} 条"
+    "paginationTotal": "第 {{start}}-{{end}} 条/共 {{total}} 条",
+    "uninvoicedDetails": "未开票明细",
+    "viewInvoicedDetails": "查看已开票明细"
   },
   "receivable": {
     "title": "应收账款",
@@ -451,7 +460,9 @@
     "saveFailed": "保存失败，请检查网络连接",
     "deleteSuccess": "回款记录删除成功",
     "deleteFailed": "删除失败，请检查网络连接",
-    "paginationTotal": "第 {{start}}-{{end}} 条/共 {{total}} 条"
+    "paginationTotal": "第 {{start}}-{{end}} 条/共 {{total}} 条",
+    "uninvoicedDetails": "未开票明细",
+    "viewInvoicedDetails": "查看已开票明细"
   },
   "analysis": {
     "title": "数据分析",

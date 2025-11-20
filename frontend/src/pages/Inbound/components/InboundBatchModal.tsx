@@ -76,7 +76,7 @@ const InboundBatchModal: FC<InboundBatchModalProps> = ({
 
   return (
     <Modal
-      title={`Batch Edit (${selectedCount} records selected)`}
+      title={`${t("inbound.batchEdit")} (${selectedCount} ${t("inbound.recordsSelected")})`}
       open={modalVisible}
       onCancel={() => setModalVisible(false)}
       footer={null}
@@ -90,8 +90,7 @@ const InboundBatchModal: FC<InboundBatchModalProps> = ({
           borderRadius: 4,
         }}
       >
-        <strong>Note:</strong> Only fields you fill in will be updated. Empty
-        fields will remain unchanged for all selected records.
+        <strong>Note:</strong> {t("inbound.onlyFieldsFilledWillBeUpdated")}
       </div>
       <Form<InboundFormValues> form={form} layout="vertical" onFinish={onSave}>
         <Row gutter={16}>
@@ -290,7 +289,7 @@ const InboundBatchModal: FC<InboundBatchModalProps> = ({
             {t("common.cancel")}
           </Button>
           <Button type="primary" htmlType="submit">
-            {`Batch Update ${selectedCount} Records`}
+            {t("inbound.batchUpdate", { selectedCount })}
           </Button>
         </div>
       </Form>
