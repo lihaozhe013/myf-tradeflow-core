@@ -41,13 +41,13 @@ router.get('/', (req: Request, res: Response): void => {
   
   sql += ' ORDER BY short_name';
   
-  db.all(sql, params, (err, rows) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
+  try {
+    const rows = db.prepare(sql).all(...params);
     res.json({ data: rows });
-  });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ error: error.message });
+  }
 });
 
 /**
@@ -61,17 +61,17 @@ router.post('/', (req: Request, res: Response): void => {
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `;
   
-  db.run(sql, [code, short_name, full_name, address, contact_person, contact_phone, type], function(err) {
-    if (err) {
-      if ((err as any).code === 'SQLITE_CONSTRAINT') {
-        res.status(400).json({ error: 'The customer/supplier code or abbreviation already exists' });
-      } else {
-        res.status(500).json({ error: err.message });
-      }
-      return;
-    }
+  try {
+    db.prepare(sql).run(code, short_name, full_name, address, contact_person, contact_phone, type);
     res.json({ short_name, message: 'Customer/Supplier created!' });
-  });
+  } catch (err) {
+    const error = err as Error;
+    if ((error as any).code === 'SQLITE_CONSTRAINT') {
+      res.status(400).json({ error: 'The customer/supplier code or abbreviation already exists' });
+    } else {
+      res.status(500).json({ error: error.message });
+    }
+  }
 });
 
 /**
@@ -86,40 +86,40 @@ router.put('/:short_name', (req: Request, res: Response): void => {
     WHERE short_name=?
   `;
   
-  db.run(sql, [code, full_name, address, contact_person, contact_phone, type, short_name], function(err) {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
+  try {
+    const result = db.prepare(sql).run(code, full_name, address, contact_person, contact_phone, type, short_name);
     
-    if (this.changes === 0) {
+    if (result.changes === 0) {
       res.status(404).json({ error: 'Customer/Supplier does not exist' });
       return;
     }
     
     res.json({ message: 'Customer/Supplier updated!' });
-  });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ error: error.message });
+  }
 });
 
 /**
  * DELETE /api/partners/:short_name
  */
 router.delete('/:short_name', (req: Request, res: Response): void => {
-  const { short_name } = req.params;
-  
-  db.run('DELETE FROM partners WHERE short_name = ?', [short_name], function(err) {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
+  try {
+    const { short_name } = req.params;
     
-    if (this.changes === 0) {
+    const result = db.prepare('DELETE FROM partners WHERE short_name = ?').run(short_name);
+    
+    if (result.changes === 0) {
       res.status(404).json({ error: 'Customer/Supplier does not exist' });
       return;
     }
     
     res.json({ message: 'Customer/Supplier deleted!' });
-  });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ error: error.message });
+  }
 });
 
 /**
@@ -160,30 +160,28 @@ router.post('/bindings', (req: Request, res: Response): void => {
     ...bindings.map(b => b.full_name)
   ];
 
-  db.all<ConflictResult>(checkSql, params, (err, rows) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
+  try {
+    const rows = db.prepare(checkSql).all(...params) as ConflictResult[];
     
     if (rows && rows.length) {
       res.status(400).json({ error: 'Conflicts with existing data', conflicts: rows });
       return;
     }
     
-    // Insert / Update
+    // Insert / Update with transaction
     const stmt = db.prepare('INSERT OR REPLACE INTO partners (code, short_name, full_name) VALUES (?, ?, ?)');
-    for (const b of bindings) {
-      stmt.run([b.code, b.short_name, b.full_name]);
-    }
-    stmt.finalize((err2) => {
-      if (err2) {
-        res.status(500).json({ error: err2.message });
-        return;
+    const batchInsert = db.transaction(() => {
+      for (const b of bindings) {
+        stmt.run(b.code, b.short_name, b.full_name);
       }
-      res.json({ message: 'Binded' });
     });
-  });
+    batchInsert();
+    
+    res.json({ message: 'Binded' });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ error: error.message });
+  }
 });
 
 export default router;

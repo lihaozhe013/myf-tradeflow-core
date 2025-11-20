@@ -77,31 +77,27 @@ class InvoiceCacheService {
    */
   private refreshCache(code: string, tableName: string, codeColumn: string): Promise<InvoicedRecord[]> {
     return new Promise((resolve, reject) => {
-      const sql = `
-        SELECT 
-          invoice_number,
-          MIN(invoice_date) as invoice_date,
-          SUM(total_price) as total_amount,
-          COUNT(*) as record_count
-        FROM ${tableName}
-        WHERE ${codeColumn} = ? 
-          AND invoice_number IS NOT NULL 
-          AND invoice_number != ''
-        GROUP BY invoice_number
-        ORDER BY MIN(invoice_date) DESC
-      `;
+      try {
+        const sql = `
+          SELECT 
+            invoice_number,
+            MIN(invoice_date) as invoice_date,
+            SUM(total_price) as total_amount,
+            COUNT(*) as record_count
+          FROM ${tableName}
+          WHERE ${codeColumn} = ? 
+            AND invoice_number IS NOT NULL 
+            AND invoice_number != ''
+          GROUP BY invoice_number
+          ORDER BY MIN(invoice_date) DESC
+        `;
 
-      db.all<{
-        invoice_number: string;
-        invoice_date: string | null;
-        total_amount: number | null;
-        record_count: number;
-      }>(sql, [code], (err, rows) => {
-        if (err) {
-          logger.error(`Failed to refresh invoice cache for ${code}: ${err.message}`);
-          reject(err);
-          return;
-        }
+        const rows = db.prepare(sql).all(code) as {
+          invoice_number: string;
+          invoice_date: string | null;
+          total_amount: number | null;
+          record_count: number;
+        }[];
 
         const invoicedRecords: InvoicedRecord[] = rows.map(row => ({
           invoice_number: row.invoice_number,
@@ -117,7 +113,11 @@ class InvoiceCacheService {
 
         this.saveCache();
         resolve(invoicedRecords);
-      });
+      } catch (err) {
+        const error = err as Error;
+        logger.error(`Failed to refresh invoice cache for ${code}: ${error.message}`);
+        reject(error);
+      }
     });
   }
 

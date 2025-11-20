@@ -3,7 +3,7 @@ import decimalCalc from "@/utils/decimalCalculator";
 
 export default class ReceivableQueries {
   getReceivableSummary(filters: any = {}): Promise<any[]> {
-    return new Promise((resolve, reject) => {
+    try {
       let sql = `
         SELECT 
           o.customer_code,
@@ -37,32 +37,32 @@ export default class ReceivableQueries {
       sql +=
         " GROUP BY o.customer_code, o.customer_short_name, o.customer_full_name";
       sql += " ORDER BY balance DESC";
-      db.all(sql, params, (err: any, rows: any[]) => {
-        if (err) return reject(err);
-        const processed = (rows || []).map((row) => {
-          const totalSales = decimalCalc.fromSqlResult(row.total_sales, 0);
-          const totalPayments = decimalCalc.fromSqlResult(
-            row.total_payments,
-            0
-          );
-          const balance = decimalCalc.calculateBalance(
-            totalSales,
-            totalPayments
-          );
-          return {
-            ...row,
-            total_sales: totalSales,
-            total_payments: totalPayments,
-            balance,
-          };
-        });
-        resolve(processed);
+      const rows = db.prepare(sql).all(...params) as any[];
+      const processed = rows.map((row) => {
+        const totalSales = decimalCalc.fromSqlResult(row.total_sales, 0);
+        const totalPayments = decimalCalc.fromSqlResult(
+          row.total_payments,
+          0
+        );
+        const balance = decimalCalc.calculateBalance(
+          totalSales,
+          totalPayments
+        );
+        return {
+          ...row,
+          total_sales: totalSales,
+          total_payments: totalPayments,
+          balance,
+        };
       });
-    });
+      return Promise.resolve(processed);
+    } catch (error) {
+      return Promise.reject(error as Error);
+    }
   }
 
   getReceivableDetails(filters: any = {}): Promise<any[]> {
-    return new Promise((resolve, reject) => {
+    try {
       let sql = `
         SELECT id as record_id, customer_code, customer_short_name, 
                product_model, total_price, outbound_date, remark
@@ -79,15 +79,15 @@ export default class ReceivableQueries {
         params.push(filters.outboundTo);
       }
       sql += " ORDER BY outbound_date DESC, id DESC";
-      db.all(sql, params, (err: any, rows: any[]) => {
-        if (err) reject(err);
-        else resolve(rows || []);
-      });
-    });
+      const rows = db.prepare(sql).all(...params) as any[];
+      return Promise.resolve(rows);
+    } catch (error) {
+      return Promise.reject(error as Error);
+    }
   }
 
   getReceivablePayments(filters: any = {}): Promise<any[]> {
-    return new Promise((resolve, reject) => {
+    try {
       let sql = `
         SELECT id, customer_code, amount, pay_date, pay_method, remark
         FROM receivable_payments 
@@ -103,10 +103,10 @@ export default class ReceivableQueries {
         params.push(filters.paymentTo);
       }
       sql += " ORDER BY pay_date DESC, id DESC";
-      db.all(sql, params, (err: any, rows: any[]) => {
-        if (err) reject(err);
-        else resolve(rows || []);
-      });
-    });
+      const rows = db.prepare(sql).all(...params) as any[];
+      return Promise.resolve(rows);
+    } catch (error) {
+      return Promise.reject(error as Error);
+    }
   }
 }

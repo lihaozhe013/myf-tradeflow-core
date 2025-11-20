@@ -55,20 +55,16 @@ export function calculateDetailAnalysis(
     HAVING normal_sales > 0 OR special_expense > 0
   `;
 
-  db.all(
-    outboundSql,
-    [startDate, endDate, filterValue],
-    (err: Error | null, outboundGroups: any[]) => {
-      if (err) return callback(err);
+  try {
+    const outboundGroups: any[] = db.prepare(outboundSql).all(startDate, endDate, filterValue);
 
-      if (!outboundGroups || outboundGroups.length === 0) {
-        callback(null, []);
-        return;
-      }
+    if (!outboundGroups || outboundGroups.length === 0) {
+      callback(null, []);
+      return;
+    }
 
-      // Calculate the average cost of all products (maintain consistency with the original logic)
-      db.all(
-        `
+    // Calculate the average cost of all products (maintain consistency with the original logic)
+    const avgCostData: any[] = db.prepare(`
       SELECT 
         product_model,
         SUM(quantity * unit_price) / SUM(quantity) as avg_cost_price,
@@ -76,29 +72,26 @@ export function calculateDetailAnalysis(
       FROM inbound_records 
       WHERE unit_price >= 0
       GROUP BY product_model
-    `,
-        [],
-        (err2: Error | null, avgCostData: any[]) => {
-          if (err2) return callback(err2);
+    `).all();
 
-          const avgCostMap: Record<
-            string,
-            { avg_cost_price: number; total_inbound_quantity: number }
-          > = {};
-          avgCostData.forEach((item: any) => {
-            avgCostMap[item.product_model] = {
-              avg_cost_price: decimalCalc.fromSqlResult(
-                item.avg_cost_price,
-                0,
-                4
-              ),
-              total_inbound_quantity: decimalCalc.fromSqlResult(
-                item.total_inbound_quantity,
-                0,
-                0
-              ),
-            };
-          });
+    const avgCostMap: Record<
+      string,
+      { avg_cost_price: number; total_inbound_quantity: number }
+    > = {};
+    avgCostData.forEach((item: any) => {
+      avgCostMap[item.product_model] = {
+        avg_cost_price: decimalCalc.fromSqlResult(
+          item.avg_cost_price,
+          0,
+          4
+        ),
+        total_inbound_quantity: decimalCalc.fromSqlResult(
+          item.total_inbound_quantity,
+          0,
+          0
+        ),
+      };
+    });
 
           // Calculate the detailed data for each group
           const detailPromises = outboundGroups.map((group: any) => {
@@ -168,16 +161,15 @@ export function calculateDetailAnalysis(
             });
           });
 
-          Promise.all(detailPromises)
-            .then((results) => {
-              const validResults = results.filter(
-                (item): item is DetailItem => item !== null
-              );
-              callback(null, validResults);
-            })
-            .catch((e) => callback(e as Error));
-        }
-      );
-    }
-  );
+    Promise.all(detailPromises)
+      .then((results) => {
+        const validResults = results.filter(
+          (item): item is DetailItem => item !== null
+        );
+        callback(null, validResults);
+      })
+      .catch((e) => callback(e as Error));
+  } catch (err) {
+    callback(err as Error);
+  }
 }
