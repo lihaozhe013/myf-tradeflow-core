@@ -1,7 +1,7 @@
 {
   "name": "myf-tradeflow-core",
   "private": true,
-  "version": "0.4.2",
+  "version": "0.5.0",
   "description": "a lightweight tradeflow system core",
   "scripts": {
     "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
@@ -16,8 +16,8 @@
   "devDependencies": {
     "argon2": "^0.44.0",
     "concurrently": "^9.2.1",
-    "fs-extra": "^11.3.0",
-    "cross-env": "^10.1.0"
+    "cross-env": "^10.1.0",
+    "fs-extra": "^11.3.2"
   },
   "engines": {
     "node": ">=22.0.0",

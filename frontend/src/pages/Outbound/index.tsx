@@ -591,7 +591,7 @@ const Outbound: FC = () => {
               disabled={selectedRowKeys.length === 0}
               style={{ marginLeft: 8 }}
             >
-              {`Batch Edit${
+              {`${t("outbound.batchEdit")}${
                 selectedRowKeys.length > 0 ? ` (${selectedRowKeys.length})` : ""
               }`}
             </Button>

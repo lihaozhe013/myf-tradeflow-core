@@ -444,14 +444,14 @@ const PayableTable: FC<PayableTableProps> = ({
 
             <div>
               <Title level={5}>
-                未开票明细
+                {t('payable.uninvoicedDetails')}
                 <Button
                   type="default"
                   size="small"
                   style={{ marginLeft: 16 }}
                   onClick={() => setInvoicedModalVisible(true)}
                 >
-                  查看已开票明细
+                  {t('payable.viewInvoicedDetails')}
                 </Button>
               </Title>
               <Table
