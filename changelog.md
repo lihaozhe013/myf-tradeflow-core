@@ -1,4 +1,11 @@
 # Change Log
+## v0.5.0
+- New feature: Automatically lookup for invoiced/uninvoiced details
+- New feature: Batch edit record in inbound and outbound table
+- New feature: One-Click DB Backup
+- Fixed the messy issue with the invoice and receipt fields
+- Chore: update npm packages
+
 ## v0.4.3
 - Replace the UI Text "Stock" with Inventory
 - Enable ESBuild minification in the backend
