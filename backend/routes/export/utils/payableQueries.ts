@@ -3,7 +3,7 @@ import decimalCalc from "@/utils/decimalCalculator";
 
 export default class PayableQueries {
   getPayableSummary(filters: any = {}): Promise<any[]> {
-    return new Promise((resolve, reject) => {
+    try {
       let sql = `
         SELECT 
           i.supplier_code,
@@ -37,35 +37,35 @@ export default class PayableQueries {
       sql +=
         " GROUP BY i.supplier_code, i.supplier_short_name, i.supplier_full_name";
       sql += " ORDER BY balance DESC";
-      db.all(sql, params, (err: any, rows: any[]) => {
-        if (err) return reject(err);
-        const processed = (rows || []).map((row) => {
-          const totalPurchases = decimalCalc.fromSqlResult(
-            row.total_purchases,
-            0
-          );
-          const totalPayments = decimalCalc.fromSqlResult(
-            row.total_payments,
-            0
-          );
-          const balance = decimalCalc.calculateBalance(
-            totalPurchases,
-            totalPayments
-          );
-          return {
-            ...row,
-            total_purchases: totalPurchases,
-            total_payments: totalPayments,
-            balance,
-          };
-        });
-        resolve(processed);
+      const rows = db.prepare(sql).all(...params) as any[];
+      const processed = rows.map((row) => {
+        const totalPurchases = decimalCalc.fromSqlResult(
+          row.total_purchases,
+          0
+        );
+        const totalPayments = decimalCalc.fromSqlResult(
+          row.total_payments,
+          0
+        );
+        const balance = decimalCalc.calculateBalance(
+          totalPurchases,
+          totalPayments
+        );
+        return {
+          ...row,
+          total_purchases: totalPurchases,
+          total_payments: totalPayments,
+          balance,
+        };
       });
-    });
+      return Promise.resolve(processed);
+    } catch (error) {
+      return Promise.reject(error as Error);
+    }
   }
 
   getPayableDetails(filters: any = {}): Promise<any[]> {
-    return new Promise((resolve, reject) => {
+    try {
       let sql = `
         SELECT id as record_id, supplier_code, supplier_short_name, 
                product_model, total_price, inbound_date, remark
@@ -82,15 +82,15 @@ export default class PayableQueries {
         params.push(filters.outboundTo);
       }
       sql += " ORDER BY inbound_date DESC, id DESC";
-      db.all(sql, params, (err: any, rows: any[]) => {
-        if (err) reject(err);
-        else resolve(rows || []);
-      });
-    });
+      const rows = db.prepare(sql).all(...params) as any[];
+      return Promise.resolve(rows);
+    } catch (error) {
+      return Promise.reject(error as Error);
+    }
   }
 
   getPayablePayments(filters: any = {}): Promise<any[]> {
-    return new Promise((resolve, reject) => {
+    try {
       let sql = `
         SELECT id, supplier_code, amount, pay_date, pay_method, remark
         FROM payable_payments 
@@ -106,10 +106,10 @@ export default class PayableQueries {
         params.push(filters.paymentTo);
       }
       sql += " ORDER BY pay_date DESC, id DESC";
-      db.all(sql, params, (err: any, rows: any[]) => {
-        if (err) reject(err);
-        else resolve(rows || []);
-      });
-    });
+      const rows = db.prepare(sql).all(...params) as any[];
+      return Promise.resolve(rows);
+    } catch (error) {
+      return Promise.reject(error as Error);
+    }
   }
 }

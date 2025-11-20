@@ -38,30 +38,25 @@ router.get('/', (req: Request, res: Response): void => {
   const listSql = `SELECT *${baseWhere}${orderBy} LIMIT ? OFFSET ?`;
   const listParams = [...whereParams, limit, offset];
 
-  db.all(listSql, listParams, (err, rows) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
+  try {
+    const rows = db.prepare(listSql).all(...listParams);
 
     const countSql = `SELECT COUNT(*) as total${baseWhere}`;
-    db.get<CountResult>(countSql, whereParams, (countErr, countResult) => {
-      if (countErr) {
-        res.status(500).json({ error: countErr.message });
-        return;
-      }
+    const countResult = db.prepare(countSql).get(...whereParams) as CountResult;
 
-      res.json({
-        data: rows,
-        pagination: {
-          page: Number(page),
-          limit,
-          total: countResult!.total,
-          pages: Math.ceil(countResult!.total / limit)
-        }
-      });
+    res.json({
+      data: rows,
+      pagination: {
+        page: Number(page),
+        limit,
+        total: countResult.total,
+        pages: Math.ceil(countResult.total / limit)
+      }
     });
-  });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ error: error.message });
+  }
 });
 
 /**
@@ -84,11 +79,8 @@ router.get('/current', (req: Request, res: Response): void => {
     LIMIT 1
   `;
   
-  db.get(sql, [partner_short_name, product_model, targetDate], (err, row) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
+  try {
+    const row = db.prepare(sql).get(partner_short_name, product_model, targetDate);
     
     if (!row) {
       res.status(404).json({ error: 'No valid price found' });
@@ -96,7 +88,10 @@ router.get('/current', (req: Request, res: Response): void => {
     }
     
     res.json({ data: row });
-  });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ error: error.message });
+  }
 });
 
 /**
@@ -110,14 +105,14 @@ router.post('/', (req: Request, res: Response): void => {
     VALUES (?, ?, ?, ?)
   `;
   
-  db.run(sql, [partner_short_name, product_model, effective_date, unit_price], function(err) {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
+  try {
+    const result = db.prepare(sql).run(partner_short_name, product_model, effective_date, unit_price);
     
-    res.json({ id: this.lastID, message: 'Product price created!' });
-  });
+    res.json({ id: result.lastInsertRowid, message: 'Product price created!' });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ error: error.message });
+  }
 });
 
 /**
@@ -132,40 +127,40 @@ router.put('/:id', (req: Request, res: Response): void => {
     WHERE id=?
   `;
   
-  db.run(sql, [partner_short_name, product_model, effective_date, unit_price, id], function(err) {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
+  try {
+    const result = db.prepare(sql).run(partner_short_name, product_model, effective_date, unit_price, id);
     
-    if (this.changes === 0) {
+    if (result.changes === 0) {
       res.status(404).json({ error: 'Product price dne' });
       return;
     }
     
     res.json({ message: 'Product price updated!' });
-  });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ error: error.message });
+  }
 });
 
 /**
  * DELETE /api/product-prices/:id
  */
 router.delete('/:id', (req: Request, res: Response): void => {
-  const { id } = req.params;
-  
-  db.run('DELETE FROM product_prices WHERE id = ?', [id], function(err) {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
+  try {
+    const { id } = req.params;
     
-    if (this.changes === 0) {
+    const result = db.prepare('DELETE FROM product_prices WHERE id = ?').run(id);
+    
+    if (result.changes === 0) {
       res.status(404).json({ error: 'Product price dne' });
       return;
     }
     
     res.json({ message: 'Product price delete!' });
-  });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ error: error.message });
+  }
 });
 
 /**
@@ -188,11 +183,8 @@ router.get('/auto', (req: Request, res: Response): void => {
     LIMIT 1
   `;
   
-  db.get<UnitPriceResult>(sql, [partner_short_name, product_model, date], (err, row) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
+  try {
+    const row = db.prepare(sql).get(partner_short_name, product_model, date) as UnitPriceResult;
     
     if (!row) {
       res.status(404).json({ error: 'No valid price found' });
@@ -200,7 +192,10 @@ router.get('/auto', (req: Request, res: Response): void => {
     }
     
     res.json({ unit_price: row.unit_price });
-  });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ error: error.message });
+  }
 });
 
 export default router;
