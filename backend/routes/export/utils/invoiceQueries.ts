@@ -4,7 +4,7 @@ export default class InvoiceQueries {
   async getInvoiceData(filters: any = {}): Promise<any[]> {
     const { partnerCode, dateFrom, dateTo } = filters || {};
     if (!partnerCode) throw new Error("Partner Code is required");
-    return new Promise((resolve, reject) => {
+    try {
       let sql = `
         SELECT 
           product_model,
@@ -41,10 +41,10 @@ export default class InvoiceQueries {
       params.push(partnerCode, partnerCode);
       if (dateFrom) params.push(dateFrom);
       if (dateTo) params.push(dateTo);
-      db.all(sql, params, (err: any, rows: any[]) => {
-        if (err) reject(err);
-        else resolve(rows || []);
-      });
-    });
+      const rows = db.prepare(sql).all(...params) as any[];
+      return rows;
+    } catch (error) {
+      throw error as Error;
+    }
   }
 }

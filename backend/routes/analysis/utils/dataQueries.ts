@@ -20,40 +20,32 @@ export function getFilterOptions(
     ORDER BY product_model
   `;
 
-  db.all(customerSql, [], (err1: Error | null, customers: any[]) => {
-    if (err1) {
-      console.error("Failed to retrieve customer list:", err1);
-      callback(err1);
-      return;
-    }
+  try {
+    const customers: any[] = db.prepare(customerSql).all();
+    const products: any[] = db.prepare(productSql).all();
 
-    db.all(productSql, [], (err2: Error | null, products: any[]) => {
-      if (err2) {
-        console.error("Failed to retrieve customer list:", err2);
-        callback(err2);
-        return;
-      }
+    const customerOptions: FilterOptions["customers"] = [
+      { code: "All", name: "All" },
+      ...customers.map((c: any) => ({
+        code: c.code,
+        name: `${c.short_name} (${c.full_name})`,
+      })),
+    ];
 
-      const customerOptions: FilterOptions["customers"] = [
-        { code: "All", name: "All" },
-        ...customers.map((c: any) => ({
-          code: c.code,
-          name: `${c.short_name} (${c.full_name})`,
-        })),
-      ];
+    const productOptions: FilterOptions["products"] = [
+      { model: "All", name: "All" },
+      ...products.map((p: any) => ({
+        model: p.product_model,
+        name: p.product_model,
+      })),
+    ];
 
-      const productOptions: FilterOptions["products"] = [
-        { model: "All", name: "All" },
-        ...products.map((p: any) => ({
-          model: p.product_model,
-          name: p.product_model,
-        })),
-      ];
-
-      callback(null, {
-        customers: customerOptions,
-        products: productOptions,
-      });
+    callback(null, {
+      customers: customerOptions,
+      products: productOptions,
     });
-  });
+  } catch (err) {
+    console.error("Failed to retrieve filter options:", err);
+    callback(err as Error);
+  }
 }

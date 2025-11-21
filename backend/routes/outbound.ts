@@ -21,48 +21,45 @@ function isProvided(val: any): boolean {
  * GET /api/outbound
  */
 router.get('/', (req: Request, res: Response): void => {
-  let { page = 1 } = req.query;
-  let pageNum = parseInt(page as string, 10);
-  if (!Number.isFinite(pageNum) || pageNum < 1) pageNum = 1;
-  const limit = 10;
-  
-  let sql = 'SELECT * FROM outbound_records WHERE 1=1';
-  const params: any[] = [];
-  
-  if (isProvided(req.query['customer_short_name'])) {
-    sql += ' AND customer_short_name LIKE ?';
-    params.push(`%${req.query['customer_short_name']}%`);
-  }
-  if (isProvided(req.query['product_model'])) {
-    sql += ' AND product_model LIKE ?';
-    params.push(`%${req.query['product_model']}%`);
-  }
-  if (isProvided(req.query['start_date'])) {
-    sql += ' AND outbound_date >= ?';
-    params.push(req.query['start_date']);
-  }
-  if (isProvided(req.query['end_date'])) {
-    sql += ' AND outbound_date <= ?';
-    params.push(req.query['end_date']);
-  }
-
-  const allowedSortFields = ['outbound_date', 'unit_price', 'total_price', 'id'];
-  let orderBy = 'id DESC';
-  if (req.query['sort_field'] && allowedSortFields.includes(req.query['sort_field'] as string)) {
-    const sortOrder = req.query['sort_order'] && (req.query['sort_order'] as string).toLowerCase() === 'asc' ? 'ASC' : 'DESC';
-    orderBy = `${req.query['sort_field']} ${sortOrder}`;
-  }
-  sql += ` ORDER BY ${orderBy}`;
-
-  const offset = (pageNum - 1) * limit;
-  sql += ' LIMIT ? OFFSET ?';
-  params.push(limit, offset);
-
-  db.all(sql, params, (err, rows) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
+  try {
+    let { page = 1 } = req.query;
+    let pageNum = parseInt(page as string, 10);
+    if (!Number.isFinite(pageNum) || pageNum < 1) pageNum = 1;
+    const limit = 10;
+    
+    let sql = 'SELECT * FROM outbound_records WHERE 1=1';
+    const params: any[] = [];
+    
+    if (isProvided(req.query['customer_short_name'])) {
+      sql += ' AND customer_short_name LIKE ?';
+      params.push(`%${req.query['customer_short_name']}%`);
     }
+    if (isProvided(req.query['product_model'])) {
+      sql += ' AND product_model LIKE ?';
+      params.push(`%${req.query['product_model']}%`);
+    }
+    if (isProvided(req.query['start_date'])) {
+      sql += ' AND outbound_date >= ?';
+      params.push(req.query['start_date']);
+    }
+    if (isProvided(req.query['end_date'])) {
+      sql += ' AND outbound_date <= ?';
+      params.push(req.query['end_date']);
+    }
+
+    const allowedSortFields = ['outbound_date', 'unit_price', 'total_price', 'id'];
+    let orderBy = 'id DESC';
+    if (req.query['sort_field'] && allowedSortFields.includes(req.query['sort_field'] as string)) {
+      const sortOrder = req.query['sort_order'] && (req.query['sort_order'] as string).toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+      orderBy = `${req.query['sort_field']} ${sortOrder}`;
+    }
+    sql += ` ORDER BY ${orderBy}`;
+
+    const offset = (pageNum - 1) * limit;
+    sql += ' LIMIT ? OFFSET ?';
+    params.push(limit, offset);
+
+    const rows = db.prepare(sql).all(...params);
     
     let countSql = 'SELECT COUNT(*) as total FROM outbound_records WHERE 1=1';
     const countParams: any[] = [];
@@ -84,23 +81,21 @@ router.get('/', (req: Request, res: Response): void => {
       countParams.push(req.query['end_date']);
     }
     
-    db.get<CountResult>(countSql, countParams, (err, countResult) => {
-      if (err) {
-        res.status(500).json({ error: err.message });
-        return;
+    const countResult = db.prepare(countSql).get(...countParams) as CountResult;
+    
+    res.json({
+      data: rows,
+      pagination: {
+        page: pageNum,
+        limit: limit,
+        total: countResult.total,
+        pages: Math.ceil(countResult.total / limit)
       }
-      
-      res.json({
-        data: rows,
-        pagination: {
-          page: pageNum,
-          limit: limit,
-          total: countResult!.total,
-          pages: Math.ceil(countResult!.total / limit)
-        }
-      });
     });
-  });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ error: error.message });
+  }
 });
 
 /**
@@ -132,14 +127,14 @@ router.post('/', (req: Request, res: Response): void => {
     remark
   ];
   
-  db.run(sql, params, function(err) {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
+  try {
+    const result = db.prepare(sql).run(...params);
     
-    res.json({ id: this.lastID, message: 'Outbound record created!' });
-  });
+    res.json({ id: result.lastInsertRowid, message: 'Outbound record created!' });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ error: error.message });
+  }
 });
 
 /**
@@ -173,40 +168,40 @@ router.put('/:id', (req: Request, res: Response): void => {
     remark, id
   ];
   
-  db.run(sql, params, function(err) {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
+  try {
+    const result = db.prepare(sql).run(...params);
     
-    if (this.changes === 0) {
+    if (result.changes === 0) {
       res.status(404).json({ error: 'No outbound records exist' });
       return;
     }
     
     res.json({ message: 'Outbound record updated!' });
-  });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ error: error.message });
+  }
 });
 
 /**
  * DELETE /api/outbound/:id
  */
 router.delete('/:id', (req: Request, res: Response): void => {
-  const { id } = req.params;
-  
-  db.run('DELETE FROM outbound_records WHERE id = ?', [id], function(err) {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
+  try {
+    const { id } = req.params;
     
-    if (this.changes === 0) {
+    const result = db.prepare('DELETE FROM outbound_records WHERE id = ?').run(id);
+    
+    if (result.changes === 0) {
       res.status(404).json({ error: 'No outbound records exist' });
       return;
     }
     
     res.json({ message: 'Outbound record updated!' });
-  });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ error: error.message });
+  }
 });
 
 /**
@@ -260,81 +255,71 @@ router.post('/batch', (req: Request, res: Response): void => {
   
   needsRecalculation = hasQuantity || hasUnitPrice;
   
-  // Execute batch update
-  let completed = 0;
-  let errors = 0;
-  const notFound: number[] = [];
-  
-  const processRecord = (index: number) => {
-    if (index >= ids.length) {
-      // All records processed
-      res.json({
-        message: 'Batch update completed!',
-        updated: completed,
-        notFound: notFound,
-        errors: errors
-      });
-      return;
-    }
+  // Execute batch update with transaction for better performance
+  try {
+    let completed = 0;
+    let errors = 0;
+    const notFound: number[] = [];
     
-    const recordId = ids[index];
-    
-    // If we need to recalculate total_price, we need to fetch current values first
-    if (needsRecalculation) {
-      db.get('SELECT quantity, unit_price FROM outbound_records WHERE id = ?', [recordId], (err, row: any) => {
-        if (err) {
-          errors++;
-          processRecord(index + 1);
-          return;
-        }
-        
-        if (!row) {
-          notFound.push(recordId);
-          processRecord(index + 1);
-          return;
-        }
-        
-        // Calculate new total_price
-        const finalQuantity = hasQuantity ? updates.quantity : row.quantity;
-        const finalUnitPrice = hasUnitPrice ? updates.unit_price : row.unit_price;
-        const total_price = decimalCalc.calculateTotalPrice(finalQuantity, finalUnitPrice);
-        
-        // Add total_price to update
-        const finalUpdateFields = [...updateFields, 'total_price=?'];
-        const finalUpdateValues = [...updateValues, total_price, recordId];
-        
-        const sql = `UPDATE outbound_records SET ${finalUpdateFields.join(', ')} WHERE id=?`;
-        
-        db.run(sql, finalUpdateValues, function(err) {
-          if (err) {
-            errors++;
-          } else if (this.changes === 0) {
-            notFound.push(recordId);
+    const batchUpdate = db.transaction(() => {
+      for (const recordId of ids) {
+        try {
+          // If we need to recalculate total_price, we need to fetch current values first
+          if (needsRecalculation) {
+            const row = db.prepare('SELECT quantity, unit_price FROM outbound_records WHERE id = ?').get(recordId) as any;
+            
+            if (!row) {
+              notFound.push(recordId);
+              continue;
+            }
+            
+            // Calculate new total_price
+            const finalQuantity = hasQuantity ? updates.quantity : row.quantity;
+            const finalUnitPrice = hasUnitPrice ? updates.unit_price : row.unit_price;
+            const total_price = decimalCalc.calculateTotalPrice(finalQuantity, finalUnitPrice);
+            
+            // Add total_price to update
+            const finalUpdateFields = [...updateFields, 'total_price=?'];
+            const finalUpdateValues = [...updateValues, total_price, recordId];
+            
+            const sql = `UPDATE outbound_records SET ${finalUpdateFields.join(', ')} WHERE id=?`;
+            
+            const result = db.prepare(sql).run(...finalUpdateValues);
+            if (result.changes === 0) {
+              notFound.push(recordId);
+            } else {
+              completed++;
+            }
           } else {
-            completed++;
+            // No recalculation needed, direct update
+            const finalUpdateValues = [...updateValues, recordId];
+            const sql = `UPDATE outbound_records SET ${updateFields.join(', ')} WHERE id=?`;
+            
+            const result = db.prepare(sql).run(...finalUpdateValues);
+            if (result.changes === 0) {
+              notFound.push(recordId);
+            } else {
+              completed++;
+            }
           }
-          processRecord(index + 1);
-        });
-      });
-    } else {
-      // No recalculation needed, direct update
-      const finalUpdateValues = [...updateValues, recordId];
-      const sql = `UPDATE outbound_records SET ${updateFields.join(', ')} WHERE id=?`;
-      
-      db.run(sql, finalUpdateValues, function(err) {
-        if (err) {
+        } catch (err) {
           errors++;
-        } else if (this.changes === 0) {
-          notFound.push(recordId);
-        } else {
-          completed++;
         }
-        processRecord(index + 1);
-      });
-    }
-  };
-  
-  processRecord(0);
+      }
+    });
+    
+    batchUpdate();
+    
+    res.json({
+      message: 'Batch update completed!',
+      updated: completed,
+      notFound: notFound,
+      errors: errors
+    });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ error: error.message });
+  }
 });
 
 export default router;

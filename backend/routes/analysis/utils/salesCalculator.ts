@@ -60,12 +60,8 @@ export function calculateSalesData(
 
   const finalSalesParams = [...salesParams, ...specialExpenseParams];
 
-  db.get(salesSql, finalSalesParams, (err: Error | null, salesRow: any) => {
-    if (err) {
-      console.error("Failed to calculate sales:", err);
-      callback(err);
-      return;
-    }
+  try {
+    const salesRow: any = db.prepare(salesSql).get(...finalSalesParams);
 
     const normalSales = decimalCalc.fromSqlResult(salesRow?.normal_sales, 0, 2);
     const specialExpense = decimalCalc.fromSqlResult(
@@ -83,5 +79,8 @@ export function calculateSalesData(
       special_expense: specialExpense,
       sales_amount: salesAmount,
     });
-  });
+  } catch (err) {
+    console.error("Failed to calculate sales:", err);
+    callback(err as Error);
+  }
 }

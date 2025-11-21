@@ -30,7 +30,7 @@ export default class TransactionQueries {
   }
 
   getInboundData(filters: any = {}): Promise<any[]> {
-    return new Promise((resolve, reject) => {
+    try {
       let sql = `
         SELECT id, supplier_code, supplier_short_name, supplier_full_name,
                product_code, product_model, quantity, unit_price, total_price,
@@ -56,15 +56,15 @@ export default class TransactionQueries {
         params.push(`%${filters.customerCode}%`, `%${filters.customerCode}%`);
       }
       sql += " ORDER BY inbound_date DESC, id DESC";
-      db.all(sql, params, (err: any, rows: any[]) => {
-        if (err) reject(err);
-        else resolve(rows || []);
-      });
-    });
+      const rows = db.prepare(sql).all(...params) as any[];
+      return Promise.resolve(rows);
+    } catch (error) {
+      return Promise.reject(error as Error);
+    }
   }
 
   getOutboundData(filters: any = {}): Promise<any[]> {
-    return new Promise((resolve, reject) => {
+    try {
       let sql = `
         SELECT id, customer_code, customer_short_name, customer_full_name,
                product_code, product_model, quantity, unit_price, total_price,
@@ -90,10 +90,10 @@ export default class TransactionQueries {
         params.push(`%${filters.customerCode}%`, `%${filters.customerCode}%`);
       }
       sql += " ORDER BY outbound_date DESC, id DESC";
-      db.all(sql, params, (err: any, rows: any[]) => {
-        if (err) reject(err);
-        else resolve(rows || []);
-      });
-    });
+      const rows = db.prepare(sql).all(...params) as any[];
+      return Promise.resolve(rows);
+    } catch (error) {
+      return Promise.reject(error as Error);
+    }
   }
 }
