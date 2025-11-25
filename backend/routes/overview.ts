@@ -108,91 +108,77 @@ function calculateSoldGoodsCost(callback: ErrorCallback<number>): void {
   oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
   const oneYearAgoStr = oneYearAgo.toISOString().split('T')[0];
 
-  // 1. Calculate weighted average inbound price for each product (only positive unit price records from past year)
-  db.all<AvgCostRow>(
-    `
-    SELECT 
-      product_model,
-      SUM(quantity * unit_price) / SUM(quantity) as avg_cost_price,
-      SUM(quantity) as total_inbound_quantity
-    FROM inbound_records 
-    WHERE unit_price >= 0 AND date(inbound_date) >= ?
-    GROUP BY product_model
-  `,
-    [oneYearAgoStr],
-    (err, avgCostData) => {
-      if (err) return callback(err);
+  try {
+    // 1. Calculate weighted average inbound price for each product (only positive unit price records from past year)
+    const avgCostData = db.prepare(`
+      SELECT 
+        product_model,
+        SUM(quantity * unit_price) / SUM(quantity) as avg_cost_price,
+        SUM(quantity) as total_inbound_quantity
+      FROM inbound_records 
+      WHERE unit_price >= 0 AND date(inbound_date) >= ?
+      GROUP BY product_model
+    `).all(oneYearAgoStr) as AvgCostRow[];
 
-      // Convert to Map for easy lookup, use decimal.js to handle data
-      const avgCostMap: Record<string, AvgCostData> = {};
-      avgCostData.forEach((item) => {
-        avgCostMap[item.product_model] = {
-          avg_cost_price: decimalCalc.fromSqlResult(item.avg_cost_price, 0, 4),
-          total_inbound_quantity: decimalCalc.fromSqlResult(item.total_inbound_quantity, 0, 0),
-        };
-      });
+    // Convert to Map for easy lookup, use decimal.js to handle data
+    const avgCostMap: Record<string, AvgCostData> = {};
+    avgCostData.forEach((item) => {
+      avgCostMap[item.product_model] = {
+        avg_cost_price: decimalCalc.fromSqlResult(item.avg_cost_price, 0, 4),
+        total_inbound_quantity: decimalCalc.fromSqlResult(item.total_inbound_quantity, 0, 0),
+      };
+    });
 
-      // 2. Get all outbound records from the past year (only positive unit price records for cost calculation)
-      db.all<OutboundCostRow>(
-        `
+    // 2. Get all outbound records from the past year (only positive unit price records for cost calculation)
+    const outboundRecords = db.prepare(`
       SELECT product_model, quantity, unit_price as selling_price
       FROM outbound_records
       WHERE unit_price >= 0 AND date(outbound_date) >= ?
-    `,
-        [oneYearAgoStr],
-        (err2, outboundRecords) => {
-          if (err2) return callback(err2);
+    `).all(oneYearAgoStr) as OutboundCostRow[];
 
-          if (outboundRecords.length === 0) {
-            return callback(null, 0);
-          }
-
-          let totalSoldGoodsCost = decimalCalc.decimal(0);
-
-          // 3. Use average cost to calculate cost for each sales record (only positive unit price items)
-          outboundRecords.forEach((outRecord) => {
-            const productModel = outRecord.product_model;
-            const soldQuantity = decimalCalc.decimal(outRecord.quantity);
-            const sellingPrice = decimalCalc.fromSqlResult(outRecord.selling_price, 0, 4);
-
-            if (avgCostMap[productModel]) {
-              // Use weighted average inbound price for this product
-              const avgCost = decimalCalc.decimal(avgCostMap[productModel].avg_cost_price);
-              const cost = decimalCalc.multiply(soldQuantity, avgCost);
-              totalSoldGoodsCost = totalSoldGoodsCost.add(cost);
-            } else {
-              // If no corresponding inbound records, use outbound price as cost (conservative estimate)
-              const cost = decimalCalc.multiply(soldQuantity, sellingPrice);
-              totalSoldGoodsCost = totalSoldGoodsCost.add(cost);
-            }
-          });
-
-          // 4. Calculate special income from inbound negative unit price items from past year, reduce total cost
-          db.get<SpecialIncomeRow>(
-            `
-        SELECT COALESCE(SUM(ABS(quantity * unit_price)), 0) as special_income
-        FROM inbound_records 
-        WHERE unit_price < 0 AND date(inbound_date) >= ?
-      `,
-            [oneYearAgoStr],
-            (err3, specialIncomeRow) => {
-              if (err3) return callback(err3);
-
-              const specialIncome = decimalCalc.fromSqlResult(specialIncomeRow!.special_income, 0, 2);
-              const finalCost = decimalCalc.subtract(totalSoldGoodsCost, specialIncome);
-
-              // Ensure cost is not negative and keep two decimal places
-              const result = decimalCalc.toDbNumber(
-                decimalCalc.decimal(Math.max(0, finalCost.toNumber())),
-                2
-              );
-              callback(null, result);
-            }
-          );
-        }
-      );
+    if (outboundRecords.length === 0) {
+      return callback(null, 0);
     }
-  );
+
+    let totalSoldGoodsCost = decimalCalc.decimal(0);
+
+    // 3. Use average cost to calculate cost for each sales record (only positive unit price items)
+    outboundRecords.forEach((outRecord) => {
+      const productModel = outRecord.product_model;
+      const soldQuantity = decimalCalc.decimal(outRecord.quantity);
+      const sellingPrice = decimalCalc.fromSqlResult(outRecord.selling_price, 0, 4);
+
+      if (avgCostMap[productModel]) {
+        // Use weighted average inbound price for this product
+        const avgCost = decimalCalc.decimal(avgCostMap[productModel].avg_cost_price);
+        const cost = decimalCalc.multiply(soldQuantity, avgCost);
+        totalSoldGoodsCost = totalSoldGoodsCost.add(cost);
+      } else {
+        // If no corresponding inbound records, use outbound price as cost (conservative estimate)
+        const cost = decimalCalc.multiply(soldQuantity, sellingPrice);
+        totalSoldGoodsCost = totalSoldGoodsCost.add(cost);
+      }
+    });
+
+    // 4. Calculate special income from inbound negative unit price items from past year, reduce total cost
+    const specialIncomeRow = db.prepare(`
+      SELECT COALESCE(SUM(ABS(quantity * unit_price)), 0) as special_income
+      FROM inbound_records 
+      WHERE unit_price < 0 AND date(inbound_date) >= ?
+    `).get(oneYearAgoStr) as SpecialIncomeRow;
+
+    const specialIncome = decimalCalc.fromSqlResult(specialIncomeRow.special_income, 0, 2);
+    const finalCost = decimalCalc.subtract(totalSoldGoodsCost, specialIncome);
+
+    // Ensure cost is not negative and keep two decimal places
+    const result = decimalCalc.toDbNumber(
+      decimalCalc.decimal(Math.max(0, finalCost.toNumber())),
+      2
+    );
+    callback(null, result);
+  } catch (err) {
+    callback(err as Error);
+  }
 }
 
 // ========== Route Handlers ==========
@@ -244,91 +230,41 @@ router.post('/stats', (_req: Request, res: Response) => {
     {
       key: 'overview',
       customHandler: (callback) => {
-        // Query each statistic separately to avoid complex nested queries, only include past year data
-        const queries: Record<string, string> = {
-          counts: `
+        try {
+          // Query each statistic separately to avoid complex nested queries, only include past year data
+          const counts = db.prepare(`
             SELECT 
               (SELECT COUNT(*) FROM inbound_records WHERE date(inbound_date) >= '${oneYearAgoStr}') as total_inbound,
               (SELECT COUNT(*) FROM outbound_records WHERE date(outbound_date) >= '${oneYearAgoStr}') as total_outbound,
               (SELECT COUNT(*) FROM partners WHERE type = 0) as suppliers_count,
               (SELECT COUNT(*) FROM partners WHERE type = 1) as customers_count,
               (SELECT COUNT(*) FROM products) as products_count
-          `,
-          purchase_amount: `
+          `).get() as CountsRow;
+          
+          const purchase_amount = db.prepare(`
             SELECT 
               COALESCE(SUM(quantity * unit_price), 0) as normal_purchase,
               COALESCE((SELECT SUM(ABS(quantity * unit_price)) FROM inbound_records WHERE unit_price < 0 AND date(inbound_date) >= '${oneYearAgoStr}'), 0) as special_income
             FROM inbound_records 
             WHERE unit_price >= 0 AND date(inbound_date) >= '${oneYearAgoStr}'
-          `,
-          sales_amount: `
+          `).get() as PurchaseAmountRow;
+          
+          const sales_amount = db.prepare(`
             SELECT 
               COALESCE(SUM(quantity * unit_price), 0) as normal_sales,
               COALESCE((SELECT SUM(ABS(quantity * unit_price)) FROM outbound_records WHERE unit_price < 0 AND date(outbound_date) >= '${oneYearAgoStr}'), 0) as special_expense
             FROM outbound_records 
             WHERE unit_price >= 0 AND date(outbound_date) >= '${oneYearAgoStr}'
-          `,
-        };
+          `).get() as SalesAmountRow;
 
-        const results: Record<string, any> = {};
-        let queryCompleted = 0;
-        const totalSubQueries = Object.keys(queries).length;
-
-        Object.entries(queries).forEach(([key, sql]) => {
-          if (key === 'counts') {
-            db.get<CountsRow>(sql, [], (err, row) => {
-              if (err) {
-                console.error(`Error in ${key} query:`, err);
-                return callback(err);
-              }
-
-              results[key] = row;
-              queryCompleted++;
-
-              if (queryCompleted === totalSubQueries) {
-                processOverviewResults(results, callback);
-              }
-            });
-          } else if (key === 'purchase_amount') {
-            db.get<PurchaseAmountRow>(sql, [], (err, row) => {
-              if (err) {
-                console.error(`Error in ${key} query:`, err);
-                return callback(err);
-              }
-
-              results[key] = row;
-              queryCompleted++;
-
-              if (queryCompleted === totalSubQueries) {
-                processOverviewResults(results, callback);
-              }
-            });
-          } else if (key === 'sales_amount') {
-            db.get<SalesAmountRow>(sql, [], (err, row) => {
-              if (err) {
-                console.error(`Error in ${key} query:`, err);
-                return callback(err);
-              }
-
-              results[key] = row;
-              queryCompleted++;
-
-              if (queryCompleted === totalSubQueries) {
-                processOverviewResults(results, callback);
-              }
-            });
-          }
-        });
-
-        function processOverviewResults(results: Record<string, any>, callback: ErrorCallback<OverviewStats>) {
           // Merge results, use decimal.js for precise calculation
-          const normalPurchase = decimalCalc.fromSqlResult(results['purchase_amount'].normal_purchase, 0);
-          const specialIncome = decimalCalc.fromSqlResult(results['purchase_amount'].special_income, 0);
-          const normalSales = decimalCalc.fromSqlResult(results['sales_amount'].normal_sales, 0);
-          const specialExpense = decimalCalc.fromSqlResult(results['sales_amount'].special_expense, 0);
+          const normalPurchase = decimalCalc.fromSqlResult(purchase_amount.normal_purchase, 0);
+          const specialIncome = decimalCalc.fromSqlResult(purchase_amount.special_income, 0);
+          const normalSales = decimalCalc.fromSqlResult(sales_amount.normal_sales, 0);
+          const specialExpense = decimalCalc.fromSqlResult(sales_amount.special_expense, 0);
 
           const finalResult = {
-            ...results['counts'],
+            ...counts,
             // Total purchase amount = normal purchase - special income (inbound negative price items)
             total_purchase_amount: decimalCalc.toDbNumber(decimalCalc.subtract(normalPurchase, specialIncome)),
             // Total sales amount = normal sales - special expense (outbound negative price items)
@@ -349,23 +285,25 @@ router.post('/stats', (_req: Request, res: Response) => {
               callback(null, result);
             });
           });
+        } catch (err) {
+          callback(err as Error);
         }
       },
     },
     {
       key: 'top_sales_products',
       customHandler: (callback) => {
-        // Query all product sales amounts from past year, order by descending (only positive unit price items)
-        const sql = `
-          SELECT product_model, SUM(quantity * unit_price) as total_sales
-          FROM outbound_records
-          WHERE unit_price >= 0 AND date(outbound_date) >= ?
-          GROUP BY product_model
-          ORDER BY total_sales DESC
-        `;
-        const dbLimit = 100;
-        db.all<TopSalesProduct>(sql + ` LIMIT ${dbLimit}`, [oneYearAgoStr], (err, rows) => {
-          if (err) return callback(err);
+        try {
+          // Query all product sales amounts from past year, order by descending (only positive unit price items)
+          const sql = `
+            SELECT product_model, SUM(quantity * unit_price) as total_sales
+            FROM outbound_records
+            WHERE unit_price >= 0 AND date(outbound_date) >= ?
+            GROUP BY product_model
+            ORDER BY total_sales DESC
+            LIMIT 100
+          `;
+          const rows = db.prepare(sql).all(oneYearAgoStr) as TopSalesProduct[];
 
           // Use decimal.js to process sales amount data, ensure precision
           const processedRows = rows.map((row) => ({
@@ -389,7 +327,9 @@ router.post('/stats', (_req: Request, res: Response) => {
             result.push({ product_model: 'Others', total_sales: otherTotal });
           }
           callback(null, result);
-        });
+        } catch (err) {
+          callback(err as Error);
+        }
       },
     },
     {
@@ -401,93 +341,66 @@ router.post('/stats', (_req: Request, res: Response) => {
         const monthStartStr = monthStart.toISOString().split('T')[0];
 
         // Get all product models
-        db.all<ProductModelRow>('SELECT DISTINCT product_model FROM products', [], (err, products) => {
-          if (err) return callback(err);
+        try {
+          const products = db.prepare('SELECT DISTINCT product_model FROM products').all() as ProductModelRow[];
 
           if (products.length === 0) {
             return callback(null, {});
           }
 
           const monthlyChanges: Record<string, MonthlyInventoryChange> = {};
-          let productCompleted = 0;
 
           products.forEach(({ product_model }) => {
-            const queries: Record<string, string> = {
-              beforeMonthInbound: `
-                SELECT COALESCE(SUM(quantity), 0) as total
-                FROM inbound_records 
-                WHERE product_model = ? AND date(inbound_date) < ?
-              `,
-              beforeMonthOutbound: `
-                SELECT COALESCE(SUM(quantity), 0) as total
-                FROM outbound_records 
-                WHERE product_model = ? AND date(outbound_date) < ?
-              `,
-              monthlyInbound: `
-                SELECT COALESCE(SUM(quantity), 0) as total_inbound
-                FROM inbound_records 
-                WHERE product_model = ? AND date(inbound_date) >= ?
-              `,
-              monthlyOutbound: `
-                SELECT COALESCE(SUM(quantity), 0) as total_outbound
-                FROM outbound_records 
-                WHERE product_model = ? AND date(outbound_date) >= ?
-              `,
+            const beforeMonthInbound = db.prepare(`
+              SELECT COALESCE(SUM(quantity), 0) as total
+              FROM inbound_records 
+              WHERE product_model = ? AND date(inbound_date) < ?
+            `).get(product_model, monthStartStr) as MonthlyQuantityRow;
+            
+            const beforeMonthOutbound = db.prepare(`
+              SELECT COALESCE(SUM(quantity), 0) as total
+              FROM outbound_records 
+              WHERE product_model = ? AND date(outbound_date) < ?
+            `).get(product_model, monthStartStr) as MonthlyQuantityRow;
+            
+            const monthlyInbound = db.prepare(`
+              SELECT COALESCE(SUM(quantity), 0) as total_inbound
+              FROM inbound_records 
+              WHERE product_model = ? AND date(inbound_date) >= ?
+            `).get(product_model, monthStartStr) as MonthlyQuantityRow;
+            
+            const monthlyOutbound = db.prepare(`
+              SELECT COALESCE(SUM(quantity), 0) as total_outbound
+              FROM outbound_records 
+              WHERE product_model = ? AND date(outbound_date) >= ?
+            `).get(product_model, monthStartStr) as MonthlyQuantityRow;
+
+            // Use decimal.js to calculate monthly inventory change for this product, ensure precision
+            const beforeMonthInboundQty = decimalCalc.fromSqlResult(beforeMonthInbound.total || 0, 0, 0);
+            const beforeMonthOutboundQty = decimalCalc.fromSqlResult(beforeMonthOutbound.total || 0, 0, 0);
+            const totalInbound = decimalCalc.fromSqlResult(monthlyInbound.total_inbound || 0, 0, 0);
+            const totalOutbound = decimalCalc.fromSqlResult(monthlyOutbound.total_outbound || 0, 0, 0);
+
+            const monthStartInventory = decimalCalc.toDbNumber(
+              decimalCalc.subtract(beforeMonthInboundQty, beforeMonthOutboundQty),
+              0
+            );
+            const monthlyChange = decimalCalc.toDbNumber(decimalCalc.subtract(totalInbound, totalOutbound), 0);
+            const currentInventory = decimalCalc.toDbNumber(decimalCalc.add(monthStartInventory, monthlyChange), 0);
+
+            monthlyChanges[product_model] = {
+              product_model,
+              month_start_inventory: monthStartInventory,
+              current_inventory: currentInventory,
+              monthly_change: monthlyChange,
+              query_date: new Date().toISOString(),
             };
-
-            const results: Record<string, number> = {};
-            let queryCompleted = 0;
-            const totalSubQueries = Object.keys(queries).length;
-
-            Object.keys(queries).forEach((key) => {
-              const params = [product_model, monthStartStr];
-              const sql = queries[key]!;
-
-              db.get<MonthlyQuantityRow>(sql, params, (err2, row) => {
-                if (!err2) {
-                  if (key === 'beforeMonthInbound') {
-                    results['before_month_inbound'] = row!.total || 0;
-                  } else if (key === 'beforeMonthOutbound') {
-                    results['before_month_outbound'] = row!.total || 0;
-                  } else if (key === 'monthlyInbound') {
-                    results['total_inbound'] = row!.total_inbound || 0;
-                  } else if (key === 'monthlyOutbound') {
-                    results['total_outbound'] = row!.total_outbound || 0;
-                  }
-                }
-
-                queryCompleted++;
-                if (queryCompleted === totalSubQueries) {
-                  // Use decimal.js to calculate monthly inventory change for this product, ensure precision
-                  const beforeMonthInbound = decimalCalc.fromSqlResult(results['before_month_inbound'], 0, 0);
-                  const beforeMonthOutbound = decimalCalc.fromSqlResult(results['before_month_outbound'], 0, 0);
-                  const totalInbound = decimalCalc.fromSqlResult(results['total_inbound'], 0, 0);
-                  const totalOutbound = decimalCalc.fromSqlResult(results['total_outbound'], 0, 0);
-
-                  const monthStartInventory = decimalCalc.toDbNumber(
-                    decimalCalc.subtract(beforeMonthInbound, beforeMonthOutbound),
-                    0
-                  );
-                  const monthlyChange = decimalCalc.toDbNumber(decimalCalc.subtract(totalInbound, totalOutbound), 0);
-                  const currentInventory = decimalCalc.toDbNumber(decimalCalc.add(monthStartInventory, monthlyChange), 0);
-
-                  monthlyChanges[product_model] = {
-                    product_model,
-                    month_start_inventory: monthStartInventory,
-                    current_inventory: currentInventory,
-                    monthly_change: monthlyChange,
-                    query_date: new Date().toISOString(),
-                  };
-
-                  productCompleted++;
-                  if (productCompleted === products.length) {
-                    callback(null, monthlyChanges);
-                  }
-                }
-              });
-            });
           });
-        });
+
+          callback(null, monthlyChanges);
+        } catch (err) {
+          callback(err as Error);
+        }
       },
     },
   ];

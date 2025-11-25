@@ -87,11 +87,8 @@ router.get('/', (req: Request, res: Response): void => {
 
   params.push(Number(limit), offset);
 
-  db.all<PayableRow>(sql, params, (err, rows) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
+  try {
+    const rows = db.prepare(sql).all(...params) as PayableRow[];
 
     const processedRows = rows.map(row => {
       const totalPayable = decimalCalc.fromSqlResult(row.total_payable, 0);
@@ -113,21 +110,18 @@ router.get('/', (req: Request, res: Response): void => {
     `;
     
     const countParams = supplier_short_name ? [`%${supplier_short_name}%`] : [];
+    const countResult = db.prepare(countSql).get(...countParams) as CountResult;
     
-    db.get<CountResult>(countSql, countParams, (err, countResult) => {
-      if (err) {
-        res.status(500).json({ error: err.message });
-        return;
-      }
-      
-      res.json({
-        data: processedRows,
-        total: countResult!.total,
-        page: Number(page),
-        limit: Number(limit)
-      });
+    res.json({
+      data: processedRows,
+      total: countResult.total,
+      page: Number(page),
+      limit: Number(limit)
     });
-  });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ error: error.message });
+  }
 });
 
 /**
@@ -141,27 +135,22 @@ router.get('/payments/:supplier_code', (req: Request, res: Response): void => {
   
   const sql = 'SELECT * FROM payable_payments WHERE supplier_code = ? ORDER BY pay_date DESC LIMIT ? OFFSET ?';
   
-  db.all(sql, [supplier_code, Number(limit), offset], (err, rows) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
+  try {
+    const rows = db.prepare(sql).all(supplier_code, Number(limit), offset);
     
     const countSql = 'SELECT COUNT(*) as total FROM payable_payments WHERE supplier_code = ?';
-    db.get<CountResult>(countSql, [supplier_code], (err, countResult) => {
-      if (err) {
-        res.status(500).json({ error: err.message });
-        return;
-      }
-      
-      res.json({
-        data: rows,
-        total: countResult!.total,
-        page: Number(page),
-        limit: Number(limit)
-      });
+    const countResult = db.prepare(countSql).get(supplier_code) as CountResult;
+    
+    res.json({
+      data: rows,
+      total: countResult.total,
+      page: Number(page),
+      limit: Number(limit)
     });
-  });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ error: error.message });
+  }
 });
 
 /**
@@ -179,13 +168,13 @@ router.post('/payments', (req: Request, res: Response): Response | void => {
     VALUES (?, ?, ?, ?, ?)
   `;
   
-  db.run(sql, [supplier_code, amount, pay_date, pay_method || '', remark || ''], function(err) {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
-    res.json({ id: this.lastID, message: 'Payment record created!' });
-  });
+  try {
+    const result = db.prepare(sql).run(supplier_code, amount, pay_date, pay_method || '', remark || '');
+    res.json({ id: result.lastInsertRowid, message: 'Payment record created!' });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ error: error.message });
+  }
 });
 
 /**
@@ -205,38 +194,38 @@ router.put('/payments/:id', (req: Request, res: Response): Response | void => {
     WHERE id=?
   `;
   
-  db.run(sql, [supplier_code, amount, pay_date, pay_method || '', remark || '', id], function(err) {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
-    if (this.changes === 0) {
+  try {
+    const result = db.prepare(sql).run(supplier_code, amount, pay_date, pay_method || '', remark || '', id);
+    if (result.changes === 0) {
       res.status(404).json({ error: 'Payement record dne' });
       return;
     }
     res.json({ message: 'Payment record updated!' });
-  });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ error: error.message });
+  }
 });
 
 /**
  * DELETE /api/payable/payments/:id
  */
 router.delete('/payments/:id', (req: Request, res: Response): void => {
-  const { id } = req.params;
-  
-  db.run('DELETE FROM payable_payments WHERE id = ?', [id], function(err) {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
+  try {
+    const { id } = req.params;
     
-    if (this.changes === 0) {
+    const result = db.prepare('DELETE FROM payable_payments WHERE id = ?').run(id);
+    
+    if (result.changes === 0) {
       res.status(404).json({ error: 'Payment record dne' });
       return;
     }
     
     res.json({ message: 'Payment record deleted!' });
-  });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ error: error.message });
+  }
 });
 
 /**
@@ -251,13 +240,9 @@ router.get('/details/:supplier_code', (req: Request, res: Response): void => {
     payment_limit = 10 
   } = req.query;
 
-  const supplierSql = 'SELECT * FROM partners WHERE code = ? AND type = 0';
-
-  db.get<SupplierResult>(supplierSql, [supplier_code], (err, supplier) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
+  try {
+    const supplierSql = 'SELECT * FROM partners WHERE code = ? AND type = 0';
+    const supplier = db.prepare(supplierSql).get(supplier_code) as SupplierResult;
 
     if (!supplier) {
       res.status(404).json({ error: 'Supplier dne' });
@@ -266,79 +251,51 @@ router.get('/details/:supplier_code', (req: Request, res: Response): void => {
 
     const inboundOffset = (Number(inbound_page) - 1) * Number(inbound_limit);
     const inboundSql = 'SELECT * FROM inbound_records WHERE supplier_code = ? ORDER BY inbound_date DESC LIMIT ? OFFSET ?';
+    const inboundRecords = db.prepare(inboundSql).all(supplier_code, Number(inbound_limit), inboundOffset);
+
+    const inboundCountSql = 'SELECT COUNT(*) as total FROM inbound_records WHERE supplier_code = ?';
+    const inboundCountResult = db.prepare(inboundCountSql).get(supplier_code) as CountResult;
+
+    const paymentOffset = (Number(payment_page) - 1) * Number(payment_limit);
+    const paymentSql = 'SELECT * FROM payable_payments WHERE supplier_code = ? ORDER BY pay_date DESC LIMIT ? OFFSET ?';
+    const paymentRecords = db.prepare(paymentSql).all(supplier_code, Number(payment_limit), paymentOffset);
+
+    const paymentCountSql = 'SELECT COUNT(*) as total FROM payable_payments WHERE supplier_code = ?';
+    const paymentCountResult = db.prepare(paymentCountSql).get(supplier_code) as CountResult;
+
+    const totalPayableSql = 'SELECT SUM(total_price) as total FROM inbound_records WHERE supplier_code = ?';
+    const totalPayableResult = db.prepare(totalPayableSql).get(supplier_code) as TotalResult;
+    const totalPayable = decimalCalc.fromSqlResult(totalPayableResult.total, 0);
     
-    db.all(inboundSql, [supplier_code, Number(inbound_limit), inboundOffset], (err, inboundRecords) => {
-      if (err) {
-        res.status(500).json({ error: err.message });
-        return;
+    const totalPaidSql = 'SELECT SUM(amount) as total FROM payable_payments WHERE supplier_code = ?';
+    const totalPaidResult = db.prepare(totalPaidSql).get(supplier_code) as TotalResult;
+    const totalPaid = decimalCalc.fromSqlResult(totalPaidResult.total, 0);
+    const balance = decimalCalc.calculateBalance(totalPayable, totalPaid);
+    
+    res.json({
+      supplier,
+      summary: {
+        total_payable: totalPayable,
+        total_paid: totalPaid,
+        balance: balance
+      },
+      inbound_records: {
+        data: inboundRecords,
+        total: inboundCountResult.total,
+        page: Number(inbound_page),
+        limit: Number(inbound_limit)
+      },
+      payment_records: {
+        data: paymentRecords,
+        total: paymentCountResult.total,
+        page: Number(payment_page),
+        limit: Number(payment_limit)
       }
-
-      const inboundCountSql = 'SELECT COUNT(*) as total FROM inbound_records WHERE supplier_code = ?';
-      db.get<CountResult>(inboundCountSql, [supplier_code], (err, inboundCountResult) => {
-        if (err) {
-          res.status(500).json({ error: err.message });
-          return;
-        }
-
-        const paymentOffset = (Number(payment_page) - 1) * Number(payment_limit);
-        const paymentSql = 'SELECT * FROM payable_payments WHERE supplier_code = ? ORDER BY pay_date DESC LIMIT ? OFFSET ?';
-        
-        db.all(paymentSql, [supplier_code, Number(payment_limit), paymentOffset], (err, paymentRecords) => {
-          if (err) {
-            res.status(500).json({ error: err.message });
-            return;
-          }
-
-          const paymentCountSql = 'SELECT COUNT(*) as total FROM payable_payments WHERE supplier_code = ?';
-          db.get<CountResult>(paymentCountSql, [supplier_code], (err, paymentCountResult) => {
-            if (err) {
-              res.status(500).json({ error: err.message });
-              return;
-            }
-
-            const totalPayableSql = 'SELECT SUM(total_price) as total FROM inbound_records WHERE supplier_code = ?';
-            db.get<TotalResult>(totalPayableSql, [supplier_code], (err, totalPayableResult) => {
-              if (err) {
-                res.status(500).json({ error: err.message });
-                return;
-              }
-              const totalPayable = decimalCalc.fromSqlResult(totalPayableResult!.total, 0);
-              const totalPaidSql = 'SELECT SUM(amount) as total FROM payable_payments WHERE supplier_code = ?';
-              db.get<TotalResult>(totalPaidSql, [supplier_code], (err, totalPaidResult) => {
-                if (err) {
-                  res.status(500).json({ error: err.message });
-                  return;
-                }
-                const totalPaid = decimalCalc.fromSqlResult(totalPaidResult!.total, 0);
-                const balance = decimalCalc.calculateBalance(totalPayable, totalPaid);
-                
-                res.json({
-                  supplier,
-                  summary: {
-                    total_payable: totalPayable,
-                    total_paid: totalPaid,
-                    balance: balance
-                  },
-                  inbound_records: {
-                    data: inboundRecords,
-                    total: inboundCountResult!.total,
-                    page: Number(inbound_page),
-                    limit: Number(inbound_limit)
-                  },
-                  payment_records: {
-                    data: paymentRecords,
-                    total: paymentCountResult!.total,
-                    page: Number(payment_page),
-                    limit: Number(payment_limit)
-                  }
-                });
-              });
-            });
-          });
-        });
-      });
     });
-  });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ error: error.message });
+  }
 });
 
 /**
@@ -359,32 +316,26 @@ router.get('/uninvoiced/:supplier_code', (req: Request, res: Response): void => 
     LIMIT ? OFFSET ?
   `;
   
-  db.all(sql, [supplier_code, Number(limit), offset], (err, rows) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
+  try {
+    const rows = db.prepare(sql).all(supplier_code, Number(limit), offset);
 
     const countSql = `
       SELECT COUNT(*) as total FROM inbound_records 
       WHERE supplier_code = ? 
         AND (invoice_number IS NULL OR invoice_number = '')
     `;
+    const countResult = db.prepare(countSql).get(supplier_code) as CountResult;
     
-    db.get<CountResult>(countSql, [supplier_code], (err, countResult) => {
-      if (err) {
-        res.status(500).json({ error: err.message });
-        return;
-      }
-      
-      res.json({
-        data: rows,
-        total: countResult!.total,
-        page: Number(page),
-        limit: Number(limit)
-      });
+    res.json({
+      data: rows,
+      total: countResult.total,
+      page: Number(page),
+      limit: Number(limit)
     });
-  });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ error: error.message });
+  }
 });
 
 /**

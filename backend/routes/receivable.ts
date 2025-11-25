@@ -87,11 +87,8 @@ router.get('/', (req: Request, res: Response): void => {
   
   params.push(Number(limit), offset);
 
-  db.all<ReceivableRow>(sql, params, (err, rows) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
+  try {
+    const rows = db.prepare(sql).all(...params) as ReceivableRow[];
 
     const processedRows = rows.map(row => {
       const totalReceivable = decimalCalc.fromSqlResult(row.total_receivable, 0);
@@ -113,21 +110,18 @@ router.get('/', (req: Request, res: Response): void => {
     `;
     
     const countParams = customer_short_name ? [`%${customer_short_name}%`] : [];
+    const countResult = db.prepare(countSql).get(...countParams) as CountResult;
     
-    db.get<CountResult>(countSql, countParams, (err, countResult) => {
-      if (err) {
-        res.status(500).json({ error: err.message });
-        return;
-      }
-      
-      res.json({
-        data: processedRows,
-        total: countResult!.total,
-        page: Number(page),
-        limit: Number(limit)
-      });
+    res.json({
+      data: processedRows,
+      total: countResult.total,
+      page: Number(page),
+      limit: Number(limit)
     });
-  });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ error: error.message });
+  }
 });
 
 /**
@@ -141,27 +135,22 @@ router.get('/payments/:customer_code', (req: Request, res: Response): void => {
   
   const sql = 'SELECT * FROM receivable_payments WHERE customer_code = ? ORDER BY pay_date DESC LIMIT ? OFFSET ?';
   
-  db.all(sql, [customer_code, Number(limit), offset], (err, rows) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
+  try {
+    const rows = db.prepare(sql).all(customer_code, Number(limit), offset);
 
     const countSql = 'SELECT COUNT(*) as total FROM receivable_payments WHERE customer_code = ?';
-    db.get<CountResult>(countSql, [customer_code], (err, countResult) => {
-      if (err) {
-        res.status(500).json({ error: err.message });
-        return;
-      }
-      
-      res.json({
-        data: rows,
-        total: countResult!.total,
-        page: Number(page),
-        limit: Number(limit)
-      });
+    const countResult = db.prepare(countSql).get(customer_code) as CountResult;
+    
+    res.json({
+      data: rows,
+      total: countResult.total,
+      page: Number(page),
+      limit: Number(limit)
     });
-  });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ error: error.message });
+  }
 });
 
 /**
@@ -179,13 +168,13 @@ router.post('/payments', (req: Request, res: Response): Response | void => {
     VALUES (?, ?, ?, ?, ?)
   `;
   
-  db.run(sql, [customer_code, amount, pay_date, pay_method || '', remark || ''], function(err) {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
-    res.json({ id: this.lastID, message: 'Payment record created!' });
-  });
+  try {
+    const result = db.prepare(sql).run(customer_code, amount, pay_date, pay_method || '', remark || '');
+    res.json({ id: result.lastInsertRowid, message: 'Payment record created!' });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ error: error.message });
+  }
 });
 
 /**
@@ -205,37 +194,37 @@ router.put('/payments/:id', (req: Request, res: Response): Response | void => {
     WHERE id=?
   `;
   
-  db.run(sql, [customer_code, amount, pay_date, pay_method || '', remark || '', id], function(err) {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
-    if (this.changes === 0) {
+  try {
+    const result = db.prepare(sql).run(customer_code, amount, pay_date, pay_method || '', remark || '', id);
+    if (result.changes === 0) {
       res.status(404).json({ error: 'Payment records dne' });
       return;
     }
     res.json({ message: 'Payment record updated!' });
-  });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ error: error.message });
+  }
 });
 
 /**
  * DELETE /api/receivable/payments/:id
  */
 router.delete('/payments/:id', (req: Request, res: Response): void => {
-  const { id } = req.params;
-  
-  db.run('DELETE FROM receivable_payments WHERE id = ?', [id], function(err) {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
-    if (this.changes === 0) {
+  try {
+    const { id } = req.params;
+    
+    const result = db.prepare('DELETE FROM receivable_payments WHERE id = ?').run(id);
+    if (result.changes === 0) {
       res.status(404).json({ error: 'Payment records dne' });
       return;
     }
     
     res.json({ message: 'Payment record deleted!' });
-  });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ error: error.message });
+  }
 });
 
 /**
@@ -250,13 +239,9 @@ router.get('/details/:customer_code', (req: Request, res: Response): void => {
     payment_limit = 10 
   } = req.query;
 
-  const customerSql = 'SELECT * FROM partners WHERE code = ? AND type = 1';
-
-  db.get<CustomerResult>(customerSql, [customer_code], (err, customer) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
+  try {
+    const customerSql = 'SELECT * FROM partners WHERE code = ? AND type = 1';
+    const customer = db.prepare(customerSql).get(customer_code) as CustomerResult;
 
     if (!customer) {
       res.status(404).json({ error: 'Clienet dne' });
@@ -265,79 +250,51 @@ router.get('/details/:customer_code', (req: Request, res: Response): void => {
 
     const outboundOffset = (Number(outbound_page) - 1) * Number(outbound_limit);
     const outboundSql = 'SELECT * FROM outbound_records WHERE customer_code = ? ORDER BY outbound_date DESC LIMIT ? OFFSET ?';
+    const outboundRecords = db.prepare(outboundSql).all(customer_code, Number(outbound_limit), outboundOffset);
+
+    const outboundCountSql = 'SELECT COUNT(*) as total FROM outbound_records WHERE customer_code = ?';
+    const outboundCountResult = db.prepare(outboundCountSql).get(customer_code) as CountResult;
+
+    const paymentOffset = (Number(payment_page) - 1) * Number(payment_limit);
+    const paymentSql = 'SELECT * FROM receivable_payments WHERE customer_code = ? ORDER BY pay_date DESC LIMIT ? OFFSET ?';
+    const paymentRecords = db.prepare(paymentSql).all(customer_code, Number(payment_limit), paymentOffset);
+
+    const paymentCountSql = 'SELECT COUNT(*) as total FROM receivable_payments WHERE customer_code = ?';
+    const paymentCountResult = db.prepare(paymentCountSql).get(customer_code) as CountResult;
+
+    const totalReceivableSql = 'SELECT SUM(total_price) as total FROM outbound_records WHERE customer_code = ?';
+    const totalReceivableResult = db.prepare(totalReceivableSql).get(customer_code) as TotalResult;
+    const totalReceivable = decimalCalc.fromSqlResult(totalReceivableResult.total, 0);
     
-    db.all(outboundSql, [customer_code, Number(outbound_limit), outboundOffset], (err, outboundRecords) => {
-      if (err) {
-        res.status(500).json({ error: err.message });
-        return;
+    const totalPaidSql = 'SELECT SUM(amount) as total FROM receivable_payments WHERE customer_code = ?';
+    const totalPaidResult = db.prepare(totalPaidSql).get(customer_code) as TotalResult;
+    const totalPaid = decimalCalc.fromSqlResult(totalPaidResult.total, 0);
+    const balance = decimalCalc.calculateBalance(totalReceivable, totalPaid);
+    
+    res.json({
+      customer,
+      summary: {
+        total_receivable: totalReceivable,
+        total_paid: totalPaid,
+        balance: balance
+      },
+      outbound_records: {
+        data: outboundRecords,
+        total: outboundCountResult.total,
+        page: Number(outbound_page),
+        limit: Number(outbound_limit)
+      },
+      payment_records: {
+        data: paymentRecords,
+        total: paymentCountResult.total,
+        page: Number(payment_page),
+        limit: Number(payment_limit)
       }
-
-      const outboundCountSql = 'SELECT COUNT(*) as total FROM outbound_records WHERE customer_code = ?';
-      db.get<CountResult>(outboundCountSql, [customer_code], (err, outboundCountResult) => {
-        if (err) {
-          res.status(500).json({ error: err.message });
-          return;
-        }
-
-        const paymentOffset = (Number(payment_page) - 1) * Number(payment_limit);
-        const paymentSql = 'SELECT * FROM receivable_payments WHERE customer_code = ? ORDER BY pay_date DESC LIMIT ? OFFSET ?';
-        
-        db.all(paymentSql, [customer_code, Number(payment_limit), paymentOffset], (err, paymentRecords) => {
-          if (err) {
-            res.status(500).json({ error: err.message });
-            return;
-          }
-
-          const paymentCountSql = 'SELECT COUNT(*) as total FROM receivable_payments WHERE customer_code = ?';
-          db.get<CountResult>(paymentCountSql, [customer_code], (err, paymentCountResult) => {
-            if (err) {
-              res.status(500).json({ error: err.message });
-              return;
-            }
-
-            const totalReceivableSql = 'SELECT SUM(total_price) as total FROM outbound_records WHERE customer_code = ?';
-            db.get<TotalResult>(totalReceivableSql, [customer_code], (err, totalReceivableResult) => {
-              if (err) {
-                res.status(500).json({ error: err.message });
-                return;
-              }
-              const totalReceivable = decimalCalc.fromSqlResult(totalReceivableResult!.total, 0);
-              const totalPaidSql = 'SELECT SUM(amount) as total FROM receivable_payments WHERE customer_code = ?';
-              db.get<TotalResult>(totalPaidSql, [customer_code], (err, totalPaidResult) => {
-                if (err) {
-                  res.status(500).json({ error: err.message });
-                  return;
-                }
-                const totalPaid = decimalCalc.fromSqlResult(totalPaidResult!.total, 0);
-                const balance = decimalCalc.calculateBalance(totalReceivable, totalPaid);
-                
-                res.json({
-                  customer,
-                  summary: {
-                    total_receivable: totalReceivable,
-                    total_paid: totalPaid,
-                    balance: balance
-                  },
-                  outbound_records: {
-                    data: outboundRecords,
-                    total: outboundCountResult!.total,
-                    page: Number(outbound_page),
-                    limit: Number(outbound_limit)
-                  },
-                  payment_records: {
-                    data: paymentRecords,
-                    total: paymentCountResult!.total,
-                    page: Number(payment_page),
-                    limit: Number(payment_limit)
-                  }
-                });
-              });
-            });
-          });
-        });
-      });
     });
-  });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ error: error.message });
+  }
 });
 
 /**
@@ -358,32 +315,26 @@ router.get('/uninvoiced/:customer_code', (req: Request, res: Response): void => 
     LIMIT ? OFFSET ?
   `;
   
-  db.all(sql, [customer_code, Number(limit), offset], (err, rows) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
+  try {
+    const rows = db.prepare(sql).all(customer_code, Number(limit), offset);
 
     const countSql = `
       SELECT COUNT(*) as total FROM outbound_records 
       WHERE customer_code = ? 
         AND (invoice_number IS NULL OR invoice_number = '')
     `;
+    const countResult = db.prepare(countSql).get(customer_code) as CountResult;
     
-    db.get<CountResult>(countSql, [customer_code], (err, countResult) => {
-      if (err) {
-        res.status(500).json({ error: err.message });
-        return;
-      }
-      
-      res.json({
-        data: rows,
-        total: countResult!.total,
-        page: Number(page),
-        limit: Number(limit)
-      });
+    res.json({
+      data: rows,
+      total: countResult.total,
+      page: Number(page),
+      limit: Number(limit)
     });
-  });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ error: error.message });
+  }
 });
 
 /**
