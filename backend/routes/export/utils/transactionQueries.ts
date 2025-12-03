@@ -34,7 +34,7 @@ export default class TransactionQueries {
       let sql = `
         SELECT id, supplier_code, supplier_short_name, supplier_full_name,
                product_code, product_model, quantity, unit_price, total_price,
-               inbound_date, invoice_date, invoice_number, order_number, remark
+               inbound_date, invoice_date, invoice_number, receipt_number, order_number, remark
         FROM inbound_records 
         WHERE 1=1
       `;
@@ -68,7 +68,7 @@ export default class TransactionQueries {
       let sql = `
         SELECT id, customer_code, customer_short_name, customer_full_name,
                product_code, product_model, quantity, unit_price, total_price,
-               outbound_date, invoice_date, invoice_number, order_number, remark
+               outbound_date, invoice_date, invoice_number, receipt_number, order_number, remark
         FROM outbound_records 
         WHERE 1=1
       `;
