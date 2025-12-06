@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { resolveFilesInDataPath, ensureDirSync } from './paths.js';
-import { logger } from './logger.js';
+import { resolveFilesInDataPath, ensureDirSync } from '@/utils/paths.js';
+import { logger } from '@/utils/logger.js';
 
 export async function backupDatabase(): Promise<string> {
   try {
