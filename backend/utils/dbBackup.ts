@@ -6,10 +6,12 @@ import { logger } from '@/utils/logger.js';
 export async function backupDatabase(): Promise<string> {
   try {
     const sourceDbPath = resolveFilesInDataPath('data.db');
+    const sourceDbWalPath = resolveFilesInDataPath('data.db-wal');
     try {
       await fs.access(sourceDbPath);
+      await fs.access(sourceDbWalPath);
     } catch (error) {
-      throw new Error('Database file not found: data.db');
+      throw new Error('Database file not found: data.db or data.db-wal');
     }
 
     const backupDir = resolveFilesInDataPath('db-backup');
@@ -23,18 +25,17 @@ export async function backupDatabase(): Promise<string> {
     const minute = String(date.getMinutes()).padStart(2, '0');
     const second = String(date.getSeconds()).padStart(2, '0');
     
-    const backupFileName = `${year}-${month}-${day}_${hour}-${minute}-${second}.db`;
-    const backupFilePath = path.join(backupDir, backupFileName);
+    const backupFolderName = path.join(backupDir, `${year}-${month}-${day}_${hour}-${minute}-${second}`);
+    ensureDirSync(backupFolderName);
+    const backupDbPath = path.join(backupFolderName, 'data.db');
+    const backupWalPath = path.join(backupFolderName, 'data.db-wal');
 
-    await fs.copyFile(sourceDbPath, backupFilePath);
+    await fs.copyFile(sourceDbPath, backupDbPath);
+    await fs.copyFile(sourceDbWalPath, backupWalPath);
 
-    logger.info('Database backup successful', {
-      source: sourceDbPath,
-      backup: backupFilePath,
-      timestamp: date.toISOString(),
-    });
+    logger.info('Database backup successful');
 
-    return backupFilePath;
+    return backupDbPath + backupWalPath;
   } catch (error) {
     const err = error as Error;
     logger.error('Database backup failed', {
