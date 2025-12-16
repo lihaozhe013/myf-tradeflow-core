@@ -11,6 +11,7 @@ RUN apt update \
     ca-certificates \
     python3 \
     curl \
+    make \
     git \
     && apt clean \
     && rm -rf /var/lib/apt/lists/* \

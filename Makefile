@@ -6,41 +6,46 @@ FRONTEND_NODE_MODULES_VOL = $(IMG_NAME)-nm-frontend
 
 .PHONY: all start stop dev install build build-image clean clean-all logs purge-volumes volumes-ls shell compose-config
 
-all: start
-
-start:
+docker-start:
 	@docker compose up -d
 
-stop:
+docker-stop:
 	@docker compose stop
 
-remove:
+docker-down:
 	@docker compose down
 
-dev:
+docker-dev:
 	@docker compose exec app npm run dev
 
-install:
-	@docker compose exec app npm run install:all
-
-build:
+docker-build:
 	@docker compose up -d --build
-	@docker compose exec app npm run install:all
 
-build-image:
+docker-build-image:
 	@docker compose build
 
-purge-volumes:
+docker-purge-volumes:
 	@docker volume rm -f $(ROOT_NODE_MODULES_VOL) $(BACKEND_NODE_MODULES_VOL) $(FRONTEND_NODE_MODULES_VOL) 2>/dev/null || true
 
-volumes-ls:
-	@docker volume ls | grep $(IMG_NAME) || true
-
-sh:
+docker-sh:
 	@docker compose exec app sh
 
-logs:
+docker-logs:
 	@docker compose logs -f app
 
-compose-config:
+docker-compose-config:
 	@docker compose config
+
+install:
+	npm run install:all
+
+dev:
+	npm run dev
+
+build:
+	npm run build
+
+clean-node-modules:
+	rm -rf node_modules
+	rm -rf backend/node_modules
+	rm -rf frontend/node_modules
