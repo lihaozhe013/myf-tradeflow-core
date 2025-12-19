@@ -1,4 +1,8 @@
 # Change Log
+## v0.6.0
+- Backend switched to the better-sqlite library
+- Fixed bugs
+
 ## v0.5.0
 - New feature: Automatically lookup for invoiced/uninvoiced details
 - New feature: Batch edit record in inbound and outbound table
