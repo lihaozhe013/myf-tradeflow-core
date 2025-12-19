@@ -1,4 +1,4 @@
-IMG_NAME = myf-tradeflow-core
+IMG_NAME = tradeflow-core
 CONTAINER_NAME = $(IMG_NAME)-container
 ROOT_NODE_MODULES_VOL = $(IMG_NAME)-nm-root
 BACKEND_NODE_MODULES_VOL = $(IMG_NAME)-nm-backend

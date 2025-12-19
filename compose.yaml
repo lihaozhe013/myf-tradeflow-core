@@ -1,12 +1,12 @@
-name: myf-tradeflow-core
+name: tradeflow-core
 
 services:
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    image: myf-tradeflow-core
-    container_name: myf-tradeflow-core-container
+    image: tradeflow-core
+    container_name: tradeflow-core-container
     command: sh -c "while true; do sleep 3600; done"
     environment:
       - NODE_ENV=development

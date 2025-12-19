@@ -1,10 +1,6 @@
-# MYF Tradeflow Core
+# Tradeflow Core
 
 A lightweight tradeflow system designed for small businesses, built with React.js based frontend and Node.js + SQLite based backend.
-
-Originally developed for a relative’s family business (myf), it is now open‑sourced on GitHub.
-
-Overall, the backend code is of higher quality. The frontend was developed in a Chinese-language environment and extensively utilizes LLM and Vibe Coding for development support, so the frontend code might have a lot of Chinese comment and have a lot of redundancy that looks like SHIT, but anyways it works.
 
 ## Key Features
 
@@ -56,8 +52,8 @@ This is the detailed page for my demo link:
 1.  **Clone the project**:
 
 ```bash
-git clone [https://github.com/lihaozhe013/myf-tradeflow-core.git](https://github.com/lihaozhe013/myf-tradeflow-core.git)
-cd myf-tradeflow-core
+git clone [https://github.com/lihaozhe013/tradeflow-core.git](https://github.com/lihaozhe013/tradeflow-core.git)
+cd tradeflow-core
 ```
 
 2.  **Install dependencies**:
@@ -147,7 +143,7 @@ npm run build
 ```
 Then
 ```
-docker build -t myf-tradeflow:1.0 .
+docker build -t tradeflow-core:1.0 .
 ```
 
 ## Data Files

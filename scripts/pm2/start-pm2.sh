@@ -11,7 +11,7 @@ fi
 echo "Checking PM2 config file..."
 node generate-pm2-config.cjs
 
-if pm2 list | grep -q "myf-tradeflow-backend"; then
+if pm2 list | grep -q "tradeflow-core-pm2"; then
     echo "Stopping the current PM2 process..."
     pm2 stop ecosystem.config.json
     pm2 delete ecosystem.config.json
@@ -34,10 +34,10 @@ echo "======================="
 
 echo " Common PM2 Commands: "
 echo "  Process Status: pm2 list"
-echo "  Log:     pm2 logs myf-tradeflow-backend"
-echo "  Restart:     pm2 restart myf-tradeflow-backend"
-echo "  Stop:     pm2 stop myf-tradeflow-backend"
-echo "  Delete:     pm2 delete myf-tradeflow-backend"
+echo "  Log:     pm2 logs tradeflow-core-pm2"
+echo "  Restart:     pm2 restart tradeflow-core-pm2"
+echo "  Stop:     pm2 stop tradeflow-core-pm2"
+echo "  Delete:     pm2 delete tradeflow-core-pm2"
 echo "  Monitoring Panel:     pm2 monit"
 
 echo "======================="

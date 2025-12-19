@@ -1,7 +1,7 @@
 {
   "apps": [
     {
-      "name": "myf-tradeflow-backend",
+      "name": "tradeflow-core-prod",
       "script": "backend/server.js",
       "cwd": "..",
       "instances": "max",

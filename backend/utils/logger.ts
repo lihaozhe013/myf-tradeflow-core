@@ -17,7 +17,7 @@ export const logger = winston.createLogger({
     winston.format.errors({ stack: true }),
     winston.format.json()
   ),
-  defaultMeta: { service: "myf-db-system" },
+  defaultMeta: { service: "tradeflow-core" },
   transports: [],
 });
 
