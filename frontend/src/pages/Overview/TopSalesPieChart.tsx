@@ -153,7 +153,14 @@ const TopSalesPieChart = () => {
             ))}
           </Pie>
           <Tooltip
-            formatter={(value: number | undefined) => [value, t("overview.salesAmount")]}
+            formatter={(
+              value:
+                | number
+                | string
+                | Array<number | string>
+                | ReadonlyArray<number | string>
+                | undefined
+            ) => [value, t("overview.salesAmount")]}
             labelFormatter={(label: string) =>
               `${t("overview.product")}: ${label}`
             }
