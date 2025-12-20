@@ -41,30 +41,18 @@ const OutboundTable: FC<OutboundTableProps> = ({
       width: 80,
     },
     {
-      title: t('outbound.customerCode'),
-      dataIndex: 'customer_code',
-      key: 'customer_code',
-      width: 100,
-    },
-    {
       title: t('outbound.customerShortName'),
       dataIndex: 'customer_short_name',
       key: 'customer_short_name',
-      width: 120,
+      width: 100,
       filters: partners.map(partner => ({ text: partner.short_name, value: partner.short_name })),
       onFilter: (value, record) => record.customer_short_name === value,
-    },
-    {
-      title: t('outbound.productCode'),
-      dataIndex: 'product_code',
-      key: 'product_code',
-      width: 100,
     },
     {
       title: t('outbound.productModel'),
       dataIndex: 'product_model',
       key: 'product_model',
-      width: 150,
+      width: 180,
       filters: products.map(product => ({ text: product.product_model, value: product.product_model })),
       onFilter: (value, record) => record.product_model === value,
     },
@@ -94,20 +82,31 @@ const OutboundTable: FC<OutboundTableProps> = ({
       title: t('outbound.outboundDate'),
       dataIndex: 'outbound_date',
       key: 'outbound_date',
-      width: 120,
+      width: 100,
       sorter: true,
+    },
+    {
+      title: t('outbound.orderNumber'),
+      dataIndex: 'order_number',
+      key: 'order_number',
+      width: 160,
+    },
+    {
+      title: t('outbound.receiptNumber'),
+      dataIndex: 'receipt_number',
+      key: 'receipt_number',
+      width: 140,
     },
     {
       title: t('outbound.invoiceNumber'),
       dataIndex: 'invoice_number',
       key: 'invoice_number',
-      width: 120,
-      render: (invoiceNumber) => invoiceNumber ?? '-',
+      width: 140,
     },
     {
       title: t('outbound.actions'),
       key: 'actions',
-      width: 120,
+      width: 80,
       render: (_value, record) => (
         <Space size="small">
           <Button

@@ -41,30 +41,18 @@ const InboundTable: FC<InboundTableProps> = ({
       width: 80,
     },
     {
-      title: t('inbound.supplierCode'),
-      dataIndex: 'supplier_code',
-      key: 'supplier_code',
-      width: 100,
-    },
-    {
       title: t('inbound.supplierShortName'),
       dataIndex: 'supplier_short_name',
       key: 'supplier_short_name',
-      width: 120,
+      width: 100,
       filters: partners.map(p => ({ text: p.short_name, value: p.short_name })),
       onFilter: (value, record) => record.supplier_short_name === value,
-    },
-    {
-      title: t('inbound.productCode'),
-      dataIndex: 'product_code',
-      key: 'product_code',
-      width: 100,
     },
     {
       title: t('inbound.productModel'),
       dataIndex: 'product_model',
       key: 'product_model',
-      width: 150,
+      width: 180,
       filters: products.map(p => ({ text: p.product_model, value: p.product_model })),
       onFilter: (value, record) => record.product_model === value,
     },
@@ -94,20 +82,31 @@ const InboundTable: FC<InboundTableProps> = ({
       title: t('inbound.inboundDate'),
       dataIndex: 'inbound_date',
       key: 'inbound_date',
-      width: 120,
+      width: 100,
       sorter: true,
+    },
+    {
+      title: t('inbound.orderNumber'),
+      dataIndex: 'order_number',
+      key: 'order_number',
+      width: 160,
+    },
+    {
+      title: t('inbound.receiptNumber'),
+      dataIndex: 'receipt_number',
+      key: 'receipt_number',
+      width: 140,
     },
     {
       title: t('inbound.invoiceNumber'),
       dataIndex: 'invoice_number',
       key: 'invoice_number',
-      width: 120,
-      render: (invoiceNumber) => invoiceNumber ?? '-',
+      width: 140,
     },
     {
       title: t('inbound.actions'),
       key: 'actions',
-      width: 120,
+      width: 80,
       render: (_value, record) => (
         <Space size="small">
           <Button
