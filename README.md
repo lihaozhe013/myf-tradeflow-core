@@ -22,6 +22,107 @@ A lightweight tradeflow system designed for small businesses, built with React.j
 - **Logging**: Winston logging system
 - **Precise Calculations**: Decimal.js for precise numerical calculations
 
+## Backend Architecture Overview
+
+```mermaid
+flowchart LR
+  Frontend[React SPA (Vite)] -->|HTTPS /api| API[Express REST API]
+  API --> Auth[JWT Auth + RBAC]
+  API --> Services{{Domain Services\\nInventory / Partners / Pricing / Finance / Reports}}
+  Services --> DB[(SQLite)]
+  Services --> Config[data/ config JSON]
+  API --> Logging[Winston Logs]
+```
+
+## Database Schema (Backend)
+
+```mermaid
+erDiagram
+  PARTNERS ||--o{ INBOUND_RECORDS : supplies
+  PARTNERS ||--o{ OUTBOUND_RECORDS : purchases
+  PARTNERS ||--o{ PRODUCT_PRICES : negotiates
+  PARTNERS ||--o{ RECEIVABLE_PAYMENTS : customer
+  PARTNERS ||--o{ PAYABLE_PAYMENTS : supplier
+  PRODUCTS ||--o{ INBOUND_RECORDS : sku
+  PRODUCTS ||--o{ OUTBOUND_RECORDS : sku
+  PRODUCTS ||--o{ PRODUCT_PRICES : has
+
+  PARTNERS {
+    TEXT code
+    TEXT short_name PK
+    TEXT full_name
+    INTEGER type
+  }
+  PRODUCTS {
+    TEXT code UNIQUE
+    TEXT category
+    TEXT product_model
+    TEXT remark
+  }
+  PRODUCT_PRICES {
+    INTEGER id PK
+    TEXT partner_short_name FK
+    TEXT product_model FK
+    TEXT effective_date
+    REAL unit_price
+  }
+  INBOUND_RECORDS {
+    INTEGER id PK
+    TEXT supplier_code FK
+    TEXT product_model FK
+    INTEGER quantity
+    REAL unit_price
+    REAL total_price
+    TEXT inbound_date
+  }
+  OUTBOUND_RECORDS {
+    INTEGER id PK
+    TEXT customer_code FK
+    TEXT product_model FK
+    INTEGER quantity
+    REAL unit_price
+    REAL total_price
+    TEXT outbound_date
+  }
+  RECEIVABLE_PAYMENTS {
+    INTEGER id PK
+    TEXT customer_code FK
+    REAL amount
+    TEXT pay_date
+    TEXT pay_method
+  }
+  PAYABLE_PAYMENTS {
+    INTEGER id PK
+    TEXT supplier_code FK
+    REAL amount
+    TEXT pay_date
+    TEXT pay_method
+  }
+```
+
+> Partner `type`: `0` = supplier, `1` = customer.
+
+## API Overview
+
+- **Base URL**: `/api`
+- **Auth**: `POST /api/login` returns a JWT; include `Authorization: Bearer <token>` in subsequent requests.
+- **Response format**: JSON with `success`/`message` fields where applicable.
+- **Full docs**: See `docs/api/` for per-endpoint request/response bodies.
+
+| Area | Method & Path | Purpose |
+| --- | --- | --- |
+| Auth | `POST /api/login` | Exchange credentials for JWT |
+| Overview | `GET /api/overview/stats`, `POST /api/overview/stats` | Dashboard metrics & refresh |
+| Products | `GET/POST/PUT/DELETE /api/products` | CRUD product catalog |
+| Partners | `GET/POST/PUT/DELETE /api/partners` | Manage customers/suppliers |
+| Pricing | `GET/POST/PUT/DELETE /api/prices` | Partner-specific product prices |
+| Inventory Inbound | `GET/POST/PUT/DELETE /api/inbound`, `POST /api/inbound/batch` | Receive goods and batch updates |
+| Inventory Outbound | `GET/POST/PUT/DELETE /api/outbound`, `POST /api/outbound/batch` | Ship goods and batch updates |
+| Stock | `GET /api/stock` | Real-time stock summary by product |
+| Finance - Receivable | `GET/POST/PUT/DELETE /api/receivable/payments` | Track customer payments |
+| Finance - Payable | `GET/POST/PUT/DELETE /api/payable/payments` | Track supplier payments |
+| Export | `GET /api/export/:type` | Export configured datasets (e.g., Excel) |
+
 ## Demo
 
 This is the detailed page for my demo link:
