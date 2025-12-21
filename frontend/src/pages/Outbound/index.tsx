@@ -22,10 +22,10 @@ import dayjs, { type Dayjs } from "dayjs";
 import { PlusOutlined, EditOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useSimpleApi, useSimpleApiData } from "@/hooks/useSimpleApi";
-import OutboundFilter from "./components/OutboundFilter";
-import OutboundTable from "./components/OutboundTable";
-import OutboundModal from "./components/OutboundModal";
-import OutboundBatchModal from "./components/OutboundBatchModal";
+import OutboundFilter from "@/pages/Outbound/components/OutboundFilter";
+import OutboundTable from "@/pages/Outbound/components/OutboundTable";
+import OutboundModal from "@/pages/Outbound/components/OutboundModal";
+import OutboundBatchModal from "@/pages/Outbound/components/OutboundBatchModal";
 import type {
   ApiListResponse,
   FetchParams,
@@ -211,7 +211,7 @@ const Outbound: FC = () => {
         const customer = partners.find(
           (partner) => partner.code === customerCode
         );
-        if (!customer || customer.short_name !== customerShortNameValue) {
+        if (customer?.short_name !== customerShortNameValue) {
           message.error(
             t("outbound.customerCodeShortNameMismatch") ??
               "客户代号与简称不匹配，请重新选择"
@@ -222,7 +222,7 @@ const Outbound: FC = () => {
 
       if (productCode && productModelValue) {
         const product = products.find((item) => item.code === productCode);
-        if (!product || product.product_model !== productModelValue) {
+        if (product?.product_model !== productModelValue) {
           message.error(
             t("outbound.productCodeModelMismatch") ??
               "产品代号与型号不匹配，请重新选择"

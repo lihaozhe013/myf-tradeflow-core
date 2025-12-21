@@ -210,7 +210,7 @@ const Inbound: FC = () => {
         const supplier = partners.find(
           (partner) => partner.code === supplierCode
         );
-        if (!supplier || supplier.short_name !== supplierShortNameValue) {
+        if (supplier?.short_name !== supplierShortNameValue) {
           message.error(
             t("inbound.supplierMismatch") ??
               "供应商代号与简称不匹配，请重新选择"
@@ -221,7 +221,7 @@ const Inbound: FC = () => {
 
       if (productCode && productModelValue) {
         const product = products.find((item) => item.code === productCode);
-        if (!product || product.product_model !== productModelValue) {
+        if (product?.product_model !== productModelValue) {
           message.error(
             t("inbound.productMismatch") ?? "产品代号与型号不匹配，请重新选择"
           );
