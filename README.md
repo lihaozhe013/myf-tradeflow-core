@@ -26,12 +26,12 @@ A lightweight tradeflow system designed for small businesses, built with React.j
 
 ```mermaid
 flowchart LR
-  Frontend[React SPA (Vite)] -->|HTTPS /api| API[Express REST API]
-  API --> Auth[JWT Auth + RBAC]
-  API --> Services{{Domain Services\nInventory / Partners / Pricing / Finance / Reports}}
-  Services --> DB[(SQLite)]
-  Services --> Config[data/ config JSON]
-  API --> Logging[Winston Logs]
+  Frontend["React SPA (Vite)"] -->|HTTPS /api| API["Express REST API"]
+  API --> Auth["JWT Auth + RBAC"]
+  API --> Services{{"Domain Services<br/>Inventory / Partners / Pricing / Finance / Reports"}}
+  Services --> DB[("SQLite")]
+  Services --> Config["data/ config JSON"]
+  API --> Logging["Winston Logs"]
 ```
 
 ## Database Schema (Backend)
@@ -48,14 +48,14 @@ erDiagram
   PRODUCTS ||--o{ PRODUCT_PRICES : has
 
   PARTNERS {
-    TEXT code UNIQUE "business key / FK target"
+    TEXT code "UNIQUE business key / FK target"
     TEXT short_name PK "database PK (legacy)"
     TEXT full_name
     INTEGER type
   }
   PRODUCTS {
     INTEGER rowid PK "implicit SQLite rowid"
-    TEXT code UNIQUE "business key / FK target"
+    TEXT code "UNIQUE business key / FK target"
     TEXT category
     TEXT product_model
     TEXT remark
