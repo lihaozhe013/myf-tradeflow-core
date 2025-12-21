@@ -28,7 +28,7 @@ A lightweight tradeflow system designed for small businesses, built with React.j
 flowchart LR
   Frontend[React SPA (Vite)] -->|HTTPS /api| API[Express REST API]
   API --> Auth[JWT Auth + RBAC]
-  API --> Services{{Domain Services\\nInventory / Partners / Pricing / Finance / Reports}}
+  API --> Services{{Domain Services\nInventory / Partners / Pricing / Finance / Reports}}
   Services --> DB[(SQLite)]
   Services --> Config[data/ config JSON]
   API --> Logging[Winston Logs]
@@ -39,7 +39,7 @@ flowchart LR
 ```mermaid
 erDiagram
   PARTNERS ||--o{ INBOUND_RECORDS : supplies
-  PARTNERS ||--o{ OUTBOUND_RECORDS : purchases
+  PARTNERS ||--o{ OUTBOUND_RECORDS : receives
   PARTNERS ||--o{ PRODUCT_PRICES : negotiates
   PARTNERS ||--o{ RECEIVABLE_PAYMENTS : customer
   PARTNERS ||--o{ PAYABLE_PAYMENTS : supplier
@@ -48,13 +48,14 @@ erDiagram
   PRODUCTS ||--o{ PRODUCT_PRICES : has
 
   PARTNERS {
-    TEXT code
-    TEXT short_name PK
+    TEXT code UNIQUE "business key / FK target"
+    TEXT short_name PK "database PK (legacy)"
     TEXT full_name
     INTEGER type
   }
   PRODUCTS {
-    TEXT code UNIQUE
+    INTEGER rowid PK "implicit SQLite rowid"
+    TEXT code UNIQUE "business key / FK target"
     TEXT category
     TEXT product_model
     TEXT remark
@@ -101,6 +102,13 @@ erDiagram
 ```
 
 > Partner `type`: `0` = supplier, `1` = customer.
+>
+> Key usage summary:
+> - Declared database PK: `PARTNERS.short_name` (legacy) because historical datasets and pricing were keyed to short names; re-keying is deferred (no migration scheduled in this repo) to avoid data migration risk.
+> - Business/lookup key: `PARTNERS.code` (unique); columns `supplier_code` and `customer_code` store this value to keep payable vs receivable roles explicit.
+> - Pricing keeps `PRODUCT_PRICES.partner_short_name` (matching `PARTNERS.short_name`) for backward compatibility; migrating pricing to use `code` is deferred to avoid breaking existing exports.
+> - `PRODUCTS` surfaces SQLite's implicit integer `rowid` as the table PK (shown above) while `code` remains the business identifier used in services and FKs.
+> - Mixed FK naming (`partner_short_name` vs. `supplier_code`/`customer_code`) is preserved intentionally for backward compatibility; new extensions should standardize on a `partner_code` column referencing `PARTNERS.code` unless interoperating with legacy price data.
 
 ## API Overview
 
@@ -109,18 +117,21 @@ erDiagram
 - **Response format**: JSON with `success`/`message` fields where applicable.
 - **Full docs**: See `docs/api/` for per-endpoint request/response bodies.
 
+Key endpoints (high level):
+
 | Area | Method & Path | Purpose |
 | --- | --- | --- |
 | Auth | `POST /api/login` | Exchange credentials for JWT |
-| Overview | `GET /api/overview/stats`, `POST /api/overview/stats` | Dashboard metrics & refresh |
-| Products | `GET/POST/PUT/DELETE /api/products` | CRUD product catalog |
-| Partners | `GET/POST/PUT/DELETE /api/partners` | Manage customers/suppliers |
-| Pricing | `GET/POST/PUT/DELETE /api/prices` | Partner-specific product prices |
-| Inventory Inbound | `GET/POST/PUT/DELETE /api/inbound`, `POST /api/inbound/batch` | Receive goods and batch updates |
-| Inventory Outbound | `GET/POST/PUT/DELETE /api/outbound`, `POST /api/outbound/batch` | Ship goods and batch updates |
+| Overview | `GET /api/overview/stats` | Fetch dashboard metrics |
+| Overview | `POST /api/overview/stats` | Trigger metrics recomputation |
+| Products | `/api/products` (GET, POST, PUT, DELETE) | CRUD endpoints for product catalog |
+| Partners | `/api/partners` (GET, POST, PUT, DELETE) | CRUD endpoints for customers/suppliers |
+| Pricing | `/api/product-prices` (GET, POST, PUT, DELETE) | CRUD partner-specific product prices (also see `/current` and `/auto` helpers) |
+| Inventory Inbound | `/api/inbound` (GET, POST, PUT, DELETE); `POST /api/inbound/batch` | Receive goods and perform batch updates |
+| Inventory Outbound | `/api/outbound` (GET, POST, PUT, DELETE); `POST /api/outbound/batch` | Ship goods and perform batch updates |
 | Stock | `GET /api/stock` | Real-time stock summary by product |
-| Finance - Receivable | `GET/POST/PUT/DELETE /api/receivable/payments` | Track customer payments |
-| Finance - Payable | `GET/POST/PUT/DELETE /api/payable/payments` | Track supplier payments |
+| Finance - Receivable | `/api/receivable/payments` (GET, POST, PUT, DELETE) | Track customer payments |
+| Finance - Payable | `/api/payable/payments` (GET, POST, PUT, DELETE) | Track supplier payments |
 | Export | `GET /api/export/:type` | Export configured datasets (e.g., Excel) |
 
 ## Demo
