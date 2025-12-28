@@ -26,113 +26,14 @@ A lightweight tradeflow system designed for small businesses, built with React.j
 
 ```mermaid
 flowchart LR
-  Frontend["React SPA (Vite)"] -->|HTTPS /api| API["Express REST API"]
+  Frontend["React SPA (Vite)"] -->|HTTPS /api| API["REST API"]
   API --> Auth["JWT Auth + RBAC"]
-  API --> Services{{"Domain Services<br/>Inventory / Partners / Pricing / Finance / Reports"}}
-  Services --> DB[("SQLite")]
-  Services --> Config["data/ config JSON"]
+  Auth --> Services{{"**Services**<br>(Inventory, Pricing, Finance, Reports)"}}
+  Services <--> Config["Config JSON"]
+  Services <--> DB[("SQLite")]
+  Services <--> Cache["Cache(JSON/Redis)"]
   API --> Logging["Winston Logs"]
 ```
-
-## Database Schema (Backend)
-
-```mermaid
-erDiagram
-  PARTNERS ||--o{ INBOUND_RECORDS : supplies
-  PARTNERS ||--o{ OUTBOUND_RECORDS : receives
-  PARTNERS ||--o{ PRODUCT_PRICES : negotiates
-  PARTNERS ||--o{ RECEIVABLE_PAYMENTS : customer
-  PARTNERS ||--o{ PAYABLE_PAYMENTS : supplier
-  PRODUCTS ||--o{ INBOUND_RECORDS : sku
-  PRODUCTS ||--o{ OUTBOUND_RECORDS : sku
-  PRODUCTS ||--o{ PRODUCT_PRICES : has
-
-  PARTNERS {
-    TEXT code "UNIQUE business key / FK target"
-    TEXT short_name PK "database PK (legacy)"
-    TEXT full_name
-    INTEGER type
-  }
-  PRODUCTS {
-    INTEGER rowid PK "implicit SQLite rowid"
-    TEXT code "UNIQUE business key / FK target"
-    TEXT category
-    TEXT product_model
-    TEXT remark
-  }
-  PRODUCT_PRICES {
-    INTEGER id PK
-    TEXT partner_short_name FK
-    TEXT product_model FK
-    TEXT effective_date
-    REAL unit_price
-  }
-  INBOUND_RECORDS {
-    INTEGER id PK
-    TEXT supplier_code FK
-    TEXT product_model FK
-    INTEGER quantity
-    REAL unit_price
-    REAL total_price
-    TEXT inbound_date
-  }
-  OUTBOUND_RECORDS {
-    INTEGER id PK
-    TEXT customer_code FK
-    TEXT product_model FK
-    INTEGER quantity
-    REAL unit_price
-    REAL total_price
-    TEXT outbound_date
-  }
-  RECEIVABLE_PAYMENTS {
-    INTEGER id PK
-    TEXT customer_code FK
-    REAL amount
-    TEXT pay_date
-    TEXT pay_method
-  }
-  PAYABLE_PAYMENTS {
-    INTEGER id PK
-    TEXT supplier_code FK
-    REAL amount
-    TEXT pay_date
-    TEXT pay_method
-  }
-```
-
-> Partner `type`: `0` = supplier, `1` = customer.
->
-> Key usage summary:
-> - Declared database PK: `PARTNERS.short_name` (legacy) because historical datasets and pricing were keyed to short names; re-keying is deferred (no migration scheduled in this repo) to avoid data migration risk.
-> - Business/lookup key: `PARTNERS.code` (unique); columns `supplier_code` and `customer_code` store this value to keep payable vs receivable roles explicit.
-> - Pricing keeps `PRODUCT_PRICES.partner_short_name` (matching `PARTNERS.short_name`) for backward compatibility; migrating pricing to use `code` is deferred to avoid breaking existing exports.
-> - `PRODUCTS` surfaces SQLite's implicit integer `rowid` as the table PK (shown above) while `code` remains the business identifier used in services and FKs.
-> - Mixed FK naming (`partner_short_name` vs. `supplier_code`/`customer_code`) is preserved intentionally for backward compatibility; new extensions should standardize on a `partner_code` column referencing `PARTNERS.code` unless interoperating with legacy price data.
-
-## API Overview
-
-- **Base URL**: `/api`
-- **Auth**: `POST /api/login` returns a JWT; include `Authorization: Bearer <token>` in subsequent requests.
-- **Response format**: JSON with `success`/`message` fields where applicable.
-- **Full docs**: See `docs/api/` for per-endpoint request/response bodies.
-
-Key endpoints (high level):
-
-| Area | Method & Path | Purpose |
-| --- | --- | --- |
-| Auth | `POST /api/login` | Exchange credentials for JWT |
-| Overview | `GET /api/overview/stats` | Fetch dashboard metrics |
-| Overview | `POST /api/overview/stats` | Trigger metrics recomputation |
-| Products | `/api/products` (GET, POST, PUT, DELETE) | CRUD endpoints for product catalog |
-| Partners | `/api/partners` (GET, POST, PUT, DELETE) | CRUD endpoints for customers/suppliers |
-| Pricing | `/api/product-prices` (GET, POST, PUT, DELETE) | CRUD partner-specific product prices (also see `/current` and `/auto` helpers) |
-| Inventory Inbound | `/api/inbound` (GET, POST, PUT, DELETE); `POST /api/inbound/batch` | Receive goods and perform batch updates |
-| Inventory Outbound | `/api/outbound` (GET, POST, PUT, DELETE); `POST /api/outbound/batch` | Ship goods and perform batch updates |
-| Stock | `GET /api/stock` | Real-time stock summary by product |
-| Finance - Receivable | `/api/receivable/payments` (GET, POST, PUT, DELETE) | Track customer payments |
-| Finance - Payable | `/api/payable/payments` (GET, POST, PUT, DELETE) | Track supplier payments |
-| Export | `GET /api/export/:type` | Export configured datasets (e.g., Excel) |
 
 ## Demo
 
@@ -152,6 +53,120 @@ This is the detailed page for my demo link:
 ![6.png](https://lihaozhe013.github.io/lihaozhe-website/posts/tradeflow-system/6.png)
 
 ![7.png](https://lihaozhe013.github.io/lihaozhe-website/posts/tradeflow-system/7.png)
+
+
+## Database Schema (Backend)
+
+> SQLite doesn’t support **Date**, so we use TEXT instead…
+
+### PARTNERS
+
+| Column  Name | Data Type | Key    | Nullable | Default |
+| ------------ | --------- | ------ | -------- | ------- |
+| code         | TEXT      | Unique | No       | NULL    |
+| short_name   | TEXT      | PK     | No       | NULL    |
+| full_name    | TEXT      |        | No       | NULL    |
+| type         | INTEGER   |        | No       | NULL    |
+
+### PRODUCTS 
+
+| Column  Name  | Data Type | Key    | Nullable | Default |
+| ------------- | --------- | ------ | -------- | ------- |
+| code          | TEXT      | Unique | No       | NULL    |
+| category      | TEXT      |        | No       | NULL    |
+| product_model | TEXT      |        | No       | NULL    |
+| remark        | TEXT      |        | No       | NULL    |
+
+### PRODUCT PRICE
+
+| Column  Name   | Data Type | Key        | Nullable | Default           |
+| -------------- | --------- | ---------- | -------- | ----------------- |
+| id             | INTEGER   | UNIQUE, PK | No       | AI                |
+| partner_code   | TEXT      | FK         | No       | NULL              |
+| product_code   | TEXT      | FK         | No       | NULL              |
+| effective_date | TEXT      |            | No       | CURRENT_TIMESTAMP |
+| unit_price     | REAL      |            | No       | NULL              |
+
+###  INBOUND RECORDS
+
+| Column  Name   | Data Type | Key        | Nullable | Default           |
+| -------------- | --------- | ---------- | -------- | ----------------- |
+| id             | INTEGER   | UNIQUE, PK | No       | AI                |
+| supplier_code  | TEXT      | FK         | No       | NULL              |
+| product_code   | TEXT      | FK         | No       | NULL              |
+| quantity       | INTEGER   |            | No       | 0                 |
+| unit_price     | REAL      |            | No       | 0                 |
+| total_price    | REAL      |            | No       | 0                 |
+| inbound_date   | TEXT      |            | No       | CURRENT_TIMESTAMP |
+| invoice_date   | TEXT      |            | Yes      | NULL              |
+| invoice_number | TEXT      |            | Yes      | NULL              |
+| receipt_number | TEXT      |            | Yes      | NULL              |
+| order_number   | TEXT      |            | Yes      | NULL              |
+| remark         | TEXT      |            | Yes      | NULL              |
+
+### OUTBOUND RECORDS
+
+| Column  Name   | Data Type | Key        | Nullable | Default           |
+| -------------- | --------- | ---------- | -------- | ----------------- |
+| id             | INTEGER   | UNIQUE, PK | No       | AI                |
+| customer_code  | TEXT      | FK         | No       | NULL              |
+| product_code   | TEXT      | FK         | No       | NULL              |
+| quantity       | INTEGER   |            | No       | 0                 |
+| unit_price     | REAL      |            | No       | 0                 |
+| total_price    | REAL      |            | No       | 0                 |
+| outbound_date  | TEXT      |            | No       | CURRENT_TIMESTAMP |
+| invoice_date   | TEXT      |            | Yes      | NULL              |
+| invoice_number | TEXT      |            | Yes      | NULL              |
+| receipt_number | TEXT      |            | Yes      | NULL              |
+| order_number   | TEXT      |            | Yes      | NULL              |
+| remark         | TEXT      |            | Yes      | NULL              |
+
+### RECEIVABLE PAYMENTS
+
+| Column  Name  | Data Type | Key        | Nullable | Default           |
+| ------------- | --------- | ---------- | -------- | ----------------- |
+| id            | INTEGER   | UNIQUE, PK | No       | AI                |
+| customer_code | TEXT      | FK         | No       | NULL              |
+| amount        | REAL      |            | No       | 0                 |
+| pay_date      | TEXT      |            | No       | CURRENT_TIMESTAMP |
+| pay_method    | TEXT      |            | Yes      | NULL              |
+| remark        | TEXT      |            | Yes      | NULL              |
+
+### PAYABLE PAYMENTS
+
+| Column  Name  | Data Type | Key        | Nullable | Default           |
+| ------------- | --------- | ---------- | -------- | ----------------- |
+| id            | INTEGER   | UNIQUE, PK | No       | AI                |
+| supplier_code | TEXT      | FK         | No       | NULL              |
+| amount        | REAL      |            | No       | 0                 |
+| pay_date      | TEXT      |            | No       | CURRENT_TIMESTAMP |
+| pay_method    | TEXT      |            | Yes      | NULL              |
+| remark        | TEXT      |            | Yes      | NULL              |
+
+
+## API Overview
+
+- **Base URL**: `/api`
+- **Auth**: `POST /api/login` returns a JWT; include `Authorization: Bearer <token>` in subsequent requests.
+
+Key endpoints (high level):
+
+| Area | Method & Path | Purpose |
+| --- | --- | --- |
+| Auth | `POST /api/login` | Exchange credentials for JWT |
+| Overview | `GET /api/overview/stats` | Fetch dashboard metrics |
+| Overview | `POST /api/overview/stats` | Trigger metrics recomputation |
+| Products | `/api/products` (GET, POST, PUT, DELETE) | CRUD endpoints for product catalog |
+| Partners | `/api/partners` (GET, POST, PUT, DELETE) | CRUD endpoints for customers/suppliers |
+| Pricing | `/api/product-prices` (GET, POST, PUT, DELETE) | CRUD partner-specific product prices (also see `/current` and `/auto` helpers) |
+| Inventory Inbound | `/api/inbound` (GET, POST, PUT, DELETE); `POST /api/inbound/batch` | Receive goods and perform batch updates |
+| Inventory Outbound | `/api/outbound` (GET, POST, PUT, DELETE); `POST /api/outbound/batch` | Ship goods and perform batch updates |
+| Stock | `GET /api/stock` | Real-time stock summary by product |
+| Finance - Receivable | `/api/receivable/payments` (GET, POST, PUT, DELETE) | Track customer payments |
+| Finance - Payable | `/api/payable/payments` (GET, POST, PUT, DELETE) | Track supplier payments |
+| Export | `GET /api/export/:type` | Export configured datasets (e.g., Excel) |
+
+
 ## Quick Start
 
 ### Prerequisites
@@ -206,9 +221,22 @@ make build
 make start
 ```
 
+or
+
+```bash
+docker compose up -d
+```
+
 #### Stop
+
 ```bash
 make stop
+```
+
+or
+
+```bash
+docker compose stop
 ```
 
 #### Use shell in docker
