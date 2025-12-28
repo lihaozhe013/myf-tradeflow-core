@@ -192,13 +192,12 @@ const InboundModal: FC<InboundModalProps> = ({
               name="quantity"
               rules={[
                 { required: true, message: t('inbound.inputQuantity') },
-                { type: 'number', min: 1, message: t('inbound.quantityGreaterThanZero') },
+                { type: 'number', message: t('inbound.quantityGreaterThanZero') },
               ]}
             >
               <InputNumber
                 style={{ width: '100%' }}
                 placeholder={t('inbound.inputQuantity') ?? ''}
-                min={1}
                 onChange={onPriceOrQuantityChange}
               />
             </Form.Item>

@@ -192,13 +192,12 @@ const OutboundModal: FC<OutboundModalProps> = ({
               name="quantity"
               rules={[
                 { required: true, message: t('outbound.inputQuantity') },
-                { type: 'number', min: 1, message: t('outbound.quantityGreaterThanZero') },
+                { type: 'number', message: t('outbound.quantityGreaterThanZero') },
               ]}
             >
               <InputNumber
                 style={{ width: '100%' }}
                 placeholder={t('outbound.inputQuantity') ?? ''}
-                min={1}
                 onChange={onPriceOrQuantityChange}
               />
             </Form.Item>

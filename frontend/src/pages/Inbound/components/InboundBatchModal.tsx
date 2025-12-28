@@ -185,7 +185,6 @@ const InboundBatchModal: FC<InboundBatchModalProps> = ({
               rules={[
                 {
                   type: "number",
-                  min: 1,
                   message: t("inbound.quantityGreaterThanZero"),
                 },
               ]}
@@ -193,7 +192,6 @@ const InboundBatchModal: FC<InboundBatchModalProps> = ({
               <InputNumber
                 style={{ width: "100%" }}
                 placeholder={t("inbound.inputQuantity") ?? ""}
-                min={1}
                 onChange={onPriceOrQuantityChange}
               />
             </Form.Item>
@@ -223,7 +221,6 @@ const InboundBatchModal: FC<InboundBatchModalProps> = ({
               rules={[
                 {
                   type: "number",
-                  min: 0,
                   message: t("inbound.priceGreaterThanZero"),
                 },
               ]}
@@ -236,7 +233,6 @@ const InboundBatchModal: FC<InboundBatchModalProps> = ({
                     : t("inbound.autoFetch") ?? ""
                 }
                 disabled={!manualPrice}
-                min={0}
                 onChange={onPriceOrQuantityChange}
               />
             </Form.Item>
