@@ -4,6 +4,7 @@ import {
   calculateFilteredSoldGoodsCost,
   calculateDetailAnalysis,
   calculateSalesData,
+  calculatePurchaseData,
   getFilterOptions,
   validateAnalysisParams,
   validateBasicParams,
@@ -16,14 +17,18 @@ import type {
   SalesData,
   DetailItem,
   FilterOptions,
+  AnalysisType,
 } from "@/routes/analysis/utils/types";
 
 const router = Router();
 
 // GET /api/analysis/data
 router.get("/data", (req: Request, res: Response) => {
-  const { start_date, end_date, customer_code, product_model } =
+  const { start_date, end_date, customer_code, supplier_code, product_model, type } =
     req.query as Record<string, string | undefined>;
+  
+  const analysisType = (type as AnalysisType) || "outbound";
+  const partnerCode = analysisType === "inbound" ? supplier_code : customer_code;
 
   const validation = validateBasicParams({ start_date, end_date });
   if (!validation.isValid) {
@@ -37,8 +42,9 @@ router.get("/data", (req: Request, res: Response) => {
   const cacheKey = generateCacheKey(
     start_date!,
     end_date!,
-    customer_code,
-    product_model
+    partnerCode,
+    product_model,
+    analysisType
   );
   const cache = readCache();
 
@@ -60,8 +66,11 @@ router.get("/data", (req: Request, res: Response) => {
 
 // GET /api/analysis/detail
 router.get("/detail", (req: Request, res: Response) => {
-  const { start_date, end_date, customer_code, product_model } =
+  const { start_date, end_date, customer_code, supplier_code, product_model, type } =
     req.query as Record<string, string | undefined>;
+
+  const analysisType = (type as AnalysisType) || "outbound";
+  const partnerCode = analysisType === "inbound" ? supplier_code : customer_code;
 
   const validation = validateBasicParams({ start_date, end_date });
   if (!validation.isValid) {
@@ -75,8 +84,9 @@ router.get("/detail", (req: Request, res: Response) => {
   const detailCacheKey = generateDetailCacheKey(
     start_date!,
     end_date!,
-    customer_code,
-    product_model
+    partnerCode,
+    product_model,
+    analysisType
   );
   const cache = readCache();
 
@@ -97,14 +107,19 @@ router.get("/detail", (req: Request, res: Response) => {
 
 // POST /api/analysis/refresh
 router.post("/refresh", (req: Request, res: Response) => {
-  const { start_date, end_date, customer_code, product_model } =
+  const { start_date, end_date, customer_code, supplier_code, product_model, type } =
     req.body as Record<string, string | undefined>;
+
+  const analysisType = (type as AnalysisType) || "outbound";
+  const partnerCode = analysisType === "inbound" ? supplier_code : customer_code;
+
   const validation = validateAnalysisParams({
     start_date,
     end_date,
-    customer_code,
+    customer_code: partnerCode, // validating generic partner code
     product_model,
   });
+  
   if (!validation.isValid) {
     res.status(400).json({
       success: false,
@@ -112,6 +127,87 @@ router.post("/refresh", (req: Request, res: Response) => {
     });
     return;
   }
+
+  // Helper to save result and respond
+  const saveAndRespond = (data: any, detailData: DetailItem[]) => {
+      const cacheKey = generateCacheKey(
+        start_date!,
+        end_date!,
+        partnerCode,
+        product_model,
+        analysisType
+      );
+      const detailCacheKey = generateDetailCacheKey(
+        start_date!,
+        end_date!,
+        partnerCode,
+        product_model,
+        analysisType
+      );
+      const cache = readCache();
+
+      cache[cacheKey] = data as unknown as Record<string, unknown>;
+      cache[detailCacheKey] = {
+        detail_data: detailData,
+        last_updated: new Date().toISOString(),
+      } as unknown as Record<string, unknown>;
+
+      if (writeCache(cache)) {
+        res.json({
+          success: true,
+          data: data,
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          message: "Cache save failed",
+        });
+      }
+  };
+
+  if (analysisType === "inbound") {
+      calculatePurchaseData(
+          start_date!,
+          end_date!,
+          partnerCode, // This is supplier_code
+          product_model,
+          (err, purchaseData) => {
+              if (err || !purchaseData) {
+                  res.status(500).json({ success: false, message: "Failed to calculate purchase data" });
+                  return;
+              }
+
+              const resultData = {
+                  ...purchaseData,
+                  query_params: {
+                      start_date,
+                      end_date,
+                      supplier_code: partnerCode || "All",
+                      product_model: product_model || "All",
+                      type: 'inbound'
+                  },
+                  last_updated: new Date().toISOString(),
+              };
+
+              calculateDetailAnalysis(
+                  start_date!,
+                  end_date!,
+                  partnerCode,
+                  product_model,
+                  'inbound',
+                  (detailErr, detailData) => {
+                      if (detailErr) {
+                          console.error("Detail analysis failed", detailErr);
+                      }
+                      saveAndRespond(resultData, detailData || []);
+                  }
+              );
+          }
+      );
+      return;
+  }
+
+  // Outbound Logic
   calculateSalesData(
     start_date!,
     end_date!,
@@ -177,47 +273,14 @@ router.post("/refresh", (req: Request, res: Response) => {
             end_date!,
             customer_code,
             product_model,
+            'outbound',
             (detailErr: Error | null, detailData?: DetailItem[]) => {
               if (detailErr) {
                 console.error("Failed to compute detailed analysis data:", detailErr);
                 detailData = [];
               }
-
-              const cacheKey = generateCacheKey(
-                start_date!,
-                end_date!,
-                customer_code,
-                product_model
-              );
-              const detailCacheKey = generateDetailCacheKey(
-                start_date!,
-                end_date!,
-                customer_code,
-                product_model
-              );
-              const cache = readCache();
-
-              cache[cacheKey] = resultData as unknown as Record<
-                string,
-                unknown
-              >;
-              cache[detailCacheKey] = {
-                detail_data: detailData,
-                last_updated: new Date().toISOString(),
-              } as unknown as Record<string, unknown>;
-
-              if (writeCache(cache)) {
-                res.json({
-                  success: true,
-                  data: resultData,
-                });
-              } else {
-                res.status(500).json({
-                  success: false,
-                  message: "Cache save failed",
-                });
-              }
-              return;
+              
+              saveAndRespond(resultData, detailData || []);
             }
           );
         }

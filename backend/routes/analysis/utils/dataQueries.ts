@@ -14,6 +14,13 @@ export function getFilterOptions(
     ORDER BY short_name
   `;
 
+  const supplierSql = `
+    SELECT code, short_name, full_name 
+    FROM partners 
+    WHERE type = 0 
+    ORDER BY short_name
+  `;
+
   const productSql = `
     SELECT code, product_model 
     FROM products 
@@ -22,6 +29,7 @@ export function getFilterOptions(
 
   try {
     const customers: any[] = db.prepare(customerSql).all();
+    const suppliers: any[] = db.prepare(supplierSql).all();
     const products: any[] = db.prepare(productSql).all();
 
     const customerOptions: FilterOptions["customers"] = [
@@ -29,6 +37,14 @@ export function getFilterOptions(
       ...customers.map((c: any) => ({
         code: c.code,
         name: `${c.short_name} (${c.full_name})`,
+      })),
+    ];
+
+    const supplierOptions: FilterOptions["suppliers"] = [
+      { code: "All", name: "All" },
+      ...suppliers.map((s: any) => ({
+        code: s.code,
+        name: `${s.short_name} (${s.full_name})`,
       })),
     ];
 
@@ -42,6 +58,7 @@ export function getFilterOptions(
 
     callback(null, {
       customers: customerOptions,
+      suppliers: supplierOptions,
       products: productOptions,
     });
   } catch (err) {

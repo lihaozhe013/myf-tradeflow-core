@@ -5,22 +5,24 @@ export function generateCacheKey(
   startDate: string,
   endDate: string,
   customerCode?: string,
-  productModel?: string
+  productModel?: string,
+  type: string = "outbound"
 ): string {
   const customer = customerCode || "All";
   const product = productModel || "All";
-  return `${startDate}_${endDate}_${customer}_${product}`;
+  return `${type}_${startDate}_${endDate}_${customer}_${product}`;
 }
 
 export function generateDetailCacheKey(
   startDate: string,
   endDate: string,
   customerCode?: string,
-  productModel?: string
+  productModel?: string,
+  type: string = "outbound"
 ): string {
   const customer = customerCode || "All";
   const product = productModel || "All";
-  return `detail_${startDate}_${endDate}_${customer}_${product}`;
+  return `detail_${type}_${startDate}_${endDate}_${customer}_${product}`;
 }
 
 export function getCacheFilePath(): string {
