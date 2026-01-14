@@ -3,7 +3,7 @@
     {
       "name": "tradeflow-core-prod",
       "script": "backend/server.js",
-      "cwd": "..",
+      "cwd": "/app",
       "instances": "max",
       "exec_mode": "cluster",
       "env": {

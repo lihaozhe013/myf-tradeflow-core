@@ -1,25 +1,11 @@
-name: tradeflow-core
-
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: tradeflow-core
-    container_name: tradeflow-core-container
-    command: sh -c "while true; do sleep 3600; done"
-    environment:
-      - NODE_ENV=development
+    image: lihaozhe013/tradeflow-core:latest
+    container_name: tradeflow-core-prod
+    restart: always
     ports:
       - "8000:8000"
-      - "5173:5173"
     volumes:
-      - .:/app
-      - nm-root:/app/node_modules
-      - nm-backend:/app/backend/node_modules
-      - nm-frontend:/app/frontend/node_modules
-
-volumes:
-  nm-root:
-  nm-backend:
-  nm-frontend:
+      - /opt/tradeflow/data:/app/data
+    environment:
+      - NODE_ENV=production

@@ -24,30 +24,4 @@ if (!(fs2.existsSync(targetDir) && fs2.statSync(targetDir).isDirectory())) {
   process.exit(1);
 }
 
-const args = fs.existsSync(path.join(targetDir, "package-lock.json"))
-  ? ["ci", "--omit=dev"]
-  : ["install", "--omit=dev"];
-
-console.log(`Installing packages for Prod Env: ${npmCmd} ${args.join(" ")}`);
-const child = spawn(npmCmd, args, {
-  cwd: targetDir,
-  stdio: "inherit",
-  // 某些 Windows 终端需要开 shell 才不报 EINVAL；若不需要可关掉
-  shell: process.platform === "win32",
-});
-
-child.on("error", (err) => {
-  console.error("spawn error:", err);
-});
-
-child.on("close", (code, signal) => {
-  if (signal) {
-    console.error(`ERROR: ${signal}`);
-    process.exit(1);
-  }
-  if (code !== 0) {
-    console.error(`ERROR: ${code}`);
-    process.exit(code);
-  }
-});
 ``;
