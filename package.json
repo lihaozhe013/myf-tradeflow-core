@@ -17,7 +17,7 @@
     "argon2": "^0.44.0",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
-    "fs-extra": "^11.3.2"
+    "fs-extra": "^11.3.3"
   },
   "engines": {
     "node": ">=22.0.0",
