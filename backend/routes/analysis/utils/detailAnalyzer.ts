@@ -1,7 +1,7 @@
 import db from "@/db";
 import decimalCalc from "@/utils/decimalCalculator";
 import { calculateFilteredSoldGoodsCost } from "@/routes/analysis/utils/costCalculator";
-import type { DetailItem } from "@/routes/analysis/utils/types";
+import type { DetailItem, AnalysisType } from "@/routes/analysis/utils/types";
 
 /**
  * Calculate detailed analytical data (grouped by customer or product)
@@ -9,35 +9,106 @@ import type { DetailItem } from "@/routes/analysis/utils/types";
 export function calculateDetailAnalysis(
   startDate: string,
   endDate: string,
-  customerCode: string | null | undefined,
+  partnerCode: string | null | undefined, // Generalized customerCode argument
   productModel: string | null | undefined,
+  analysisType: AnalysisType = 'outbound',
   callback: (err: Error | null, detailData?: DetailItem[]) => void
 ): void {
   // Determine the grouping type
-  const groupByCustomer = !customerCode || customerCode === "All";
+  const groupByPartner = !partnerCode || partnerCode === "All";
   const groupByProduct = !productModel || productModel === "All";
 
-  // If both are All or neither is All, no detailed analysis is required
-  if (
-    (groupByCustomer && groupByProduct) ||
-    (!groupByCustomer && !groupByProduct)
-  ) {
-    callback(null, []);
+  if (analysisType === 'inbound') {
+    handleInboundAnalysis(startDate, endDate, partnerCode, productModel, groupByPartner, groupByProduct, callback);
     return;
   }
 
-  let groupField: "customer_code" | "product_model";
-  let filterField: "customer_code" | "product_model";
-  let filterValue: string | null | undefined;
+  handleOutboundAnalysis(startDate, endDate, partnerCode, productModel, groupByPartner, groupByProduct, callback);
+}
 
-  if (groupByCustomer) {
-    groupField = "customer_code";
-    filterField = "product_model";
-    filterValue = productModel;
-  } else {
-    groupField = "product_model";
-    filterField = "customer_code";
-    filterValue = customerCode;
+function handleInboundAnalysis(
+  startDate: string,
+  endDate: string,
+  supplierCode: string | null | undefined,
+  productModel: string | null | undefined,
+  groupBySupplier: boolean,
+  _groupByProduct: boolean,
+  callback: (err: Error | null, detailData?: DetailItem[]) => void
+) {
+  // Logic: Group by Supplier if Supplier is "All", otherwise Group by Product
+  const groupField = groupBySupplier ? "supplier_code" : "product_model";
+
+  const conditions = [`date(inbound_date) BETWEEN ? AND ?`];
+  const params: any[] = [startDate, endDate];
+
+  if (supplierCode && supplierCode !== 'All') {
+      conditions.push(`supplier_code = ?`);
+      params.push(supplierCode);
+  }
+  if (productModel && productModel !== 'All') {
+      conditions.push(`product_model = ?`);
+      params.push(productModel);
+  }
+
+  const inboundSql = `
+    SELECT 
+      ${groupField} as group_key,
+      product_model,
+      supplier_code,
+      SUM(CASE WHEN unit_price >= 0 THEN quantity * unit_price ELSE 0 END) as normal_purchase,
+      SUM(CASE WHEN unit_price < 0 THEN ABS(quantity * unit_price) ELSE 0 END) as special_income
+    FROM inbound_records 
+    WHERE ${conditions.join(' AND ')}
+    GROUP BY ${groupField}
+    HAVING normal_purchase > 0 OR special_income > 0
+  `;
+
+  try {
+    const inboundGroups: any[] = db.prepare(inboundSql).all(...params);
+    const results: DetailItem[] = inboundGroups.map(group => {
+      const normalPurchase = decimalCalc.fromSqlResult(group.normal_purchase, 0, 2);
+      const specialIncome = decimalCalc.fromSqlResult(group.special_income, 0, 2);
+      const purchaseAmount = decimalCalc.toDbNumber(
+        decimalCalc.subtract(normalPurchase, specialIncome),
+        2
+      );
+
+      return {
+        group_key: group.group_key,
+        supplier_code: groupBySupplier ? group.group_key : (supplierCode || group.supplier_code), 
+        product_model: groupBySupplier ? (productModel || group.product_model) : group.group_key,
+        purchase_amount: purchaseAmount
+      };
+    });
+    
+    callback(null, results);
+  } catch (err) {
+    callback(err as Error);
+  }
+}
+
+function handleOutboundAnalysis(
+  startDate: string,
+  endDate: string,
+  customerCode: string | null | undefined,
+  productModel: string | null | undefined,
+  groupByCustomer: boolean,
+  groupByProduct: boolean,
+  callback: (err: Error | null, detailData?: DetailItem[]) => void
+) {
+  // Logic: Group by Customer if Customer is "All", otherwise Group by Product
+  const groupField = groupByCustomer ? "customer_code" : "product_model";
+
+  const conditions = [`date(outbound_date) BETWEEN ? AND ?`];
+  const params: any[] = [startDate, endDate];
+
+  if (customerCode && customerCode !== 'All') {
+      conditions.push(`customer_code = ?`);
+      params.push(customerCode);
+  }
+  if (productModel && productModel !== 'All') {
+      conditions.push(`product_model = ?`);
+      params.push(productModel);
   }
 
   // Retrieve all relevant outbound records
@@ -49,14 +120,13 @@ export function calculateDetailAnalysis(
       SUM(CASE WHEN unit_price >= 0 THEN quantity * unit_price ELSE 0 END) as normal_sales,
       SUM(CASE WHEN unit_price < 0 THEN ABS(quantity * unit_price) ELSE 0 END) as special_expense
     FROM outbound_records 
-    WHERE date(outbound_date) BETWEEN ? AND ?
-      AND ${filterField} = ?
+    WHERE ${conditions.join(' AND ')}
     GROUP BY ${groupField}
     HAVING normal_sales > 0 OR special_expense > 0
   `;
 
   try {
-    const outboundGroups: any[] = db.prepare(outboundSql).all(startDate, endDate, filterValue);
+    const outboundGroups: any[] = db.prepare(outboundSql).all(...params);
 
     if (!outboundGroups || outboundGroups.length === 0) {
       callback(null, []);

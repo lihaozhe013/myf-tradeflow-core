@@ -1,17 +1,30 @@
 import { useState } from 'react';
 import { message } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { useSimpleApi } from '../../../hooks/useSimpleApi';
+import { useSimpleApi } from '@/hooks/useSimpleApi';
+import type { Dayjs } from 'dayjs';
+import type { 
+    AnalysisType, 
+    AnalysisData, 
+    DetailItem, 
+    PartnerOption 
+} from '@/types/analysis';
 
-const useAnalysisExport = () => {
+export const useAnalysisExport = () => {
   const { t } = useTranslation();
   const [exporting, setExporting] = useState(false);
   
-  // 使用认证API
   const apiInstance = useSimpleApi();
 
-  // 执行普通导出
-  const performNormalExport = async (analysisData, detailData, dateRange, selectedCustomer, selectedProduct, customers) => {
+  const performNormalExport = async (
+      analysisData: AnalysisData, 
+      detailData: DetailItem[], 
+      dateRange: [Dayjs, Dayjs], 
+      selectedPartner: string | null, 
+      selectedProduct: string | null, 
+      partners: PartnerOption[], 
+      analysisType: AnalysisType
+  ) => {
     if (!analysisData) {
       message.warning(t('analysis.noDataToExport'));
       return;
@@ -25,12 +38,12 @@ const useAnalysisExport = () => {
     try {
       setExporting(true);
       
-      // 处理详细数据，添加客户名称映射
       const processedDetailData = detailData.map(item => {
-        const customer = customers.find(c => c.code === item.customer_code);
+        const partnerCode = item.partner_code || item.supplier_code || item.customer_code;
+        const partner = partners.find(c => c.code === partnerCode);
         return {
           ...item,
-          customer_name: customer ? customer.short_name : item.customer_code
+          partner_name: partner ? partner.name : partnerCode
         };
       });
       
@@ -39,51 +52,48 @@ const useAnalysisExport = () => {
         detailData: processedDetailData,
         startDate: dateRange[0].format('YYYY-MM-DD'),
         endDate: dateRange[1].format('YYYY-MM-DD'),
-        customerCode: selectedCustomer && selectedCustomer !== 'ALL' ? selectedCustomer : undefined,
-        productModel: selectedProduct && selectedProduct !== 'ALL' ? selectedProduct : undefined
+        partnerCode: selectedPartner && selectedPartner !== 'All' ? selectedPartner : undefined,
+        productModel: selectedProduct && selectedProduct !== 'All' ? selectedProduct : undefined,
+        type: analysisType
       };
 
-      const blob = await apiInstance.postBlob('/export/analysis', requestBody);
+      const blob = await (apiInstance as any).postBlob('/export/analysis', requestBody);
 
-      // 获取文件名并下载
-      downloadFile(blob, '数据分析导出.xlsx');
+      downloadFile(blob, `Data_Analysis_Export_${analysisType}.xlsx`);
       message.success(t('analysis.exportSuccess'));
-    } catch (error) {
-      console.error('导出失败:', error);
+    } catch (error: any) {
+      console.error('Export failed:', error);
       message.error(error.message || t('analysis.exportFailed'));
     } finally {
       setExporting(false);
     }
   };
 
-  // 执行高级导出
-  const performAdvancedExport = async (exportType, dateRange) => {
+  const performAdvancedExport = async (exportType: string, dateRange: [Dayjs, Dayjs], analysisType: AnalysisType) => {
     try {
       setExporting(true);
       
       const requestBody = {
-        exportType, // 'customer' 或 'product'
+        exportType, 
         startDate: dateRange[0].format('YYYY-MM-DD'),
-        endDate: dateRange[1].format('YYYY-MM-DD')
+        endDate: dateRange[1].format('YYYY-MM-DD'),
+        type: analysisType
       };
 
-      const blob = await apiInstance.postBlob('/export/analysis/advanced', requestBody);
+      const blob = await (apiInstance as any).postBlob('/export/analysis/advanced', requestBody);
 
-      // 获取文件名并下载
-      const defaultFilename = `高级分析导出_${exportType === 'customer' ? '按客户分类' : '按产品分类'}.xlsx`;
+      const defaultFilename = `Advanced_Export_${analysisType}_${exportType}.xlsx`;
       downloadFile(blob, defaultFilename);
       message.success(t('analysis.exportSuccess'));
-    } catch (error) {
-      console.error('高级导出失败:', error);
+    } catch (error: any) {
+      console.error('Advanced export failed:', error);
       message.error(error.message || t('analysis.exportFailed'));
     } finally {
       setExporting(false);
     }
   };
 
-  // 下载文件的通用函数
-  const downloadFile = async (blob, defaultFilename) => {
-    // 创建下载链接
+  const downloadFile = (blob: Blob, defaultFilename: string) => {
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
