@@ -6,7 +6,6 @@ const router: Router = express.Router();
 
 /**
  * POST /api/db-backup
- * 备份数据库
  */
 router.post('/', async (_req: Request, res: Response): Promise<void> => {
   try {
