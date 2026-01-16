@@ -17,6 +17,6 @@ if (!fs.pathExistsSync(srcServer)) {
 fs.moveSync(srcServer, dstServer, { overwrite: true });
 
 // Copy backend package.json to dist and normalize start script
-const srcPkg = r("backend/scripts/prod-package.json");
+const srcPkg = r("backend/scripts/package.json");
 const dstPkg = r("dist/package.json");
 fs.copySync(srcPkg, dstPkg);

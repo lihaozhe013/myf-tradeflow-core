@@ -8,7 +8,7 @@
   "main": "backend/server.js",
   "dependencies": {
     "argon2": "^0.44.0",
-    "better-sqlite3": "^12.5.0",
+    "better-sqlite3": "^12.6.0",
     "cors": "^2.8.5",
     "decimal.js": "^10.6.0",
     "express": "^5.2.1",
