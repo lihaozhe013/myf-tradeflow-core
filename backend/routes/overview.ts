@@ -477,7 +477,7 @@ router.get('/top-sales-products', (_req: Request, res: Response) => {
 
 // Get monthly inventory change for specified product (read from overview-stats.json)
 router.get('/monthly-inventory-change/:productModel', (req: Request, res: Response) => {
-  const productModel = req.params['productModel'];
+  const productModel = req.params['productModel'] as string;
 
   if (!productModel) {
     return res.status(400).json({
