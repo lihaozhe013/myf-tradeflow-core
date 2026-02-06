@@ -23,13 +23,13 @@ const AdvancedExportModal: React.FC<AdvancedExportModalProps> = ({
 
   return (
     <Modal
-      title={t('analysis.advancedExport') || "Advanced Export"}
+      title={t('analysis.advancedExport.title') || "Advanced Export"}
       open={visible}
       onCancel={onCancel}
       footer={null}
       width={500}
     >
-      <p>{t('analysis.selectExportType') || "Please select export grouping type:"}</p>
+      {/* <p>{t('analysis.advancedExport.exportMethod') || "Please select export grouping type:"}</p> */}
       
       <Space direction="vertical" style={{ width: '100%', marginTop: 20 }}>
         <Button 
@@ -40,8 +40,8 @@ const AdvancedExportModal: React.FC<AdvancedExportModalProps> = ({
           loading={exporting}
         >
           {analysisType === 'outbound' 
-            ? (t('analysis.exportByCustomer') || "Export by Customer") 
-            : (t('analysis.exportBySupplier') || "Export by Supplier")}
+            ? (t('analysis.advancedExport.byCustomer') || "Export by Customer") 
+            : (t('analysis.advancedExport.bySupplier') || "Export by Supplier")}
         </Button>
         
         <Button 
@@ -51,7 +51,7 @@ const AdvancedExportModal: React.FC<AdvancedExportModalProps> = ({
           onClick={() => onExport('product')}
           loading={exporting}
         >
-          {t('analysis.exportByProduct') || "Export by Product"}
+          {t('analysis.advancedExport.byProduct') || "Export by Product"}
         </Button>
       </Space>
     </Modal>
