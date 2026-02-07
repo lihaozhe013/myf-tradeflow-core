@@ -1,15 +1,32 @@
 import fs from "fs";
 import Database from "better-sqlite3";
 import { initSql } from "@/utils/dbSchema";
-import { resolveFilesInDataPath } from "@/utils/paths";
+import { resolveFilesInDataPath, appConfigPath } from "@/utils/paths";
 
 const dbPath: string = resolveFilesInDataPath("data.db");
+
+function getDatabaseType(): string {
+  try {
+    if (fs.existsSync(appConfigPath)) {
+      const config = JSON.parse(fs.readFileSync(appConfigPath, "utf8"));
+      return config.database?.type || 'sqlite';
+    }
+  } catch (e) { /* ignore */ }
+  return 'sqlite';
+}
 
 /**
  * Connect to data.db with multi-threading support (PM2 cluster / Kubernetes)
  * @returns {Database.Database}
  */
 function initializeDatabase(): Database.Database {
+  if (getDatabaseType() === 'postgresql') {
+    console.log("App configured for PostgreSQL. Skipping Legacy SQLite initialization.");
+    // Return a dummy object to satisfy the type, but methods will fail if called.
+    // This assumes usages are guarded or Migrated to Prisma.
+    return {} as Database.Database;
+  }
+
   const dbExists: boolean = fs.existsSync(dbPath);
   
   try {
