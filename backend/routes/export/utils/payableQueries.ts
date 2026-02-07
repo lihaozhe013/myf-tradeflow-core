@@ -1,8 +1,8 @@
-import db from "@/db";
-import decimalCalc from "@/utils/decimalCalculator";
+import { prisma } from "@/prismaClient.js";
+import decimalCalc from "@/utils/decimalCalculator.js";
 
 export default class PayableQueries {
-  getPayableSummary(filters: any = {}): Promise<any[]> {
+  async getPayableSummary(filters: any = {}): Promise<any[]> {
     try {
       let sql = `
         SELECT 
@@ -37,7 +37,9 @@ export default class PayableQueries {
       sql +=
         " GROUP BY i.supplier_code, i.supplier_short_name, i.supplier_full_name";
       sql += " ORDER BY balance DESC";
-      const rows = db.prepare(sql).all(...params) as any[];
+      
+      const rows = await prisma.$queryRawUnsafe<any[]>(sql, ...params);
+      
       const processed = rows.map((row) => {
         const totalPurchases = decimalCalc.fromSqlResult(
           row.total_purchases,
@@ -58,58 +60,76 @@ export default class PayableQueries {
           balance,
         };
       });
-      return Promise.resolve(processed);
+      return processed;
     } catch (error) {
-      return Promise.reject(error as Error);
+      throw error;
     }
   }
 
-  getPayableDetails(filters: any = {}): Promise<any[]> {
+  async getPayableDetails(filters: any = {}): Promise<any[]> {
     try {
-      let sql = `
-        SELECT id as record_id, supplier_code, supplier_short_name, 
-               product_model, total_price, inbound_date, remark
-        FROM inbound_records 
-        WHERE 1=1
-      `;
-      const params: any[] = [];
+      const where: any = {};
       if (filters.outboundFrom) {
-        sql += " AND inbound_date >= ?";
-        params.push(filters.outboundFrom);
+        where.inbound_date = { ...where.inbound_date, gte: filters.outboundFrom };
       }
       if (filters.outboundTo) {
-        sql += " AND inbound_date <= ?";
-        params.push(filters.outboundTo);
+        where.inbound_date = { ...where.inbound_date, lte: filters.outboundTo };
       }
-      sql += " ORDER BY inbound_date DESC, id DESC";
-      const rows = db.prepare(sql).all(...params) as any[];
-      return Promise.resolve(rows);
+
+      const rows = await prisma.inboundRecord.findMany({
+        where,
+        select: {
+          id: true,
+          supplier_code: true,
+          supplier_short_name: true,
+          product_model: true,
+          total_price: true,
+          inbound_date: true,
+          remark: true,
+        },
+        orderBy: [
+            { inbound_date: 'desc' },
+            { id: 'desc' }
+        ]
+      });
+      
+      // Map 'id' to 'record_id' to match original return structure if strictly needed,
+      // but usually standardizing on 'id' is better. However, let's preserve compat.
+      return rows.map(r => ({ ...r, record_id: r.id }));
     } catch (error) {
-      return Promise.reject(error as Error);
+      throw error;
     }
   }
 
-  getPayablePayments(filters: any = {}): Promise<any[]> {
+  async getPayablePayments(filters: any = {}): Promise<any[]> {
     try {
-      let sql = `
-        SELECT id, supplier_code, amount, pay_date, pay_method, remark
-        FROM payable_payments 
-        WHERE 1=1
-      `;
-      const params: any[] = [];
+      const where: any = {};
       if (filters.paymentFrom) {
-        sql += " AND pay_date >= ?";
-        params.push(filters.paymentFrom);
+        where.pay_date = { ...where.pay_date, gte: filters.paymentFrom };
       }
       if (filters.paymentTo) {
-        sql += " AND pay_date <= ?";
-        params.push(filters.paymentTo);
+        where.pay_date = { ...where.pay_date, lte: filters.paymentTo };
       }
-      sql += " ORDER BY pay_date DESC, id DESC";
-      const rows = db.prepare(sql).all(...params) as any[];
-      return Promise.resolve(rows);
+
+      const rows = await prisma.payablePayment.findMany({
+        where,
+        select: {
+          id: true,
+          supplier_code: true,
+          amount: true,
+          pay_date: true,
+          pay_method: true,
+          remark: true,
+        },
+        orderBy: [
+            { pay_date: 'desc' },
+            { id: 'desc' }
+        ]
+      });
+      
+      return rows;
     } catch (error) {
-      return Promise.reject(error as Error);
+      throw error;
     }
   }
 }

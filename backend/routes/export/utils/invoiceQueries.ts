@@ -1,4 +1,4 @@
-import db from "@/db";
+import { prisma } from "@/prismaClient.js";
 
 export default class InvoiceQueries {
   async getInvoiceData(filters: any = {}): Promise<any[]> {
@@ -41,8 +41,15 @@ export default class InvoiceQueries {
       params.push(partnerCode, partnerCode);
       if (dateFrom) params.push(dateFrom);
       if (dateTo) params.push(dateTo);
-      const rows = db.prepare(sql).all(...params) as any[];
-      return rows;
+      
+      const rows = await prisma.$queryRawUnsafe<any[]>(sql, ...params);
+      
+      // Serialize numbers
+      return rows.map(row => ({
+        ...row,
+        quantity: typeof row.quantity === 'bigint' ? Number(row.quantity) : row.quantity,
+        total_price: typeof row.total_price === 'bigint' ? Number(row.total_price) : row.total_price
+      }));
     } catch (error) {
       throw error as Error;
     }

@@ -1,8 +1,8 @@
-import db from "@/db";
-import decimalCalc from "@/utils/decimalCalculator";
+import { prisma } from "@/prismaClient.js";
+import decimalCalc from "@/utils/decimalCalculator.js";
 
 export default class ReceivableQueries {
-  getReceivableSummary(filters: any = {}): Promise<any[]> {
+  async getReceivableSummary(filters: any = {}): Promise<any[]> {
     try {
       let sql = `
         SELECT 
@@ -37,7 +37,9 @@ export default class ReceivableQueries {
       sql +=
         " GROUP BY o.customer_code, o.customer_short_name, o.customer_full_name";
       sql += " ORDER BY balance DESC";
-      const rows = db.prepare(sql).all(...params) as any[];
+      
+      const rows = await prisma.$queryRawUnsafe<any[]>(sql, ...params);
+      
       const processed = rows.map((row) => {
         const totalSales = decimalCalc.fromSqlResult(row.total_sales, 0);
         const totalPayments = decimalCalc.fromSqlResult(
@@ -55,58 +57,72 @@ export default class ReceivableQueries {
           balance,
         };
       });
-      return Promise.resolve(processed);
+      return processed;
     } catch (error) {
-      return Promise.reject(error as Error);
+      throw error;
     }
   }
 
-  getReceivableDetails(filters: any = {}): Promise<any[]> {
+  async getReceivableDetails(filters: any = {}): Promise<any[]> {
     try {
-      let sql = `
-        SELECT id as record_id, customer_code, customer_short_name, 
-               product_model, total_price, outbound_date, remark
-        FROM outbound_records 
-        WHERE 1=1
-      `;
-      const params: any[] = [];
+      const where: any = {};
       if (filters.outboundFrom) {
-        sql += " AND outbound_date >= ?";
-        params.push(filters.outboundFrom);
+        where.outbound_date = { ...where.outbound_date, gte: filters.outboundFrom };
       }
       if (filters.outboundTo) {
-        sql += " AND outbound_date <= ?";
-        params.push(filters.outboundTo);
+        where.outbound_date = { ...where.outbound_date, lte: filters.outboundTo };
       }
-      sql += " ORDER BY outbound_date DESC, id DESC";
-      const rows = db.prepare(sql).all(...params) as any[];
-      return Promise.resolve(rows);
+
+      const rows = await prisma.outboundRecord.findMany({
+        where,
+        select: {
+          id: true,
+          customer_code: true,
+          customer_short_name: true,
+          product_model: true,
+          total_price: true,
+          outbound_date: true,
+          remark: true,
+        },
+        orderBy: [
+            { outbound_date: 'desc' },
+            { id: 'desc' }
+        ]
+      });
+      return rows.map(r => ({ ...r, record_id: r.id }));
     } catch (error) {
-      return Promise.reject(error as Error);
+      throw error;
     }
   }
 
-  getReceivablePayments(filters: any = {}): Promise<any[]> {
+  async getReceivablePayments(filters: any = {}): Promise<any[]> {
     try {
-      let sql = `
-        SELECT id, customer_code, amount, pay_date, pay_method, remark
-        FROM receivable_payments 
-        WHERE 1=1
-      `;
-      const params: any[] = [];
+      const where: any = {};
       if (filters.paymentFrom) {
-        sql += " AND pay_date >= ?";
-        params.push(filters.paymentFrom);
+        where.pay_date = { ...where.pay_date, gte: filters.paymentFrom };
       }
       if (filters.paymentTo) {
-        sql += " AND pay_date <= ?";
-        params.push(filters.paymentTo);
+        where.pay_date = { ...where.pay_date, lte: filters.paymentTo };
       }
-      sql += " ORDER BY pay_date DESC, id DESC";
-      const rows = db.prepare(sql).all(...params) as any[];
-      return Promise.resolve(rows);
+      
+      const rows = await prisma.receivablePayment.findMany({
+        where,
+        select: {
+          id: true,
+          customer_code: true,
+          amount: true,
+          pay_date: true,
+          pay_method: true,
+          remark: true,
+        },
+        orderBy: [
+            { pay_date: 'desc' },
+            { id: 'desc' }
+        ]
+      });
+      return rows;
     } catch (error) {
-      return Promise.reject(error as Error);
+      throw error;
     }
   }
 }

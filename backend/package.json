@@ -27,6 +27,7 @@
     "xlsx": "https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz"
   },
   "devDependencies": {
+    "@prisma/client": "^5.22.0",
     "@types/argon2": "^0.14.1",
     "@types/better-sqlite3": "^7.6.13",
     "@types/cors": "^2.8.19",
@@ -39,6 +40,7 @@
     "esbuild": "^0.25.12",
     "esbuild-plugin-tsconfig-paths": "^1.0.2",
     "nodemon": "^3.1.11",
+    "prisma": "^5.22.0",
     "ts-node": "^10.9.2",
     "tsc-alias": "^1.8.16",
     "tsconfig-paths": "^4.2.0",
