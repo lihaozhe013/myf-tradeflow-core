@@ -15,9 +15,9 @@
     "prebuild": "npm run clean"
   },
   "dependencies": {
+    "@prisma/client": "^5.22.0",
     "argon2": "^0.44.0",
-    "better-sqlite3": "^12.6.0",
-    "cors": "^2.8.5",
+    "cors": "^2.8.6",
     "decimal.js": "^10.6.0",
     "express": "^5.2.1",
     "fs-extra": "^11.3.3",
@@ -27,7 +27,6 @@
     "xlsx": "https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz"
   },
   "devDependencies": {
-    "@prisma/client": "^5.22.0",
     "@types/argon2": "^0.14.1",
     "@types/better-sqlite3": "^7.6.13",
     "@types/cors": "^2.8.19",
@@ -35,8 +34,9 @@
     "@types/fs-extra": "^11.0.4",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.0.0",
-    "@types/node": "^24.10.8",
+    "@types/node": "^24.10.11",
     "@types/winston": "^2.4.4",
+    "better-sqlite3": "^12.6.2",
     "esbuild": "^0.25.12",
     "esbuild-plugin-tsconfig-paths": "^1.0.2",
     "nodemon": "^3.1.11",
