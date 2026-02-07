@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/prismaClient.js";
 
 type Row = Record<string, any>;
@@ -11,7 +12,7 @@ export default class AnalysisQueries {
     endDate: string
   ): Promise<any[]> {
     try {
-      const customerSalesSql = `
+      const customerSalesSql = Prisma.sql`
         SELECT 
           p.code as customer_code,
           p.full_name as customer_name,
@@ -20,17 +21,17 @@ export default class AnalysisQueries {
           SUM(o.total_price) as sales_amount
         FROM outbound_records o
         LEFT JOIN partners p ON (o.customer_code = p.code OR o.customer_short_name = p.short_name)
-        WHERE o.outbound_date >= ? AND o.outbound_date <= ?
+        WHERE o.outbound_date >= ${startDate} AND o.outbound_date <= ${endDate}
         AND p.code IS NOT NULL
         AND o.unit_price >= 0
         GROUP BY p.code, p.full_name, o.product_model
         ORDER BY p.full_name, o.product_model
       `;
 
-      const salesData = await prisma.$queryRawUnsafe<Row[]>(customerSalesSql, startDate, endDate);
+      const salesData = await prisma.$queryRaw<Row[]>(customerSalesSql);
       if (!salesData || salesData.length === 0) return [];
 
-      const avgCostSql = `
+      const avgCostSql = Prisma.sql`
           SELECT 
             product_model,
             SUM(quantity * unit_price) / SUM(quantity) as avg_cost_price
@@ -39,7 +40,7 @@ export default class AnalysisQueries {
           GROUP BY product_model
         `;
 
-      const costData = await prisma.$queryRawUnsafe<Row[]>(avgCostSql);
+      const costData = await prisma.$queryRaw<Row[]>(avgCostSql);
       const costMap: Record<string, number> = {};
       (costData || []).forEach((item) => {
         const avgCost = item["avg_cost_price"];
@@ -109,7 +110,7 @@ export default class AnalysisQueries {
     endDate: string
   ): Promise<any[]> {
     try {
-      const productSalesSql = `
+      const productSalesSql = Prisma.sql`
         SELECT 
           o.product_model,
           p.code as customer_code,
@@ -118,17 +119,17 @@ export default class AnalysisQueries {
           SUM(o.total_price) as sales_amount
         FROM outbound_records o
         LEFT JOIN partners p ON (o.customer_code = p.code OR o.customer_short_name = p.short_name)
-        WHERE o.outbound_date >= ? AND o.outbound_date <= ?
+        WHERE o.outbound_date >= ${startDate} AND o.outbound_date <= ${endDate}
         AND p.code IS NOT NULL
         AND o.unit_price >= 0
         GROUP BY o.product_model, p.code, p.full_name
         ORDER BY o.product_model, p.full_name
       `;
 
-      const salesData = await prisma.$queryRawUnsafe<Row[]>(productSalesSql, startDate, endDate);
+      const salesData = await prisma.$queryRaw<Row[]>(productSalesSql);
       if (!salesData || salesData.length === 0) return [];
 
-      const avgCostSql = `
+      const avgCostSql = Prisma.sql`
           SELECT 
             product_model,
             SUM(quantity * unit_price) / SUM(quantity) as avg_cost_price
@@ -137,7 +138,7 @@ export default class AnalysisQueries {
           GROUP BY product_model
         `;
 
-      const costData = await prisma.$queryRawUnsafe<Row[]>(avgCostSql);
+      const costData = await prisma.$queryRaw<Row[]>(avgCostSql);
       const costMap: Record<string, number> = {};
       (costData || []).forEach((item) => {
         const avgCost = item["avg_cost_price"];

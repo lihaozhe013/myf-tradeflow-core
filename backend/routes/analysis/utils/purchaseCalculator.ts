@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/prismaClient.js";
 import decimalCalc from "@/utils/decimalCalculator.js";
 import type { PurchaseData } from "@/routes/analysis/utils/types.js";
@@ -11,31 +12,28 @@ export function calculatePurchaseData(
 ): void {
   (async () => {
     // Build Purchase Query Conditions
-    const purchaseSqlConditions: string[] = [
-      "date(inbound_date) BETWEEN ? AND ?",
+    const purchaseSqlConditions: Prisma.Sql[] = [
+      Prisma.sql`inbound_date >= ${startDate}`,
+      Prisma.sql`inbound_date <= ${endDate}`
     ];
-    const purchaseParams: any[] = [startDate, endDate];
 
     if (supplierCode && supplierCode !== "All") {
-      purchaseSqlConditions.push("supplier_code = ?");
-      purchaseParams.push(supplierCode);
+      purchaseSqlConditions.push(Prisma.sql`supplier_code = ${supplierCode}`);
     }
 
     if (productModel && productModel !== "All") {
-      purchaseSqlConditions.push("product_model = ?");
-      purchaseParams.push(productModel);
+      purchaseSqlConditions.push(Prisma.sql`product_model = ${productModel}`);
     }
 
-    const purchaseSql = `
+    const query = Prisma.sql`
       SELECT 
         COALESCE(SUM(quantity * unit_price), 0) as purchase_amount
       FROM inbound_records 
-      WHERE ${purchaseSqlConditions.join(" AND ")}
+      WHERE ${Prisma.join(purchaseSqlConditions, " AND ")}
     `;
 
     try {
-      // Use queryRawUnsafe because of dynamic WHERE clause construction
-      const result = await prisma.$queryRawUnsafe<any[]>(purchaseSql, ...purchaseParams);
+      const result = await prisma.$queryRaw<any[]>(query);
       const purchaseRow = result[0];
       const purchaseAmount = decimalCalc.fromSqlResult(purchaseRow?.purchase_amount, 0, 2);
 

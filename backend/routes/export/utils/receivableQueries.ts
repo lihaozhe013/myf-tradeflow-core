@@ -1,10 +1,26 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/prismaClient.js";
 import decimalCalc from "@/utils/decimalCalculator.js";
 
 export default class ReceivableQueries {
   async getReceivableSummary(filters: any = {}): Promise<any[]> {
     try {
-      let sql = `
+      const conditions: Prisma.Sql[] = [Prisma.sql`1=1`];
+      
+      if (filters.outboundFrom) {
+        conditions.push(Prisma.sql`o.outbound_date >= ${filters.outboundFrom}`);
+      }
+      if (filters.outboundTo) {
+        conditions.push(Prisma.sql`o.outbound_date <= ${filters.outboundTo}`);
+      }
+      if (filters.paymentFrom) {
+        conditions.push(Prisma.sql`(p.pay_date IS NULL OR p.pay_date >= ${filters.paymentFrom})`);
+      }
+      if (filters.paymentTo) {
+        conditions.push(Prisma.sql`(p.pay_date IS NULL OR p.pay_date <= ${filters.paymentTo})`);
+      }
+
+      const sql = Prisma.sql`
         SELECT 
           o.customer_code,
           o.customer_short_name,
@@ -14,31 +30,12 @@ export default class ReceivableQueries {
           COALESCE(SUM(o.total_price), 0) - COALESCE(SUM(p.amount), 0) as balance
         FROM outbound_records o
         LEFT JOIN receivable_payments p ON o.customer_code = p.customer_code
+        WHERE ${Prisma.join(conditions, " AND ")}
+        GROUP BY o.customer_code, o.customer_short_name, o.customer_full_name
+        ORDER BY balance DESC
       `;
-      const conditions: string[] = ["1=1"];
-      const params: any[] = [];
-      if (filters.outboundFrom) {
-        conditions.push("o.outbound_date >= ?");
-        params.push(filters.outboundFrom);
-      }
-      if (filters.outboundTo) {
-        conditions.push("o.outbound_date <= ?");
-        params.push(filters.outboundTo);
-      }
-      if (filters.paymentFrom) {
-        conditions.push("(p.pay_date IS NULL OR p.pay_date >= ?)");
-        params.push(filters.paymentFrom);
-      }
-      if (filters.paymentTo) {
-        conditions.push("(p.pay_date IS NULL OR p.pay_date <= ?)");
-        params.push(filters.paymentTo);
-      }
-      sql += " WHERE " + conditions.join(" AND ");
-      sql +=
-        " GROUP BY o.customer_code, o.customer_short_name, o.customer_full_name";
-      sql += " ORDER BY balance DESC";
       
-      const rows = await prisma.$queryRawUnsafe<any[]>(sql, ...params);
+      const rows = await prisma.$queryRaw<any[]>(sql);
       
       const processed = rows.map((row) => {
         const totalSales = decimalCalc.fromSqlResult(row.total_sales, 0);

@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/prismaClient.js";
 import decimalCalc from "@/utils/decimalCalculator.js";
 
@@ -13,26 +14,26 @@ export function calculateFilteredSoldGoodsCost(
 ): void {
   (async () => {
     // Build query conditions
-    const whereConditions: string[] = ['unit_price >= 0'];
-    const params: any[] = [];
-
+    const whereConditions: Prisma.Sql[] = [Prisma.sql`unit_price >= 0`];
+    
     if (customerCode && customerCode !== 'All') {
-      whereConditions.push('customer_code = ?');
-      params.push(customerCode);
+      whereConditions.push(Prisma.sql`customer_code = ${customerCode}`);
     }
 
     if (productModel && productModel !== 'All') {
-      whereConditions.push('product_model = ?');
-      params.push(productModel);
+      whereConditions.push(Prisma.sql`product_model = ${productModel}`);
     }
 
     // Add time interval conditions
-    whereConditions.push('date(outbound_date) BETWEEN ? AND ?');
-    params.push(startDate, endDate);
+    // Use string comparison for dates (YYYY-MM-DD format works well)
+    whereConditions.push(Prisma.sql`outbound_date >= ${startDate}`);
+    whereConditions.push(Prisma.sql`outbound_date <= ${endDate}`);
 
     // Calculate the weighted average purchase price for each product (across the entire time range, using only positive unit prices)
     try {
-      const avgCostData = await prisma.$queryRawUnsafe<any[]>(`
+      // Note: This query doesn't filter by date range, it calculates global average cost. 
+      // This logic preserves the original behavior shown in the file.
+      const avgCostData = await prisma.$queryRaw<any[]>(Prisma.sql`
         SELECT 
           product_model,
           SUM(quantity * unit_price) / SUM(quantity) as avg_cost_price,
@@ -52,13 +53,13 @@ export function calculateFilteredSoldGoodsCost(
       });
 
       // Retrieve outbound records meeting specified conditions
-      const outboundSql = `
+      const outboundSql = Prisma.sql`
         SELECT product_model, quantity, unit_price as selling_price
         FROM outbound_records
-        WHERE ${whereConditions.join(' AND ')}
+        WHERE ${Prisma.join(whereConditions, ' AND ')}
       `;
 
-      const outboundRecords = await prisma.$queryRawUnsafe<any[]>(outboundSql, ...params);
+      const outboundRecords = await prisma.$queryRaw<any[]>(outboundSql);
 
       if (!outboundRecords || outboundRecords.length === 0) {
         callback(null, 0);
@@ -85,25 +86,23 @@ export function calculateFilteredSoldGoodsCost(
       });
 
       // Calculate the special income from goods with negative unit prices under specified conditions when entering inventory, thereby reducing total costs
-      const specialIncomeConditions: string[] = ['unit_price < 0'];
-      const specialIncomeParams: any[] = [];
+      const specialIncomeConditions: Prisma.Sql[] = [Prisma.sql`unit_price < 0`];
 
       if (productModel && productModel !== 'All') {
-        specialIncomeConditions.push('product_model = ?');
-        specialIncomeParams.push(productModel);
+        specialIncomeConditions.push(Prisma.sql`product_model = ${productModel}`);
       }
 
       // Special income is also calculated by time period
-      specialIncomeConditions.push('date(inbound_date) BETWEEN ? AND ?');
-      specialIncomeParams.push(startDate, endDate);
+      specialIncomeConditions.push(Prisma.sql`inbound_date >= ${startDate}`);
+      specialIncomeConditions.push(Prisma.sql`inbound_date <= ${endDate}`);
 
-      const specialIncomeSql = `
+      const specialIncomeSql = Prisma.sql`
         SELECT COALESCE(SUM(ABS(quantity * unit_price)), 0) as special_income
         FROM inbound_records 
-        WHERE ${specialIncomeConditions.join(' AND ')}
+        WHERE ${Prisma.join(specialIncomeConditions, ' AND ')}
       `;
 
-      const result = await prisma.$queryRawUnsafe<any[]>(specialIncomeSql, ...specialIncomeParams);
+      const result = await prisma.$queryRaw<any[]>(specialIncomeSql);
       const specialIncomeRow = result[0];
       const specialIncome = decimalCalc.fromSqlResult(specialIncomeRow?.special_income, 0, 2);
       const finalCost = decimalCalc.subtract(totalSoldGoodsCost, specialIncome);
