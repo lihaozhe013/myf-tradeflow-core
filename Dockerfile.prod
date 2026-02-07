@@ -1,7 +1,7 @@
 FROM node:24-slim
 
 # Install OpenSSL (Required by Prisma Client)
-RUN apt-get update -y && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update -y && apt-get install -y openssl ca-certificates bash bash-completion && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /app/data
 
