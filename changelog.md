@@ -1,4 +1,7 @@
 # Change Log
+## v0.7.0
+- Use prisma as databse ORM, now support PostgreSQL, SQLite, etc.
+
 ## v0.6.0
 - Backend switched to the better-sqlite library
 - Fixed bugs
