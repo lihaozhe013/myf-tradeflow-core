@@ -40,6 +40,16 @@ function handleInboundAnalysis(
     // Logic: Group by Supplier if Supplier is "All", otherwise Group by Product
     const groupField = groupBySupplier ? Prisma.sql`supplier_code` : Prisma.sql`product_model`;
 
+    // Only select the necessary columns to avoid GROUP BY issues in Postgres
+    const selectCols = groupBySupplier 
+        ? Prisma.sql`${groupField} as group_key, supplier_code` 
+        : Prisma.sql`${groupField} as group_key, product_model`;
+    
+    // Group only by relevant columns
+    const groupByCols = groupBySupplier
+        ? Prisma.sql`${groupField}, supplier_code`
+        : Prisma.sql`${groupField}, product_model`;
+
     const conditions: Prisma.Sql[] = [];
     
     // Date comparison (lexicographical for ISO strings)
@@ -55,16 +65,12 @@ function handleInboundAnalysis(
 
     const inboundSql = Prisma.sql`
       SELECT 
-        ${groupField} as group_key,
-        product_model,
-        supplier_code,
+        ${selectCols},
         SUM(CASE WHEN unit_price >= 0 THEN quantity * unit_price ELSE 0 END) as normal_purchase,
         SUM(CASE WHEN unit_price < 0 THEN ABS(quantity * unit_price) ELSE 0 END) as special_income
       FROM inbound_records 
       WHERE ${Prisma.join(conditions, ' AND ')}
-      GROUP BY ${groupField}, product_model, supplier_code
-      HAVING SUM(CASE WHEN unit_price >= 0 THEN quantity * unit_price ELSE 0 END) > 0 
-          OR SUM(CASE WHEN unit_price < 0 THEN ABS(quantity * unit_price) ELSE 0 END) > 0
+      GROUP BY ${groupByCols}
     `;
 
     try {
@@ -79,8 +85,8 @@ function handleInboundAnalysis(
 
         return {
           group_key: group.group_key,
-          supplier_code: groupBySupplier ? group.group_key : (supplierCode || group.supplier_code), 
-          product_model: groupBySupplier ? (productModel || group.product_model) : group.group_key,
+          supplier_code: groupBySupplier ? group.group_key : (supplierCode || undefined), 
+          product_model: groupBySupplier ? (productModel || undefined) : group.group_key,
           purchase_amount: purchaseAmount
         };
       });
@@ -98,12 +104,22 @@ function handleOutboundAnalysis(
   customerCode: string | null | undefined,
   productModel: string | null | undefined,
   groupByCustomer: boolean,
-  groupByProduct: boolean,
+  _groupByProduct: boolean,
   callback: (err: Error | null, detailData?: DetailItem[]) => void
 ) {
   (async () => {
     // Logic: Group by Customer if Customer is "All", otherwise Group by Product
     const groupField = groupByCustomer ? Prisma.sql`customer_code` : Prisma.sql`product_model`;
+
+    // Only select the necessary columns
+    const selectCols = groupByCustomer 
+        ? Prisma.sql`${groupField} as group_key, customer_code` 
+        : Prisma.sql`${groupField} as group_key, product_model`;
+    
+    // Group only by relevant columns
+    const groupByCols = groupByCustomer
+        ? Prisma.sql`${groupField}, customer_code`
+        : Prisma.sql`${groupField}, product_model`;
 
     const conditions: Prisma.Sql[] = [];
     
@@ -121,16 +137,12 @@ function handleOutboundAnalysis(
     // Retrieve all relevant outbound records
     const outboundSql = Prisma.sql`
       SELECT 
-        ${groupField} as group_key,
-        product_model,
-        customer_code,
+        ${selectCols},
         SUM(CASE WHEN unit_price >= 0 THEN quantity * unit_price ELSE 0 END) as normal_sales,
         SUM(CASE WHEN unit_price < 0 THEN ABS(quantity * unit_price) ELSE 0 END) as special_expense
       FROM outbound_records 
       WHERE ${Prisma.join(conditions, ' AND ')}
-      GROUP BY ${groupField}, product_model, customer_code
-      HAVING SUM(CASE WHEN unit_price >= 0 THEN quantity * unit_price ELSE 0 END) > 0 
-          OR SUM(CASE WHEN unit_price < 0 THEN ABS(quantity * unit_price) ELSE 0 END) > 0
+      GROUP BY ${groupByCols}
     `;
 
     try {
@@ -141,17 +153,20 @@ function handleOutboundAnalysis(
         return;
       }
 
-
             // Calculate the detailed data for each group
             const detailPromises = outboundGroups.map((group: any) => {
               return new Promise<DetailItem | null>((resolve, reject) => {
                 const groupKey = group.group_key as string;
+                
+                // If grouped by customer, key is customer -> Product is All
+                // If grouped by product, key is product -> Customer is All/Specific (from filter params)
                 const currentCustomerCode = groupByCustomer
                   ? groupKey
                   : customerCode;
-                const currentProductModel = groupByProduct
-                  ? groupKey
-                  : productModel;
+                  
+                const currentProductModel = groupByCustomer
+                  ? productModel // Should be "All" or undefined if grouped by customer
+                  : groupKey;
 
                 // Calculate the cost of this grouping
                 calculateFilteredSoldGoodsCost(
@@ -192,7 +207,7 @@ function handleOutboundAnalysis(
                       profitRate = decimalCalc.toDbNumber(rate, 2);
                     }
 
-                    if (salesAmount > 0) {
+                    if (salesAmount !== 0) {
                       resolve({
                         group_key: groupKey,
                         customer_code: currentCustomerCode ?? undefined,
