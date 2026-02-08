@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/prismaClient.js";
 import decimalCalc from "@/utils/decimalCalculator.js";
 import { calculateFilteredSoldGoodsCost } from "@/routes/analysis/utils/costCalculator.js";
@@ -37,21 +38,22 @@ function handleInboundAnalysis(
 ) {
   (async () => {
     // Logic: Group by Supplier if Supplier is "All", otherwise Group by Product
-    const groupField = groupBySupplier ? "supplier_code" : "product_model";
+    const groupField = groupBySupplier ? Prisma.sql`supplier_code` : Prisma.sql`product_model`;
 
-    const conditions = [`date(inbound_date) BETWEEN ? AND ?`];
-    const params: any[] = [startDate, endDate];
+    const conditions: Prisma.Sql[] = [];
+    
+    // Date comparison (lexicographical for ISO strings)
+    conditions.push(Prisma.sql`inbound_date >= ${startDate}`);
+    conditions.push(Prisma.sql`inbound_date <= ${endDate}`);
 
     if (supplierCode && supplierCode !== 'All') {
-        conditions.push(`supplier_code = ?`);
-        params.push(supplierCode);
+        conditions.push(Prisma.sql`supplier_code = ${supplierCode}`);
     }
     if (productModel && productModel !== 'All') {
-        conditions.push(`product_model = ?`);
-        params.push(productModel);
+        conditions.push(Prisma.sql`product_model = ${productModel}`);
     }
 
-    const inboundSql = `
+    const inboundSql = Prisma.sql`
       SELECT 
         ${groupField} as group_key,
         product_model,
@@ -59,13 +61,14 @@ function handleInboundAnalysis(
         SUM(CASE WHEN unit_price >= 0 THEN quantity * unit_price ELSE 0 END) as normal_purchase,
         SUM(CASE WHEN unit_price < 0 THEN ABS(quantity * unit_price) ELSE 0 END) as special_income
       FROM inbound_records 
-      WHERE ${conditions.join(' AND ')}
-      GROUP BY ${groupField}
-      HAVING normal_purchase > 0 OR special_income > 0
+      WHERE ${Prisma.join(conditions, ' AND ')}
+      GROUP BY ${groupField}, product_model, supplier_code
+      HAVING SUM(CASE WHEN unit_price >= 0 THEN quantity * unit_price ELSE 0 END) > 0 
+          OR SUM(CASE WHEN unit_price < 0 THEN ABS(quantity * unit_price) ELSE 0 END) > 0
     `;
 
     try {
-      const inboundGroups = await prisma.$queryRawUnsafe<any[]>(inboundSql, ...params);
+      const inboundGroups = await prisma.$queryRaw<any[]>(inboundSql);
       const results: DetailItem[] = inboundGroups.map(group => {
         const normalPurchase = decimalCalc.fromSqlResult(group.normal_purchase, 0, 2);
         const specialIncome = decimalCalc.fromSqlResult(group.special_income, 0, 2);
@@ -100,22 +103,23 @@ function handleOutboundAnalysis(
 ) {
   (async () => {
     // Logic: Group by Customer if Customer is "All", otherwise Group by Product
-    const groupField = groupByCustomer ? "customer_code" : "product_model";
+    const groupField = groupByCustomer ? Prisma.sql`customer_code` : Prisma.sql`product_model`;
 
-    const conditions = [`date(outbound_date) BETWEEN ? AND ?`];
-    const params: any[] = [startDate, endDate];
+    const conditions: Prisma.Sql[] = [];
+    
+    // Date comparison
+    conditions.push(Prisma.sql`outbound_date >= ${startDate}`);
+    conditions.push(Prisma.sql`outbound_date <= ${endDate}`);
 
     if (customerCode && customerCode !== 'All') {
-        conditions.push(`customer_code = ?`);
-        params.push(customerCode);
+        conditions.push(Prisma.sql`customer_code = ${customerCode}`);
     }
     if (productModel && productModel !== 'All') {
-        conditions.push(`product_model = ?`);
-        params.push(productModel);
+        conditions.push(Prisma.sql`product_model = ${productModel}`);
     }
 
     // Retrieve all relevant outbound records
-    const outboundSql = `
+    const outboundSql = Prisma.sql`
       SELECT 
         ${groupField} as group_key,
         product_model,
@@ -123,18 +127,20 @@ function handleOutboundAnalysis(
         SUM(CASE WHEN unit_price >= 0 THEN quantity * unit_price ELSE 0 END) as normal_sales,
         SUM(CASE WHEN unit_price < 0 THEN ABS(quantity * unit_price) ELSE 0 END) as special_expense
       FROM outbound_records 
-      WHERE ${conditions.join(' AND ')}
-      GROUP BY ${groupField}
-      HAVING normal_sales > 0 OR special_expense > 0
+      WHERE ${Prisma.join(conditions, ' AND ')}
+      GROUP BY ${groupField}, product_model, customer_code
+      HAVING SUM(CASE WHEN unit_price >= 0 THEN quantity * unit_price ELSE 0 END) > 0 
+          OR SUM(CASE WHEN unit_price < 0 THEN ABS(quantity * unit_price) ELSE 0 END) > 0
     `;
 
     try {
-      const outboundGroups = await prisma.$queryRawUnsafe<any[]>(outboundSql, ...params);
+      const outboundGroups = await prisma.$queryRaw<any[]>(outboundSql);
 
       if (!outboundGroups || outboundGroups.length === 0) {
         callback(null, []);
         return;
       }
+
 
             // Calculate the detailed data for each group
             const detailPromises = outboundGroups.map((group: any) => {
