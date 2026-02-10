@@ -105,3 +105,15 @@ model PayablePayment {
 
   @@map("payable_payments")
 }
+model SystemLog {
+  id          Int      @id @default(autoincrement())
+  username    String?
+  action      String
+  resource    String
+  ip          String?
+  user_agent  String?
+  params      String?
+  created_at  DateTime @default(now())
+
+  @@map("system_logs")
+}
