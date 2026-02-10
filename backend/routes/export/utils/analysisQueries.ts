@@ -9,7 +9,7 @@ export default class AnalysisQueries {
    */
   async getCustomerAnalysisData(
     startDate: string,
-    endDate: string
+    endDate: string,
   ): Promise<any[]> {
     try {
       const customerSalesSql = Prisma.sql`
@@ -44,7 +44,8 @@ export default class AnalysisQueries {
       const costMap: Record<string, number> = {};
       (costData || []).forEach((item) => {
         const avgCost = item["avg_cost_price"];
-        costMap[item["product_model"]] = typeof avgCost === 'bigint' ? Number(avgCost) : (Number(avgCost) || 0);
+        costMap[item["product_model"]] =
+          typeof avgCost === "bigint" ? Number(avgCost) : Number(avgCost) || 0;
       });
 
       const customerMap: Record<string, any> = {};
@@ -53,9 +54,15 @@ export default class AnalysisQueries {
         const customerName = row["customer_name"];
         const productModel = row["product_model"];
         const salesAmountVal = row["sales_amount"];
-        const salesAmount = typeof salesAmountVal === 'bigint' ? Number(salesAmountVal) : (Number(salesAmountVal) || 0);
+        const salesAmount =
+          typeof salesAmountVal === "bigint"
+            ? Number(salesAmountVal)
+            : Number(salesAmountVal) || 0;
         const quantityVal = row["total_quantity"];
-        const quantity = typeof quantityVal === 'bigint' ? Number(quantityVal) : (Number(quantityVal) || 0);
+        const quantity =
+          typeof quantityVal === "bigint"
+            ? Number(quantityVal)
+            : Number(quantityVal) || 0;
         const avgCostPrice = costMap[productModel] || 0;
         const costAmount = avgCostPrice * quantity;
         const profitAmount = salesAmount - costAmount;
@@ -94,7 +101,7 @@ export default class AnalysisQueries {
       });
 
       const result = Object.values(customerMap).sort(
-        (a: any, b: any) => b.sales_amount - a.sales_amount
+        (a: any, b: any) => b.sales_amount - a.sales_amount,
       );
       return result;
     } catch (error) {
@@ -107,7 +114,7 @@ export default class AnalysisQueries {
    */
   async getProductAnalysisData(
     startDate: string,
-    endDate: string
+    endDate: string,
   ): Promise<any[]> {
     try {
       const productSalesSql = Prisma.sql`
@@ -142,7 +149,8 @@ export default class AnalysisQueries {
       const costMap: Record<string, number> = {};
       (costData || []).forEach((item) => {
         const avgCost = item["avg_cost_price"];
-        costMap[item["product_model"]] = typeof avgCost === 'bigint' ? Number(avgCost) : (Number(avgCost) || 0);
+        costMap[item["product_model"]] =
+          typeof avgCost === "bigint" ? Number(avgCost) : Number(avgCost) || 0;
       });
 
       const productMap: Record<string, any> = {};
@@ -151,9 +159,15 @@ export default class AnalysisQueries {
         const customerCode = row["customer_code"];
         const customerName = row["customer_name"];
         const salesAmountVal = row["sales_amount"];
-        const salesAmount = typeof salesAmountVal === 'bigint' ? Number(salesAmountVal) : (Number(salesAmountVal) || 0);
+        const salesAmount =
+          typeof salesAmountVal === "bigint"
+            ? Number(salesAmountVal)
+            : Number(salesAmountVal) || 0;
         const quantityVal = row["total_quantity"];
-        const quantity = typeof quantityVal === 'bigint' ? Number(quantityVal) : (Number(quantityVal) || 0);
+        const quantity =
+          typeof quantityVal === "bigint"
+            ? Number(quantityVal)
+            : Number(quantityVal) || 0;
         const avgCostPrice = costMap[productModel] || 0;
         const costAmount = avgCostPrice * quantity;
         const profitAmount = salesAmount - costAmount;
@@ -194,7 +208,7 @@ export default class AnalysisQueries {
       const result = Object.values(productMap)
         .filter(
           (product: any) =>
-            product.product_model && product.product_model.trim() !== ""
+            product.product_model && product.product_model.trim() !== "",
         )
         .sort((a: any, b: any) => b.sales_amount - a.sales_amount);
       return result;

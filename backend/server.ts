@@ -31,15 +31,7 @@ const config: AppConfig = JSON.parse(fs.readFileSync(appConfigPath, "utf8"));
 
 // Port Config
 const PORT: number =
-  Number(process.env["PORT"]) || config.server?.httpPort || 8080;
-
-// =============================================================================
-// DB Init
-// =============================================================================
-
-// Check and upgrade database structures upon startup
-// database init is handled by Prisma
-logger.info("Database initialization completed!");
+  Number(process.env["PORT"]) || config.server?.httpPort || 8000;
 
 // Logger Middleware
 app.use(requestLogger);
@@ -53,14 +45,12 @@ if (process.env["NODE_ENV"] !== "production") {
     cors({
       origin: [
         "http://localhost:5173",
-        `http://localhost:${PORT}`,
-        "http://127.0.0.1:5173",
+        `http://localhost:${PORT}`
       ],
       credentials: true,
     })
   );
   console.log("Dev Mode: CORS cross-origin support has been enabled.");
-  logger.info("Dev Mode: CORS cross-origin support has been enabled.");
 }
 
 // =============================================================================
@@ -125,7 +115,6 @@ app.use(
 // Frontend Static File Hosting (Based on Config File)
 // =============================================================================
 
-// Frontend Static File Hosting (Production Mode Only)
 const shouldHostFrontend: boolean = !!(
   config.frontend?.hostByBackend &&
   (process.env["NODE_ENV"] === "production" ||

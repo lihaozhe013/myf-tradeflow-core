@@ -20,7 +20,7 @@ export default class AdvancedAnalysisExporter {
       {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
-      }
+      },
     )}`;
   }
 
@@ -81,11 +81,11 @@ export default class AdvancedAnalysisExporter {
   private async createCustomerSheets(
     workbook: XLSX.WorkBook,
     startDate: string,
-    endDate: string
+    endDate: string,
   ) {
     const customerData = await this.queries.getCustomerAnalysisData(
       startDate,
-      endDate
+      endDate,
     );
     const summaryLabels = this.templates.analysis_customer_summary.labels || {};
     const detailLabels = this.templates.analysis_customer_detail.labels || {};
@@ -105,18 +105,18 @@ export default class AdvancedAnalysisExporter {
         ];
         const summaryWorksheet = ExportUtils.createWorksheet(
           summaryData,
-          this.templates.analysis_customer_summary
+          this.templates.analysis_customer_summary,
         );
         const summarySheetName = this.getUniqueSheetName(
           workbook,
           `${customer.customer_name}-${
             summaryLabels.summary_suffix || "Summary"
-          }`
+          }`,
         );
         XLSX.utils.book_append_sheet(
           workbook,
           summaryWorksheet,
-          summarySheetName
+          summarySheetName,
         );
 
         // Create detail sheet if product details exist
@@ -133,18 +133,18 @@ export default class AdvancedAnalysisExporter {
           if (detailData.length > 0) {
             const detailWorksheet = ExportUtils.createWorksheet(
               detailData,
-              this.templates.analysis_customer_detail
+              this.templates.analysis_customer_detail,
             );
             const detailSheetName = this.getUniqueSheetName(
               workbook,
               `${customer.customer_name}-${
                 detailLabels.detail_suffix || "Details"
-              }`
+              }`,
             );
             XLSX.utils.book_append_sheet(
               workbook,
               detailWorksheet,
-              detailSheetName
+              detailSheetName,
             );
           }
         }
@@ -158,11 +158,11 @@ export default class AdvancedAnalysisExporter {
   private async createProductSheets(
     workbook: XLSX.WorkBook,
     startDate: string,
-    endDate: string
+    endDate: string,
   ) {
     const productData = await this.queries.getProductAnalysisData(
       startDate,
-      endDate
+      endDate,
     );
     const summaryLabels = this.templates.analysis_product_summary.labels || {};
     const detailLabels = this.templates.analysis_product_detail.labels || {};
@@ -181,18 +181,18 @@ export default class AdvancedAnalysisExporter {
         ];
         const summaryWorksheet = ExportUtils.createWorksheet(
           summaryData,
-          this.templates.analysis_product_summary
+          this.templates.analysis_product_summary,
         );
         const summarySheetName = this.getUniqueSheetName(
           workbook,
           `${product.product_model}-${
             summaryLabels.summary_suffix || "Summary"
-          }`
+          }`,
         );
         XLSX.utils.book_append_sheet(
           workbook,
           summaryWorksheet,
-          summarySheetName
+          summarySheetName,
         );
 
         // Create detail sheet if customer details exist
@@ -210,18 +210,18 @@ export default class AdvancedAnalysisExporter {
           if (detailData.length > 0) {
             const detailWorksheet = ExportUtils.createWorksheet(
               detailData,
-              this.templates.analysis_product_detail
+              this.templates.analysis_product_detail,
             );
             const detailSheetName = this.getUniqueSheetName(
               workbook,
               `${product.product_model}-${
                 detailLabels.detail_suffix || "Details"
-              }`
+              }`,
             );
             XLSX.utils.book_append_sheet(
               workbook,
               detailWorksheet,
-              detailSheetName
+              detailSheetName,
             );
           }
         }

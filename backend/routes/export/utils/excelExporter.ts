@@ -25,7 +25,7 @@ export default class ExcelExporter {
     this.analysisExporter = new AnalysisExporter(TEMPLATES as any);
     this.advancedAnalysisExporter = new AdvancedAnalysisExporter(
       TEMPLATES as any,
-      this.queries
+      this.queries,
     );
     this.invoiceExporter = new InvoiceExporter(TEMPLATES as any);
   }
@@ -77,7 +77,7 @@ export default class ExcelExporter {
   async exportAdvancedAnalysis(options: any = {}): Promise<Buffer> {
     try {
       return await this.advancedAnalysisExporter.exportAdvancedAnalysis(
-        options
+        options,
       );
     } catch (error: any) {
       throw new Error(`Advanced analysis export failed: ${error.message}`);

@@ -5,25 +5,25 @@ import type { FilterOptions } from "@/routes/analysis/utils/types.js";
  * Retrieve filter options (customer and product lists)
  */
 export function getFilterOptions(
-  callback: (err: Error | null, options?: FilterOptions) => void
+  callback: (err: Error | null, options?: FilterOptions) => void,
 ): void {
   (async () => {
     try {
       const [customers, suppliers, products] = await Promise.all([
         prisma.partner.findMany({
           where: { type: 1 },
-          orderBy: { short_name: 'asc' },
-          select: { code: true, short_name: true, full_name: true }
+          orderBy: { short_name: "asc" },
+          select: { code: true, short_name: true, full_name: true },
         }),
         prisma.partner.findMany({
           where: { type: 0 },
-          orderBy: { short_name: 'asc' },
-          select: { code: true, short_name: true, full_name: true }
+          orderBy: { short_name: "asc" },
+          select: { code: true, short_name: true, full_name: true },
         }),
         prisma.product.findMany({
-          orderBy: { product_model: 'asc' },
-          select: { code: true, product_model: true }
-        })
+          orderBy: { product_model: "asc" },
+          select: { code: true, product_model: true },
+        }),
       ]);
 
       const customerOptions: FilterOptions["customers"] = [

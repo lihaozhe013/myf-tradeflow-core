@@ -7,21 +7,21 @@ export function getAppRoot(): string {
 
 export function getDataDir(): string {
   const appRoot = getAppRoot();
-  const candidatePaths = [
-    'data',
-    '../data',
-    '../../data'
-  ];
-  for (const relativePath of candidatePaths) {
-    const fullPath = path.resolve(appRoot, relativePath);
+  const candidatePaths = ["data", "../data", "../../data"];
+
+  const resolvedCandidatePaths = candidatePaths.map((relativePath) =>
+    path.resolve(appRoot, relativePath),
+  );
+
+  const foundPath = resolvedCandidatePaths.find((fullPath) => {
     try {
-      if (fs.existsSync(fullPath) && fs.statSync(fullPath).isDirectory()) {
-        return fullPath;
-      }
+      return fs.existsSync(fullPath) && fs.statSync(fullPath).isDirectory();
     } catch (e) {
+      return false;
     }
-  }
-  return path.resolve(appRoot, "data");
+  });
+
+  return foundPath ?? path.resolve(appRoot, "data");
 }
 
 // Resolves a path inside the data directory.
@@ -46,17 +46,15 @@ export function getLogDir(): string {
   return path.resolve(getDataDir(), "log");
 }
 
-
 const appConfigPath = resolveFilesInDataPath("appConfig.json");
 let currency_unit_symbol = "¥";
 try {
   if (fs.existsSync(appConfigPath)) {
-    const temp_data = fs.readFileSync(appConfigPath, 'utf8');
+    const temp_data = fs.readFileSync(appConfigPath, "utf8");
     const json = JSON.parse(temp_data);
-    if(json.currency_symbol) {
-        currency_unit_symbol = json.currency_symbol;
+    if (json.currency_symbol) {
+      currency_unit_symbol = json.currency_symbol;
     }
   }
-} catch (e) {
-}
+} catch (e) {}
 export { currency_unit_symbol, appConfigPath };

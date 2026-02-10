@@ -10,17 +10,17 @@ export function calculateFilteredSoldGoodsCost(
   endDate: string,
   customerCode: string | null | undefined,
   productModel: string | null | undefined,
-  callback: (err: Error | null, totalCost?: number) => void
+  callback: (err: Error | null, totalCost?: number) => void,
 ): void {
   (async () => {
     // Build query conditions
     const whereConditions: Prisma.Sql[] = [Prisma.sql`unit_price >= 0`];
-    
-    if (customerCode && customerCode !== 'All') {
+
+    if (customerCode && customerCode !== "All") {
       whereConditions.push(Prisma.sql`customer_code = ${customerCode}`);
     }
 
-    if (productModel && productModel !== 'All') {
+    if (productModel && productModel !== "All") {
       whereConditions.push(Prisma.sql`product_model = ${productModel}`);
     }
 
@@ -31,7 +31,7 @@ export function calculateFilteredSoldGoodsCost(
 
     // Calculate the weighted average purchase price for each product (across the entire time range, using only positive unit prices)
     try {
-      // Note: This query doesn't filter by date range, it calculates global average cost. 
+      // Note: This query doesn't filter by date range, it calculates global average cost.
       // This logic preserves the original behavior shown in the file.
       const avgCostData = await prisma.$queryRaw<any[]>(Prisma.sql`
         SELECT 
@@ -44,11 +44,18 @@ export function calculateFilteredSoldGoodsCost(
       `);
 
       // Converting to a Map facilitates lookup operations
-      const avgCostMap: Record<string, { avg_cost_price: number; total_inbound_quantity: number }> = {};
+      const avgCostMap: Record<
+        string,
+        { avg_cost_price: number; total_inbound_quantity: number }
+      > = {};
       avgCostData.forEach((item: any) => {
         avgCostMap[item.product_model] = {
           avg_cost_price: decimalCalc.fromSqlResult(item.avg_cost_price, 0, 4),
-          total_inbound_quantity: decimalCalc.fromSqlResult(item.total_inbound_quantity, 0, 0)
+          total_inbound_quantity: decimalCalc.fromSqlResult(
+            item.total_inbound_quantity,
+            0,
+            0,
+          ),
         };
       });
 
@@ -56,7 +63,7 @@ export function calculateFilteredSoldGoodsCost(
       const outboundSql = Prisma.sql`
         SELECT product_model, quantity, unit_price as selling_price
         FROM outbound_records
-        WHERE ${Prisma.join(whereConditions, ' AND ')}
+        WHERE ${Prisma.join(whereConditions, " AND ")}
       `;
 
       const outboundRecords = await prisma.$queryRaw<any[]>(outboundSql);
@@ -79,17 +86,25 @@ export function calculateFilteredSoldGoodsCost(
           totalSoldGoodsCost = decimalCalc.add(totalSoldGoodsCost, recordCost);
         } else {
           // If there is no inventory receipt record, use the issue price as the cost (conservative estimate)
-          const sellingPrice = decimalCalc.fromSqlResult(outRecord.selling_price, 0, 4);
+          const sellingPrice = decimalCalc.fromSqlResult(
+            outRecord.selling_price,
+            0,
+            4,
+          );
           const recordCost = decimalCalc.multiply(soldQuantity, sellingPrice);
           totalSoldGoodsCost = decimalCalc.add(totalSoldGoodsCost, recordCost);
         }
       });
 
       // Calculate the special income from goods with negative unit prices under specified conditions when entering inventory, thereby reducing total costs
-      const specialIncomeConditions: Prisma.Sql[] = [Prisma.sql`unit_price < 0`];
+      const specialIncomeConditions: Prisma.Sql[] = [
+        Prisma.sql`unit_price < 0`,
+      ];
 
-      if (productModel && productModel !== 'All') {
-        specialIncomeConditions.push(Prisma.sql`product_model = ${productModel}`);
+      if (productModel && productModel !== "All") {
+        specialIncomeConditions.push(
+          Prisma.sql`product_model = ${productModel}`,
+        );
       }
 
       // Special income is also calculated by time period
@@ -99,15 +114,24 @@ export function calculateFilteredSoldGoodsCost(
       const specialIncomeSql = Prisma.sql`
         SELECT COALESCE(SUM(ABS(quantity * unit_price)), 0) as special_income
         FROM inbound_records 
-        WHERE ${Prisma.join(specialIncomeConditions, ' AND ')}
+        WHERE ${Prisma.join(specialIncomeConditions, " AND ")}
       `;
 
       const result = await prisma.$queryRaw<any[]>(specialIncomeSql);
       const specialIncomeRow = result[0];
-      const specialIncome = decimalCalc.fromSqlResult(specialIncomeRow?.special_income, 0, 2);
+      const specialIncome = decimalCalc.fromSqlResult(
+        specialIncomeRow?.special_income,
+        0,
+        2,
+      );
       const finalCost = decimalCalc.subtract(totalSoldGoodsCost, specialIncome);
       // Ensure that costs are not negative and retain two decimal places
-      const finalResult = decimalCalc.toDbNumber(decimalCalc.decimal(Math.max(0, (finalCost as any).toNumber?.() ?? Number(finalCost))), 2);
+      const finalResult = decimalCalc.toDbNumber(
+        decimalCalc.decimal(
+          Math.max(0, (finalCost as any).toNumber?.() ?? Number(finalCost)),
+        ),
+        2,
+      );
       callback(null, finalResult);
     } catch (err) {
       callback(err as Error);
