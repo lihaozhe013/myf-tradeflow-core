@@ -2,8 +2,7 @@
   "name": "prod",
   "version": "1.0.0",
   "description": "prod",
-  "license": "MIT",
-  "author": "",
+  "author": "Li Haozhe",
   "type": "module",
   "main": "backend/server.js",
   "dependencies": {
@@ -17,7 +16,6 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2",
     "prisma": "^7.3.0",
-    "winston": "^3.19.0",
     "xlsx": "https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz"
   },
   "engines": {

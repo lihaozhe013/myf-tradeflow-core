@@ -1,131 +1,106 @@
 import { Request, Response, NextFunction } from "express";
-import { logger, accessLogger } from "@/utils/logger";
+import { prisma } from "@/prismaClient";
 
-const STATIC_EXTENSIONS = [
-  ".js",
-  ".css",
-  ".map",
-  ".ico",
-  ".png",
-  ".jpg",
-  ".jpeg",
-  ".gif",
-  ".svg",
-  ".woff",
-  ".woff2",
-  ".ttf",
-  ".eot",
-];
-
-// Irrelevant path filtering (scanners, crawlers, etc.)
-const IGNORE_PATHS = [
-  "/plugin.php",
-  "/mag/",
-  "/robots.txt",
-  "/favicon.ico",
-  "/.well-known",
-  "/sitemap",
-  "/xmlrpc.php",
-  "/wp-",
-  "/admin",
-  "/phpmyadmin",
-  "/mysql",
-  "/sql",
-  "/test",
-  "/backup",
-  "/tmp",
-  "057707.com",
-  ".php",
-  ".asp",
-  ".jsp",
+/**
+ * Paths that should not be logged (e.g., manual cache refreshes)
+ */
+const IGNORED_PATHS = [
+  '/api/overview/stats',
+  '/api/analysis/refresh',
+  '/api/payable/invoices/refresh',
+  '/api/receivable/invoices/refresh'
 ];
 
 /**
- * Determine whether this request should be logged
+ * Sensitive keys to mask in the logs
  */
-const shouldLogRequest = (url: string, _method: string): boolean => {
-  // Static File Filtering
-  const hasStaticExtension = STATIC_EXTENSIONS.some((ext) =>
-    url.toLowerCase().includes(ext)
-  );
-  if (hasStaticExtension) return false;
+const SENSITIVE_KEYS = [
+  'password', 
+  'token', 
+  'access_token', 
+  'refreshToken', 
+  'oldPassword', 
+  'newPassword', 
+  'confirmnewPassword'
+];
 
-  // Irrelevant Path Filtering
-  const isIgnoredPath = IGNORE_PATHS.some((path) =>
-    url.toLowerCase().includes(path.toLowerCase())
-  );
-  if (isIgnoredPath) return false;
-
-  // Log all API requests (including GET and POST)
-  if (url.startsWith("/api/")) return true;
-
-  // Log important page requests (based on frontend routing)
-  if (url === "/" || url.startsWith("/login")) return true;
+function shouldSkipLogging(req: Request): boolean {
+  // Check exact matches
+  if (IGNORED_PATHS.includes(req.path)) return true;
+  
+  // Check for refresh patterns (common in cache operations)
+  if (req.originalUrl.includes('/refresh/')) return true;
 
   return false;
-};
+}
+
+function maskSensitiveData(data: any): any {
+  if (!data) return data;
+  if (typeof data !== 'object') return data;
+
+  if (Array.isArray(data)) {
+    return data.map(item => maskSensitiveData(item));
+  }
+
+  const masked = { ...data };
+  for (const key of Object.keys(masked)) {
+    if (SENSITIVE_KEYS.some(k => key.toLowerCase().includes(k.toLowerCase()))) {
+      masked[key] = '******';
+    } else if (typeof masked[key] === 'object') {
+      masked[key] = maskSensitiveData(masked[key]);
+    }
+  }
+  return masked;
+}
 
 /**
  * Access Logger Middleware
+ * Logs modifications (POST, PUT, DELETE, PATCH) to the database.
  */
 export const requestLogger = (
   req: Request,
   res: Response,
   next: NextFunction
 ): void => {
-  const start = Date.now();
-
-  // Request logging begins
-  const requestInfo = {
-    method: req.method,
-    url: req.originalUrl,
-    ip: req.ip || req.socket.remoteAddress,
-    userAgent: req.get("User-Agent"),
-    timestamp: new Date().toISOString(),
-  };
-
-  const shouldLog = shouldLogRequest(req.originalUrl, req.method);
-
-  // Listen for the end of response event
-  res.on("finish", () => {
-    if (!shouldLog) return;
-
-    const duration = Date.now() - start;
-    const responseInfo = {
-      ...requestInfo,
-      statusCode: res.statusCode,
-      duration: `${duration}ms`,
-      contentLength: res.get("Content-Length") || 0,
-    };
-
-    if (req.user) {
-      Object.assign(responseInfo, {
-        user: { username: req.user.username, role: req.user.role },
-      });
+  // Only log mutations
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
+    
+    // Check if this request should be skipped
+    if (shouldSkipLogging(req)) {
+      next();
+      return;
     }
 
-    // Record access logs (with user information)
-    const userPart = req.user
-      ? ` user=${req.user.username} role=${req.user.role}`
-      : " user=anonymous";
-    accessLogger.info(
-      `${req.method} ${req.originalUrl} ${res.statusCode}${userPart}`
-    );
+    res.on("finish", async () => {
+      // Only log if the request was processed (status code exists and no error preventing request handling)
+      // Usually logging regardless of success is better for audit, but let's stick to user request "if valid"
+      if (res.statusCode) {
+        try {
+          const username = req.user?.username || 'anonymous';
+          
+          let bodyToLog = null;
+          if (req.body) {
+             // Mask sensitive fields
+             const maskedBody = maskSensitiveData(req.body);
+             bodyToLog = JSON.stringify(maskedBody);
+          }
 
-    // Determine the log level based on the status code.
-    if (res.statusCode >= 400) {
-      logger.warn("HTTP Request", responseInfo);
-    } else {
-      // Record all successful API requests, including POST operations.
-      logger.info("API Request", {
-        method: req.method,
-        url: req.originalUrl,
-        statusCode: res.statusCode,
-        duration: `${duration}ms`,
-        user: req.user ? req.user.username : "anonymous",
-      });
-    }
-  });
+          await prisma.systemLog.create({
+            data: {
+              username,
+              action: req.method,
+              resource: req.originalUrl,
+              ip: req.ip || req.socket.remoteAddress || '',
+              user_agent: req.get("User-Agent") || '',
+              params: bodyToLog,
+            },
+          });
+        } catch (error) {
+          console.error("Failed to write system log:", error);
+        }
+      }
+    });
+  }
 
   next();
 };
@@ -139,22 +114,12 @@ export const errorLogger = (
   _res: Response,
   next: NextFunction
 ): void => {
-  const errorInfo: Record<string, any> = {
-    error: err.message,
+  console.error("API Error", {
+    message: err.message,
     stack: err.stack,
     method: req.method,
     url: req.originalUrl,
-    ip: req.ip || req.socket.remoteAddress,
-    timestamp: new Date().toISOString(),
-    body: req.body,
-    params: req.params,
-    query: req.query,
-  };
-
-  if (req.user) {
-    errorInfo["user"] = { username: req.user.username, role: req.user.role };
-  }
-
-  logger.error("API Error", errorInfo);
+    user: req.user?.username || "anonymous",
+  });
   next(err);
 };

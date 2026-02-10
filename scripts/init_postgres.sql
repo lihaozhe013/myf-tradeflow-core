@@ -96,3 +96,17 @@ CREATE TABLE payable_payments (
     pay_method TEXT,
     remark TEXT
 );
+
+-- Table: system_logs
+DROP TABLE IF EXISTS system_logs;
+CREATE TABLE system_logs (
+    id SERIAL PRIMARY KEY,
+    username TEXT,
+    action TEXT NOT NULL,
+    resource TEXT NOT NULL,
+    ip TEXT,
+    user_agent TEXT,
+    params TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
