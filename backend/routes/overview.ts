@@ -52,6 +52,56 @@ interface StatsCache {
 // ========== Helper Functions ==========
 
 /**
+ * Helper: Build weighted average cost map from inbound records
+ */
+function buildAvgCostMap(inboundRecords: any[]): Record<string, AvgCostData> {
+  return inboundRecords.reduce((map, item) => {
+    if (!item.product_model) return map;
+
+    const totalQty = item._sum.quantity || 0;
+    const totalPrice = item._sum.total_price || 0;
+    
+    if (totalQty > 0) {
+      map[item.product_model] = {
+        avg_cost_price: decimalCalc.fromSqlResult(totalPrice / totalQty, 0, 4),
+        total_inbound_quantity: decimalCalc.fromSqlResult(totalQty, 0),
+      };
+    }
+    return map;
+  }, {} as Record<string, AvgCostData>);
+}
+
+/**
+ * Helper: Calculate cost for a single sales record
+ */
+function calculateOutboundCost(record: any, avgCostMap: Record<string, AvgCostData>) {
+  const productModel = record.product_model || "unknown";
+  const soldQuantity = decimalCalc.decimal(record.quantity || 0);
+  
+  // Use weighted average inbound price for this product if exists
+  const costPerUnit = avgCostMap[productModel]
+     ? decimalCalc.decimal(avgCostMap[productModel].avg_cost_price)
+     : decimalCalc.fromSqlResult(record.unit_price || 0, 0, 4); // Fallback to selling price
+     
+  return decimalCalc.multiply(soldQuantity, costPerUnit);
+}
+
+/**
+ * Helper: Calculate special income from negative unit price record
+ */
+function calculateSpecialIncome(record: any) {
+  const amt = Math.abs((record.quantity || 0) * (record.unit_price || 0));
+  return decimalCalc.decimal(amt);
+}
+
+/**
+ * Helper: Reducer for summing Decimals
+ */
+function sumDecimals(acc: any, curr: any) {
+  return acc.add(curr);
+}
+
+/**
  * Calculate the real cost of sold goods (weighted average cost method)
  * Inbound records with negative unit prices are treated as special income, reducing costs
  * Only calculates data from the past year
@@ -74,24 +124,7 @@ async function calculateSoldGoodsCost(): Promise<number> {
     }
   });
 
-  const avgCostMap: Record<string, AvgCostData> = {};
-  
-  for (const item of inboundRecords) {
-    if (!item.product_model) continue;
-
-    const totalQty = item._sum.quantity || 0;
-    const totalPrice = item._sum.total_price || 0;
-    
-    // In SQL it was SUM(quantity * unit_price) / SUM(quantity)
-    // prisma item._sum.total_price is ideally quantity * unit_price. 
-    
-    if (totalQty > 0) {
-      avgCostMap[item.product_model] = {
-        avg_cost_price: decimalCalc.fromSqlResult(totalPrice / totalQty, 0, 4),
-        total_inbound_quantity: decimalCalc.fromSqlResult(totalQty, 0),
-      };
-    }
-  }
+  const avgCostMap = buildAvgCostMap(inboundRecords);
 
   // 2. Get all outbound records from the past year (only positive unit price records for cost calculation)
   const outboundRecords = await prisma.outboundRecord.findMany({
@@ -110,25 +143,10 @@ async function calculateSoldGoodsCost(): Promise<number> {
     return 0;
   }
 
-  let totalSoldGoodsCost = decimalCalc.decimal(0);
-
-  // 3. Use average cost to calculate cost for each sales record (only positive unit price items)
-  for (const outRecord of outboundRecords) {
-    const productModel = outRecord.product_model || "unknown";
-    const soldQuantity = decimalCalc.decimal(outRecord.quantity || 0);
-    const sellingPrice = decimalCalc.fromSqlResult(outRecord.unit_price || 0, 0, 4);
-
-    if (avgCostMap[productModel]) {
-       // Use weighted average inbound price for this product
-       const avgCost = decimalCalc.decimal(avgCostMap[productModel].avg_cost_price);
-       const cost = decimalCalc.multiply(soldQuantity, avgCost);
-       totalSoldGoodsCost = totalSoldGoodsCost.add(cost);
-    } else {
-       // If no corresponding inbound records, use outbound price as cost (conservative estimate)
-       const cost = decimalCalc.multiply(soldQuantity, sellingPrice);
-       totalSoldGoodsCost = totalSoldGoodsCost.add(cost);
-    }
-  }
+  // 3. Use average cost to calculate sold goods cost
+  const totalSoldGoodsCost = outboundRecords
+    .map(record => calculateOutboundCost(record, avgCostMap))
+    .reduce(sumDecimals, decimalCalc.decimal(0));
 
   // 4. Calculate special income from inbound negative unit price items from past year, reduce total cost
   // SQL: SELECT COALESCE(SUM(ABS(quantity * unit_price)), 0) ... WHERE unit_price < 0
@@ -143,13 +161,11 @@ async function calculateSoldGoodsCost(): Promise<number> {
     }
   });
 
-  let specialIncomeDec = decimalCalc.decimal(0);
-  for (const r of specialIncomeRecords) {
-     const amt = Math.abs((r.quantity || 0) * (r.unit_price || 0));
-     specialIncomeDec = decimalCalc.add(specialIncomeDec, amt);
-  }
+  const totalSpecialIncome = specialIncomeRecords
+    .map(calculateSpecialIncome)
+    .reduce(sumDecimals, decimalCalc.decimal(0));
 
-  const finalCost = decimalCalc.subtract(totalSoldGoodsCost, specialIncomeDec);
+  const finalCost = decimalCalc.subtract(totalSoldGoodsCost, totalSpecialIncome);
 
   // Ensure cost is not negative and keep two decimal places
   return decimalCalc.toDbNumber(
