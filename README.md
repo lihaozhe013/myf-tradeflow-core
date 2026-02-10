@@ -31,9 +31,9 @@ flowchart LR
   API --> Auth["JWT Auth + RBAC"]
   Auth --> Services{{"**Services**<br>(Inventory, Pricing, Finance, Reports)"}}
   Services <--> Config["Config JSON"]
-  Services <--> DB[("SQLite/Postgres")]
+  Services <--> DB[("PostgreSQL/SQLite")]
   Services <--> Cache["Cache(JSON/Redis)"]
-  API --> Logging["Winston Logs"]
+  API --> Logging["Logger Middleware"] --> DB["PostgreSQL/SQLite"]
 ```
 
 ## Demo
