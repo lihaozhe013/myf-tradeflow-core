@@ -1,24 +1,13 @@
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
-import fs from 'fs';
-import { appConfigPath } from "@/utils/paths.js";
+import { config } from "@/utils/paths.js";
 import { logger } from "@/utils/logger.js";
 
 let prismaInstance: PrismaClient | null = null;
 
 function getDatabaseConfig() {
-  try {
-    if (fs.existsSync(appConfigPath)) {
-      const configContent = fs.readFileSync(appConfigPath, "utf8");
-      const config = JSON.parse(configContent);
-      return config.database || {};
-    }
-    return {};
-  } catch (error) {
-    logger.warn("Failed to read appConfig for database configuration, using defaults.");
-    return {};
-  }
+  return config.database || {};
 }
 
 function createPrismaClient() {

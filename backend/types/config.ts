@@ -15,9 +15,24 @@ export interface FrontendConfig {
 }
 
 /**
+ * AuthConfig Interface
+ */
+export interface AuthConfig {
+  enabled: boolean;
+  tokenExpiresInHours?: number;
+  loginRateLimit?: {
+    windowMinutes: number;
+    maxAttempts: number;
+  };
+  allowExportsForReader?: boolean;
+}
+
+/**
  * AppConfig Interface
  */
 export interface AppConfig {
+  currency_unit_symbol?: string;
+  pagination_limit?: number;
   database?: {
     type?: 'sqlite' | 'postgresql';
     host?: string;
@@ -26,6 +41,7 @@ export interface AppConfig {
     password?: string;
     dbName?: string;
   };
+  auth?: AuthConfig;
   server?: ServerConfig;
   frontend?: FrontendConfig;
 }

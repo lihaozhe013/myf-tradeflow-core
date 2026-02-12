@@ -3,8 +3,8 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import cors from "cors";
-import type { AppConfig, CustomError } from "@/types/index";
-import { appConfigPath } from "@/utils/paths";
+import type { CustomError } from "@/types/index";
+import { config } from "@/utils/paths";
 import { logger } from "@/utils/logger";
 import { requestLogger, errorLogger } from "@/utils/loggerMiddleware";
 import { authenticateToken, checkWritePermission } from "@/utils/auth";
@@ -26,8 +26,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app: Express = express();
-
-const config: AppConfig = JSON.parse(fs.readFileSync(appConfigPath, "utf8"));
 
 // Port Config
 const PORT: number =
