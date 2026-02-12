@@ -2,6 +2,7 @@ import express, { type Router, type Request, type Response } from 'express';
 import { prisma } from '@/prismaClient.js';
 import { Prisma } from '@prisma/client';
 import decimalCalc from '@/utils/decimalCalculator.js';
+import { pagination_limit } from '@/utils/paths.js';
 
 const router: Router = express.Router();
 
@@ -17,7 +18,7 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
     let { page = 1 } = req.query;
     let pageNum = parseInt(page as string, 10);
     if (!Number.isFinite(pageNum) || pageNum < 1) pageNum = 1;
-    const limit = 10;
+    const limit = pagination_limit;
     const skip = (pageNum - 1) * limit;
     
     const where: Prisma.InboundRecordWhereInput = {};

@@ -48,6 +48,7 @@ export function getLogDir(): string {
 
 const appConfigPath = resolveFilesInDataPath("appConfig.json");
 let currency_unit_symbol = "¥";
+let pagination_limit = 20;
 try {
   if (fs.existsSync(appConfigPath)) {
     const temp_data = fs.readFileSync(appConfigPath, "utf8");
@@ -55,6 +56,12 @@ try {
     if (json.currency_symbol) {
       currency_unit_symbol = json.currency_symbol;
     }
+    if (json.currency_unit_symbol) {
+      currency_unit_symbol = json.currency_unit_symbol;
+    }
+    if (json.pagination_limit) {
+      pagination_limit = Number(json.pagination_limit);
+    }
   }
 } catch (e) {}
-export { currency_unit_symbol, appConfigPath };
+export { currency_unit_symbol, pagination_limit, appConfigPath };

@@ -1,5 +1,6 @@
 {
   "currency_unit_symbol": "$",
+  "pagination_limit": 20,
   "database": {
     "type": "postgresql",
     "host": "localhost",
