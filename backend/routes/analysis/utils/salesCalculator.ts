@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
-import { prisma } from "@/prismaClient.js";
-import decimalCalc from "@/utils/decimalCalculator.js";
-import type { SalesData } from "@/routes/analysis/utils/types.js";
+import { prisma } from "@/prismaClient";
+import decimalCalc from "@/utils/decimalCalculator";
+import type { SalesData } from "@/routes/analysis/utils/types";
 
 export function calculateSalesData(
   startDate: string,

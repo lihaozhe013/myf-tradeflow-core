@@ -2,12 +2,12 @@
  * Inventory Cache Service
  * Calculate inventory from the database and cache management
  */
-import { prisma } from "@/prismaClient.js";
+import { prisma } from "@/prismaClient";
 import fs from "fs";
 import path from "path";
-import { logger } from "@/utils/logger.js";
-import decimalCalc from "@/utils/decimalCalculator.js";
-import { resolveFilesInDataPath } from "@/utils/paths.js";
+import { logger } from "@/utils/logger";
+import decimalCalc from "@/utils/decimalCalculator";
+import { resolveFilesInDataPath } from "@/utils/paths";
 
 const INVENTORY_CACHE_FILE = resolveFilesInDataPath("inventory-summary.json");
 

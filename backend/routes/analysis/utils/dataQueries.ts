@@ -1,5 +1,5 @@
-import { prisma } from "@/prismaClient.js";
-import type { FilterOptions } from "@/routes/analysis/utils/types.js";
+import { prisma } from "@/prismaClient";
+import type { FilterOptions } from "@/routes/analysis/utils/types";
 
 /**
  * Retrieve filter options (customer and product lists)

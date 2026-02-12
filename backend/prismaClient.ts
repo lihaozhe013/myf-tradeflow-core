@@ -1,8 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
-import { config } from "@/utils/paths.js";
-import { logger } from "@/utils/logger.js";
+import { config } from "@/utils/paths";
+import { logger } from "@/utils/logger";
 
 let prismaInstance: PrismaClient | null = null;
 

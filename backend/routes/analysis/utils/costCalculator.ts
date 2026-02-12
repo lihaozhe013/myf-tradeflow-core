@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
-import { prisma } from "@/prismaClient.js";
-import decimalCalc from "@/utils/decimalCalculator.js";
+import { prisma } from "@/prismaClient";
+import decimalCalc from "@/utils/decimalCalculator";
 
 /**
  * Calculate the actual cost of goods sold under specified conditions (using the weighted average cost method)

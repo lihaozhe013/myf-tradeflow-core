@@ -1,6 +1,6 @@
 import express, { type Router, type Request, type Response } from 'express';
 import fs from 'fs/promises';
-import { logger } from '@/utils/logger.js';
+import { logger } from '@/utils/logger';
 import { resolveFilesInDataPath } from '@/utils/paths';
 
 const router: Router = express.Router();

@@ -3,7 +3,7 @@ import {
   getInventorySummary, 
   refreshInventoryCache, 
   getInventoryCache 
-} from '@/utils/inventoryCacheService.js';
+} from '@/utils/inventoryCacheService';
 
 const router: Router = express.Router();
 

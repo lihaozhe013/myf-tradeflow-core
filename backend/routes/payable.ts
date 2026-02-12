@@ -1,8 +1,8 @@
 import express, { type Router, type Request, type Response } from 'express';
-import { prisma } from '@/prismaClient.js';
+import { prisma } from '@/prismaClient';
 import { Prisma } from '@prisma/client';
-import decimalCalc from '@/utils/decimalCalculator.js';
-import invoiceCacheService from '@/utils/invoiceCacheService.js';
+import decimalCalc from '@/utils/decimalCalculator';
+import invoiceCacheService from '@/utils/invoiceCacheService';
 
 const router: Router = express.Router();
 
