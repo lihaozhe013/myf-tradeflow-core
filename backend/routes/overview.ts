@@ -3,7 +3,6 @@ import express, { Request, Response, Router } from 'express';
 import fs from 'fs';
 import path from 'path';
 import { prisma } from '@/prismaClient';
-import { getAllInventoryData } from '@/utils/inventoryCacheService';
 import decimalCalc from '@/utils/decimalCalculator';
 import { resolveFilesInDataPath } from '@/utils/paths';
 
@@ -206,16 +205,12 @@ router.post('/stats', async (_req: Request, res: Response): Promise<void> => {
     // -------------------------------------------------------------------------
     // 1. Out of Inventory Products
     // -------------------------------------------------------------------------
-    const outOfInventoryPromise = new Promise<{ product_model: string }[]>((resolve, reject) => {
-      getAllInventoryData((err, inventoryData) => {
-        if (err) return reject(err);
-        const outOfStockProducts = Object.entries(inventoryData!)
-          .filter(([, data]) => data.current_inventory <= 0)
-          .map(([product_model]) => ({ product_model }));
-        resolve(outOfStockProducts);
-      });
+    const outOfInventoryPromise = prisma.inventory.findMany({
+      where: { quantity: { lte: 0 } },
+      select: { product_model: true }
     });
-
+    
+    // Convert to simple array of objects { product_model: string }
     stats.out_of_inventory_products = await outOfInventoryPromise;
 
     // -------------------------------------------------------------------------
@@ -274,13 +269,7 @@ router.post('/stats', async (_req: Request, res: Response): Promise<void> => {
     const soldGoodsCost = await calculateSoldGoodsCost();
 
     // Inventory Count
-    const inventoryCountPromise = new Promise<number>((resolve, reject) => {
-        getAllInventoryData((err, inventoryData) => {
-            if (err) return reject(err);
-            resolve(Object.keys(inventoryData!).length);
-        });
-    });
-    const inventoryCount = await inventoryCountPromise;
+    const inventoryCount = await prisma.inventory.count();
 
     stats.overview = {
       ...counts,

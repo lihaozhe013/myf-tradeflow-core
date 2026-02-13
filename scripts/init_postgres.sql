@@ -97,8 +97,23 @@ CREATE TABLE payable_payments (
     remark TEXT
 );
 
--- Table: system_logs
-DROP TABLE IF EXISTS system_logs;
+-- Table: inventory
+CREATE TABLE inventory (
+    product_model TEXT PRIMARY KEY,
+    quantity INTEGER NOT NULL DEFAULT 0
+);
+
+-- Table: inventory_ledger
+CREATE TABLE inventory_ledger (
+    id SERIAL PRIMARY KEY,
+    product_model TEXT NOT NULL,
+    change_qty INTEGER NOT NULL,
+    change_type TEXT NOT NULL,
+    reference_id INTEGER,
+    date TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE system_logs (
     id SERIAL PRIMARY KEY,
     username TEXT,
