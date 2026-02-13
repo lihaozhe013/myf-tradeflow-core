@@ -2,10 +2,10 @@
 import express, { Request, Response, Router } from 'express';
 import fs from 'fs';
 import path from 'path';
-import { prisma } from '@/prismaClient.js';
-import { getAllInventoryData } from '@/utils/inventoryCacheService.js';
-import decimalCalc from '@/utils/decimalCalculator.js';
-import { resolveFilesInDataPath } from '@/utils/paths.js';
+import { prisma } from '@/prismaClient';
+import { getAllInventoryData } from '@/utils/inventoryCacheService';
+import decimalCalc from '@/utils/decimalCalculator';
+import { resolveFilesInDataPath } from '@/utils/paths';
 
 const router: Router = express.Router();
 

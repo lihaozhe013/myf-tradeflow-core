@@ -1,5 +1,7 @@
 import fs from "fs";
 import path from "path";
+import yaml from "js-yaml";
+import { AppConfig } from "@/types/config";
 
 export function getAppRoot(): string {
   return process.cwd();
@@ -46,15 +48,19 @@ export function getLogDir(): string {
   return path.resolve(getDataDir(), "log");
 }
 
-const appConfigPath = resolveFilesInDataPath("appConfig.json");
-let currency_unit_symbol = "¥";
+const appConfigPath = resolveFilesInDataPath("appConfig.yaml");
+let config: AppConfig = {};
+
 try {
   if (fs.existsSync(appConfigPath)) {
     const temp_data = fs.readFileSync(appConfigPath, "utf8");
-    const json = JSON.parse(temp_data);
-    if (json.currency_symbol) {
-      currency_unit_symbol = json.currency_symbol;
-    }
+    config = yaml.load(temp_data) as AppConfig;
   }
-} catch (e) {}
-export { currency_unit_symbol, appConfigPath };
+} catch (e) {
+  console.error("Failed to load appConfig.yaml", e);
+}
+
+const currency_unit_symbol = config.currency_unit_symbol || "¥";
+const pagination_limit = config.pagination_limit ? Number(config.pagination_limit) : 20;
+
+export { currency_unit_symbol, pagination_limit, appConfigPath, config };

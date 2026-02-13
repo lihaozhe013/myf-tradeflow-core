@@ -1,9 +1,9 @@
 import fs from "fs";
 import path from "path";
-import { prisma } from "@/prismaClient.js";
-import decimalCalc from "@/utils/decimalCalculator.js";
-import { logger } from "@/utils/logger.js";
-import { getDataDir } from "@/utils/paths.js";
+import { prisma } from "@/prismaClient";
+import decimalCalc from "@/utils/decimalCalculator";
+import { logger } from "@/utils/logger";
+import { getDataDir } from "@/utils/paths";
 
 const CACHE_FILE_NAME = "invoice-cache.json";
 

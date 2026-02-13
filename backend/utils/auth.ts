@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 import argon2 from "argon2";
 import { Request, Response, NextFunction } from "express";
 import { logger } from "@/utils/logger";
-import { resolveFilesInDataPath, appConfigPath } from "@/utils/paths";
+import { resolveFilesInDataPath, config } from "@/utils/paths";
 
 const usersPath: string = resolveFilesInDataPath("users.json");
 const secretPath: string = resolveFilesInDataPath("jwt-secret.txt");
@@ -57,17 +57,16 @@ function readJSONSafe<T>(filePath: string, fallback: T): T {
 }
 
 export function getAuthConfig(): AuthConfig {
-  const cfg = readJSONSafe<any>(appConfigPath, {});
-  const auth = cfg?.auth || {};
+  const auth = config?.auth;
   return {
-    enabled: auth.enabled !== undefined ? auth.enabled : false,
-    tokenExpiresInHours: auth.tokenExpiresInHours || 12,
+    enabled: auth?.enabled ?? false,
+    tokenExpiresInHours: auth?.tokenExpiresInHours || 12,
     loginRateLimit: {
-      windowMinutes: auth.loginRateLimit?.windowMinutes || 5,
-      maxAttempts: auth.loginRateLimit?.maxAttempts || 20,
+      windowMinutes: auth?.loginRateLimit?.windowMinutes || 5,
+      maxAttempts: auth?.loginRateLimit?.maxAttempts || 20,
     },
     allowExportsForReader:
-      auth.allowExportsForReader !== undefined
+      auth?.allowExportsForReader !== undefined
         ? auth.allowExportsForReader
         : true,
   };

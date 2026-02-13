@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
-import { prisma } from "@/prismaClient.js";
-import decimalCalc from "@/utils/decimalCalculator.js";
+import { prisma } from "@/prismaClient";
+import decimalCalc from "@/utils/decimalCalculator";
 
 export default class ReceivableQueries {
   async getReceivableSummary(filters: any = {}): Promise<any[]> {

@@ -1,4 +1,4 @@
-import { prisma } from "@/prismaClient.js";
+import { prisma } from "@/prismaClient";
 
 export default class BasicDataQueries {
   async getBaseInfoData(tables: string = "123"): Promise<any> {

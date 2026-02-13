@@ -1,11 +1,11 @@
 import { Prisma } from "@prisma/client";
-import { prisma } from "@/prismaClient.js";
-import decimalCalc from "@/utils/decimalCalculator.js";
-import { calculateFilteredSoldGoodsCost } from "@/routes/analysis/utils/costCalculator.js";
+import { prisma } from "@/prismaClient";
+import decimalCalc from "@/utils/decimalCalculator";
+import { calculateFilteredSoldGoodsCost } from "@/routes/analysis/utils/costCalculator";
 import type {
   DetailItem,
   AnalysisType,
-} from "@/routes/analysis/utils/types.js";
+} from "@/routes/analysis/utils/types";
 
 /**
  * Calculate detailed analytical data (grouped by customer or product)

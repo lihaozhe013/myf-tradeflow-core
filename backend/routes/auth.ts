@@ -6,8 +6,8 @@ import {
   getPublicUser, 
   authenticateToken,
   loginRateLimiter 
-} from '@/utils/auth.js';
-import { logger } from '@/utils/logger.js';
+} from '@/utils/auth';
+import { logger } from '@/utils/logger';
 
 const router: Router = express.Router();
 

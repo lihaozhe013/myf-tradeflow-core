@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { prisma } from "@/prismaClient.js";
+import { prisma } from "@/prismaClient";
 
 export default class InvoiceQueries {
   async getInvoiceData(filters: any = {}): Promise<any[]> {
