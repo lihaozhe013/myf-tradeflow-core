@@ -122,6 +122,25 @@ This is the detailed page for my demo link:
 | order_number   | TEXT      |            | Yes      | NULL              |
 | remark         | TEXT      |            | Yes      | NULL              |
 
+### INVENTORY
+
+| Column  Name  | Data Type | Key    | Nullable | Default |
+| ------------- | --------- | ------ | -------- | ------- |
+| product_model | TEXT      | PK     | No       | NULL    |
+| quantity      | INTEGER   |        | No       | 0       |
+
+### INVENTORY LEDGER
+
+| Column  Name  | Data Type | Key        | Nullable | Default           |
+| ------------- | --------- | ---------- | -------- | ----------------- |
+| id            | INTEGER   | UNIQUE, PK | No       | AI                |
+| product_model | TEXT      |            | No       | NULL              |
+| change_qty    | INTEGER   |            | No       | NULL              |
+| change_type   | TEXT      |            | No       | NULL              |
+| reference_id  | INTEGER   |            | Yes      | NULL              |
+| date          | TEXT      |            | No       | NULL              |
+| created_at    | TIMESTAMP |            | No       | CURRENT_TIMESTAMP |
+
 ### RECEIVABLE PAYMENTS
 
 | Column  Name  | Data Type | Key        | Nullable | Default           |
@@ -212,7 +231,7 @@ npm run dev
 ```
 
 ## Data Files
-The system uses JSON configuration files located in the `data/` directory:
+The system uses configuration files located in the `data/` directory:
 
-- `appConfig.json`: Application settings and company information
+- `appConfig.yaml`: Application settings and company information
 - `exportConfig.json`: Data export templates and settings
