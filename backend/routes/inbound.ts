@@ -3,6 +3,7 @@ import { prisma } from '@/prismaClient';
 import { Prisma } from '@prisma/client';
 import decimalCalc from '@/utils/decimalCalculator';
 import { pagination_limit } from '@/utils/paths';
+import { inventoryService } from '@/utils/inventoryService';
 
 const router: Router = express.Router();
 
@@ -115,6 +116,8 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
           remark
         }
     });
+
+    await inventoryService.onInboundCreate(result);
     
     res.json({ id: result.id, message: 'Inbound record created!' });
   } catch (err) {
@@ -139,7 +142,13 @@ router.put('/:id', async (req: Request, res: Response): Promise<void> => {
     
     const total_price = decimalCalc.calculateTotalPrice(quantity, unit_price);
     
-    await prisma.inboundRecord.update({
+    const oldRecord = await prisma.inboundRecord.findUnique({ where: { id } });
+    if (!oldRecord) {
+      res.status(404).json({ error: 'No inbound records exist' });
+      return;
+    }
+
+    const result = await prisma.inboundRecord.update({
         where: { id },
         data: {
           supplier_code,
@@ -158,6 +167,8 @@ router.put('/:id', async (req: Request, res: Response): Promise<void> => {
           remark
         }
     });
+
+    await inventoryService.onInboundUpdate(oldRecord, result);
     
     res.json({ message: 'Inbound record updated!' });
   } catch (err) {
@@ -178,6 +189,7 @@ router.delete('/:id', async (req: Request, res: Response): Promise<void> => {
     const id = Number(req.params['id']);
     
     await prisma.inboundRecord.delete({ where: { id } });
+    await inventoryService.onInboundDelete(id);
     
     res.json({ message: 'Inbound record deleted!' });
   } catch (err) {
@@ -258,34 +270,39 @@ router.post('/batch', async (req: Request, res: Response): Promise<void> => {
     
     for (const recordId of ids) {
         try {
+            const oldRecord = await prisma.inboundRecord.findUnique({ where: { id: recordId } });
+            if (!oldRecord) {
+                notFound.push(recordId);
+                continue;
+            }
+
+            let result;
             if (needsRecalculation) {
-                // Fetch current first
-                const current = await prisma.inboundRecord.findUnique({ where: { id: recordId }, select: { quantity: true, unit_price: true } });
-                if (!current) {
-                    notFound.push(recordId);
-                    continue;
-                }
+                // We have oldRecord, so we can use its values safely
+                const quantity = oldRecord.quantity ?? 0;
+                const unitPrice = oldRecord.unit_price ?? 0;
                 
-                const finalQuantity = hasQuantity ? updates.quantity : current.quantity;
-                const finalUnitPrice = hasUnitPrice ? updates.unit_price : current.unit_price;
+                // Assuming updates object has correct types or casting as needed
+                const finalQuantity = hasQuantity ? (updates.quantity as number) : quantity;
+                const finalUnitPrice = hasUnitPrice ? (updates.unit_price as number) : unitPrice;
                 const total_price = decimalCalc.calculateTotalPrice(finalQuantity, finalUnitPrice);
                 
-                await prisma.inboundRecord.update({
+                result = await prisma.inboundRecord.update({
                     where: { id: recordId },
                     data: {
                         ...updateData,
                         total_price: total_price
                     }
                 });
-                completed++;
             } else {
-                // No calc needed
-                 await prisma.inboundRecord.update({
+                 result = await prisma.inboundRecord.update({
                     where: { id: recordId },
                     data: updateData
                 });
-                completed++;
             }
+            
+            await inventoryService.onInboundUpdate(oldRecord, result);
+            completed++;
         } catch (e: any) {
             if (e.code === 'P2025') {
                  notFound.push(recordId);

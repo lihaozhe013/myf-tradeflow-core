@@ -91,7 +91,7 @@ export default class AdvancedAnalysisExporter {
     const detailLabels = this.templates.analysis_customer_detail.labels || {};
 
     for (const customer of customerData) {
-      if (customer.sales_amount > 0) {
+      if (customer.sales_amount !== 0) {
         // Create summary sheet
         const summaryData = [
           {
@@ -122,7 +122,7 @@ export default class AdvancedAnalysisExporter {
         // Create detail sheet if product details exist
         if (customer.product_details && customer.product_details.length > 0) {
           const detailData = customer.product_details
-            .filter((item: any) => item.sales_amount > 0)
+            .filter((item: any) => item.sales_amount !== 0)
             .map((item: any) => ({
               product_model: item.product_model,
               sales_amount: this.formatCurrency(item.sales_amount),
@@ -168,7 +168,7 @@ export default class AdvancedAnalysisExporter {
     const detailLabels = this.templates.analysis_product_detail.labels || {};
 
     for (const product of productData) {
-      if (product.sales_amount > 0) {
+      if (product.sales_amount !== 0) {
         // Create summary sheet
         const summaryData = [
           {
@@ -198,7 +198,7 @@ export default class AdvancedAnalysisExporter {
         // Create detail sheet if customer details exist
         if (product.customer_details && product.customer_details.length > 0) {
           const detailData = product.customer_details
-            .filter((item: any) => item.sales_amount > 0)
+            .filter((item: any) => item.sales_amount !== 0)
             .map((item: any) => ({
               customer_code: item.customer_code,
               customer_name: item.customer_name,

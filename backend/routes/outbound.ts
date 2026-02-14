@@ -3,6 +3,7 @@ import { prisma } from "@/prismaClient";
 import { Prisma } from "@prisma/client";
 import decimalCalc from "@/utils/decimalCalculator";
 import { pagination_limit } from '@/utils/paths';
+import { inventoryService } from '@/utils/inventoryService';
 
 const router: Router = express.Router();
 
@@ -140,6 +141,8 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
       },
     });
 
+    await inventoryService.onOutboundCreate(result);
+
     res.json({ id: result.id, message: "Outbound record created!" });
   } catch (err) {
     const error = err as Error;
@@ -171,7 +174,13 @@ router.put("/:id", async (req: Request, res: Response): Promise<void> => {
 
     const total_price = decimalCalc.calculateTotalPrice(quantity, unit_price);
 
-    await prisma.outboundRecord.update({
+    const oldRecord = await prisma.outboundRecord.findUnique({ where: { id } });
+    if (!oldRecord) {
+        res.status(404).json({ error: "No outbound records exist" });
+        return;
+    }
+
+    const result = await prisma.outboundRecord.update({
       where: { id },
       data: {
         customer_code,
@@ -190,6 +199,8 @@ router.put("/:id", async (req: Request, res: Response): Promise<void> => {
         remark,
       },
     });
+
+    await inventoryService.onOutboundUpdate(oldRecord, result);
 
     res.json({ message: "Outbound record updated!" });
   } catch (err) {
@@ -213,6 +224,8 @@ router.delete("/:id", async (req: Request, res: Response): Promise<void> => {
     const id = Number(req.params["id"]);
 
     await prisma.outboundRecord.delete({ where: { id } });
+
+    await inventoryService.onOutboundDelete(id);
 
     res.json({ message: "Outbound record deleted!" });
   } catch (err) {
@@ -294,35 +307,43 @@ router.post("/batch", async (req: Request, res: Response): Promise<void> => {
     for (const recordId of ids) {
       try {
         if (needsRecalculation) {
-          const current = await prisma.outboundRecord.findUnique({
-            where: { id: recordId },
-            select: { quantity: true, unit_price: true },
-          });
-          if (!current) {
-            notFound.push(recordId);
-            continue;
+          const oldRecord = await prisma.outboundRecord.findUnique({ where: { id: recordId } });
+          if (!oldRecord) {
+             notFound.push(recordId);
+             continue;
           }
+          
+          const quantity = oldRecord.quantity ?? 0;
+          const unitPrice = oldRecord.unit_price ?? 0;
           const finalQuantity = hasQuantity
-            ? updates.quantity
-            : current.quantity;
+            ? (updates.quantity as number)
+            : quantity;
           const finalUnitPrice = hasUnitPrice
-            ? updates.unit_price
-            : current.unit_price;
+            ? (updates.unit_price as number)
+            : unitPrice;
           const total_price = decimalCalc.calculateTotalPrice(
             finalQuantity,
-            finalUnitPrice,
+            finalUnitPrice
           );
 
-          await prisma.outboundRecord.update({
+          const result = await prisma.outboundRecord.update({
             where: { id: recordId },
             data: { ...updateData, total_price: total_price },
           });
+          
+          await inventoryService.onOutboundUpdate(oldRecord, result);
           completed++;
         } else {
-          await prisma.outboundRecord.update({
+          const oldRecord = await prisma.outboundRecord.findUnique({ where: { id: recordId } });
+          if (!oldRecord) {
+             notFound.push(recordId); // unlikely if we are here?
+             continue; // or handle error
+          }
+          const result = await prisma.outboundRecord.update({
             where: { id: recordId },
             data: updateData,
           });
+          await inventoryService.onOutboundUpdate(oldRecord, result);
           completed++;
         }
       } catch (e: any) {

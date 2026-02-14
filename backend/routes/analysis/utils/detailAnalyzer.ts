@@ -2,10 +2,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/prismaClient";
 import decimalCalc from "@/utils/decimalCalculator";
 import { calculateFilteredSoldGoodsCost } from "@/routes/analysis/utils/costCalculator";
-import type {
-  DetailItem,
-  AnalysisType,
-} from "@/routes/analysis/utils/types";
+import type { DetailItem, AnalysisType } from "@/routes/analysis/utils/types";
 
 /**
  * Calculate detailed analytical data (grouped by customer or product)
@@ -232,7 +229,7 @@ function handleOutboundAnalysis(
 
               // Calculate the profit margin
               let profitRate = 0;
-              if (salesAmount > 0) {
+              if (salesAmount !== 0) {
                 const rate = decimalCalc.multiply(
                   decimalCalc.divide(profit, salesAmount),
                   100,

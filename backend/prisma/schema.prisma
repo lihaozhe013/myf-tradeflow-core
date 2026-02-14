@@ -53,6 +53,25 @@ model OutboundRecord {
   @@map("outbound_records")
 }
 
+model Inventory {
+  product_model String @id
+  quantity      Int    @default(0)
+
+  @@map("inventory")
+}
+
+model InventoryLedger {
+  id            Int      @id @default(autoincrement())
+  product_model String
+  change_qty    Int
+  change_type   String
+  reference_id  Int?
+  date          String
+  created_at    DateTime @default(now())
+
+  @@map("inventory_ledger")
+}
+
 model Partner {
   code           String? @unique
   short_name     String  @id
