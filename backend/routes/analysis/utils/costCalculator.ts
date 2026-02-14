@@ -18,7 +18,6 @@ export function calculateFilteredSoldGoodsCost(
       // 1. Fetch all INBOUND records (Supply) - Sorted Oldest First
       // We need 'all' history to trace the FIFO queue correctly.
       const inboundWhere: Prisma.InboundRecordWhereInput = {
-        unit_price: { gte: 0 }, // Ignore returns/adjustments with negative price for cost basis
         quantity: { gt: 0 },
       };
       if (productModel && productModel !== "All") {
@@ -155,45 +154,7 @@ export function calculateFilteredSoldGoodsCost(
         }
       }
 
-      // 4. Handle Adjustments (Negative Inbound Records like Rebates/Returns)
-      // These are effectively "Cost Reductions" for the period.
-      // We only sum the negative entries because positive entries are already accounted for
-      // in the FIFO logic when they are sold.
-
-      const adjustmentWhere: Prisma.InboundRecordWhereInput = {
-        unit_price: { lt: 0 },
-        inbound_date: {
-          gte: startDate,
-          lte: endDate,
-        },
-      };
-
-      if (productModel && productModel !== "All") {
-        adjustmentWhere.product_model = productModel;
-      }
-
-      const adjustmentAgg = await prisma.inboundRecord.aggregate({
-        _sum: { total_price: true },
-        where: adjustmentWhere,
-      });
-
-      // total_price is usually (quantity * unit_price).
-      // If unit_price < 0, total_price is negative.
-      const adjustmentAmt = decimalCalc.fromSqlResult(
-        adjustmentAgg._sum.total_price || 0,
-        0,
-        2,
-      );
-
-      // Add the negative amount to reduce the total cost
-      const finalCost = decimalCalc.add(totalPeriodCost, adjustmentAmt);
-
-      const finalResult = decimalCalc.toDbNumber(
-        decimalCalc.decimal(
-          Math.max(0, (finalCost as any).toNumber?.() ?? Number(finalCost)),
-        ),
-        2,
-      );
+      const finalResult = decimalCalc.toDbNumber(totalPeriodCost, 2);
 
       callback(null, finalResult);
     } catch (err: any) {

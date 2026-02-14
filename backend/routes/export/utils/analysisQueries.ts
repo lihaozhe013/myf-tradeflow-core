@@ -1,9 +1,133 @@
-import { Prisma } from "@prisma/client";
 import { prisma } from "@/prismaClient";
+import decimalCalc from "@/utils/decimalCalculator";
 
-type Row = Record<string, any>;
+interface Batch {
+  quantity_remaining: number;
+  unit_price: number;
+}
 
 export default class AnalysisQueries {
+  /**
+   * Helper to perform FIFO calculation and return enriched outbound records
+   */
+  private async calculateFIFOData(startDate: string, endDate: string) {
+    // 1. Fetch Data
+    const [allInbound, allOutbound, partners] = await Promise.all([
+      // Inbound: All history, sorted by date asc for FIFO
+      prisma.inboundRecord.findMany({
+        where: { quantity: { gt: 0 } },
+        orderBy: [{ inbound_date: "asc" }, { id: "asc" }],
+        select: { product_model: true, quantity: true, unit_price: true },
+      }),
+      // Outbound: Up to endDate
+      prisma.outboundRecord.findMany({
+        where: { quantity: { gt: 0 }, outbound_date: { lte: endDate } },
+        orderBy: [{ outbound_date: "asc" }, { id: "asc" }],
+        select: {
+          id: true,
+          product_model: true,
+          quantity: true,
+          outbound_date: true,
+          unit_price: true,
+          total_price: true,
+          customer_code: true,
+          customer_short_name: true,
+        },
+      }),
+      // Partners for resolution
+      prisma.partner.findMany({
+        select: { code: true, short_name: true, full_name: true },
+      }),
+    ]);
+
+    // 2. Prepare Maps
+    const partnerCodeMap = new Map<string, any>();
+    const partnerShortMap = new Map<string, any>();
+    partners.forEach((p) => {
+      if (p.code) partnerCodeMap.set(p.code, p);
+      if (p.short_name) partnerShortMap.set(p.short_name, p);
+    });
+
+    // 3. FIFO Simulation
+    const inventoryState: Record<string, Batch[]> = {};
+    const processedRecords: any[] = [];
+
+    // Initial Inventory (Inbound)
+    for (const inRecord of allInbound) {
+      if (!inRecord.product_model || !inRecord.quantity) continue;
+      if (!inventoryState[inRecord.product_model])
+        inventoryState[inRecord.product_model] = [];
+
+      inventoryState[inRecord.product_model]!.push({
+        quantity_remaining: Number(inRecord.quantity),
+        unit_price: Number(inRecord.unit_price),
+      });
+    }
+
+    // Process Outbound
+    for (const outRecord of allOutbound) {
+      if (!outRecord.product_model || !outRecord.quantity) continue;
+
+      const model = outRecord.product_model;
+      let qtyToFulfill = Number(outRecord.quantity);
+      let currentRecordCost = decimalCalc.decimal(0);
+
+      const batches = inventoryState[model] || [];
+
+      // Determine if this record is in our target period
+      const isTarget =
+        outRecord.outbound_date! >= startDate &&
+        outRecord.outbound_date! <= endDate;
+
+      // Resolve Partner - match behavior of "p.code IS NOT NULL"
+      let partner = null;
+      if (
+        outRecord.customer_code &&
+        partnerCodeMap.has(outRecord.customer_code)
+      ) {
+        partner = partnerCodeMap.get(outRecord.customer_code);
+      } else if (
+        outRecord.customer_short_name &&
+        partnerShortMap.has(outRecord.customer_short_name)
+      ) {
+        partner = partnerShortMap.get(outRecord.customer_short_name);
+      }
+
+      // FIFO consumption
+      while (qtyToFulfill > 0) {
+        if (batches.length === 0) break;
+
+        const batch = batches[0]!;
+        const take = Math.min(batch.quantity_remaining, qtyToFulfill);
+
+        if (isTarget && partner) {
+          const portionCost = decimalCalc.multiply(take, batch.unit_price);
+          currentRecordCost = decimalCalc.add(currentRecordCost, portionCost);
+        }
+
+        batch.quantity_remaining -= take;
+        qtyToFulfill -= take;
+
+        if (batch.quantity_remaining <= 0) {
+          batches.shift();
+        }
+      }
+
+      if (isTarget && partner) {
+        // Record this transaction for analysis
+        processedRecords.push({
+          ...outRecord,
+          cost_amount: decimalCalc.toNumber(currentRecordCost, 2), // Decimal
+          sales_amount: Number(outRecord.total_price || 0),
+          customer_full_name: partner.full_name,
+          resolved_customer_code: partner.code,
+        });
+      }
+    }
+
+    return processedRecords;
+  }
+
   /**
    * Get customer analysis data with product details
    */
@@ -12,62 +136,18 @@ export default class AnalysisQueries {
     endDate: string,
   ): Promise<any[]> {
     try {
-      const customerSalesSql = Prisma.sql`
-        SELECT 
-          p.code as customer_code,
-          p.full_name as customer_name,
-          o.product_model,
-          SUM(o.quantity) as total_quantity,
-          SUM(o.total_price) as sales_amount
-        FROM outbound_records o
-        LEFT JOIN partners p ON (o.customer_code = p.code OR o.customer_short_name = p.short_name)
-        WHERE o.outbound_date >= ${startDate} AND o.outbound_date <= ${endDate}
-        AND p.code IS NOT NULL
-        AND o.unit_price >= 0
-        GROUP BY p.code, p.full_name, o.product_model
-        ORDER BY p.full_name, o.product_model
-      `;
-
-      const salesData = await prisma.$queryRaw<Row[]>(customerSalesSql);
-      if (!salesData || salesData.length === 0) return [];
-
-      const avgCostSql = Prisma.sql`
-          SELECT 
-            product_model,
-            SUM(quantity * unit_price) / SUM(quantity) as avg_cost_price
-          FROM inbound_records 
-          WHERE unit_price >= 0
-          GROUP BY product_model
-        `;
-
-      const costData = await prisma.$queryRaw<Row[]>(avgCostSql);
-      const costMap: Record<string, number> = {};
-      (costData || []).forEach((item) => {
-        const avgCost = item["avg_cost_price"];
-        costMap[item["product_model"]] =
-          typeof avgCost === "bigint" ? Number(avgCost) : Number(avgCost) || 0;
-      });
+      const records = await this.calculateFIFOData(startDate, endDate);
 
       const customerMap: Record<string, any> = {};
-      (salesData || []).forEach((row) => {
-        const customerCode = row["customer_code"];
-        const customerName = row["customer_name"];
-        const productModel = row["product_model"];
-        const salesAmountVal = row["sales_amount"];
-        const salesAmount =
-          typeof salesAmountVal === "bigint"
-            ? Number(salesAmountVal)
-            : Number(salesAmountVal) || 0;
-        const quantityVal = row["total_quantity"];
-        const quantity =
-          typeof quantityVal === "bigint"
-            ? Number(quantityVal)
-            : Number(quantityVal) || 0;
-        const avgCostPrice = costMap[productModel] || 0;
-        const costAmount = avgCostPrice * quantity;
+
+      for (const row of records) {
+        const customerCode = row.resolved_customer_code;
+        const customerName = row.customer_full_name;
+        const productModel = row.product_model;
+
+        const salesAmount = row.sales_amount;
+        const costAmount = row.cost_amount;
         const profitAmount = salesAmount - costAmount;
-        const profitRate =
-          salesAmount > 0 ? (profitAmount / salesAmount) * 100 : 0;
 
         if (!customerMap[customerCode]) {
           customerMap[customerCode] = {
@@ -77,33 +157,50 @@ export default class AnalysisQueries {
             cost_amount: 0,
             profit_amount: 0,
             profit_rate: 0,
-            product_details: [] as any[],
+            product_details_map: {},
           };
         }
 
-        customerMap[customerCode].sales_amount += salesAmount;
-        customerMap[customerCode].cost_amount += costAmount;
-        customerMap[customerCode].profit_amount += profitAmount;
-        customerMap[customerCode].product_details.push({
-          product_model: productModel,
-          sales_amount: salesAmount,
-          cost_amount: costAmount,
-          profit_amount: profitAmount,
-          profit_rate: profitRate,
-        });
-      });
+        const cust = customerMap[customerCode];
+        cust.sales_amount += salesAmount;
+        cust.cost_amount += costAmount;
+        cust.profit_amount += profitAmount;
 
-      Object.values(customerMap).forEach((customer: any) => {
-        customer.profit_rate =
-          customer.sales_amount > 0
-            ? (customer.profit_amount / customer.sales_amount) * 100
-            : 0;
-      });
+        if (!cust.product_details_map[productModel]) {
+          cust.product_details_map[productModel] = {
+            product_model: productModel,
+            sales_amount: 0,
+            cost_amount: 0,
+            profit_amount: 0,
+            profit_rate: 0,
+          };
+        }
+        const prod = cust.product_details_map[productModel];
+        prod.sales_amount += salesAmount;
+        prod.cost_amount += costAmount;
+        prod.profit_amount += profitAmount;
+      }
 
-      const result = Object.values(customerMap).sort(
-        (a: any, b: any) => b.sales_amount - a.sales_amount,
-      );
-      return result;
+      return Object.values(customerMap)
+        .map((cust: any) => {
+          cust.profit_rate =
+            cust.sales_amount !== 0
+              ? (cust.profit_amount / cust.sales_amount) * 100
+              : 0;
+          cust.product_details = Object.values(cust.product_details_map)
+            .map((prod: any) => {
+              prod.profit_rate =
+                prod.sales_amount !== 0
+                  ? (prod.profit_amount / prod.sales_amount) * 100
+                  : 0;
+              return prod;
+            })
+            .sort((a: any, b: any) => b.sales_amount - a.sales_amount);
+
+          delete cust.product_details_map;
+          return cust;
+        })
+        .sort((a: any, b: any) => b.sales_amount - a.sales_amount);
     } catch (error) {
       throw error as Error;
     }
@@ -117,62 +214,17 @@ export default class AnalysisQueries {
     endDate: string,
   ): Promise<any[]> {
     try {
-      const productSalesSql = Prisma.sql`
-        SELECT 
-          o.product_model,
-          p.code as customer_code,
-          p.full_name as customer_name,
-          SUM(o.quantity) as total_quantity,
-          SUM(o.total_price) as sales_amount
-        FROM outbound_records o
-        LEFT JOIN partners p ON (o.customer_code = p.code OR o.customer_short_name = p.short_name)
-        WHERE o.outbound_date >= ${startDate} AND o.outbound_date <= ${endDate}
-        AND p.code IS NOT NULL
-        AND o.unit_price >= 0
-        GROUP BY o.product_model, p.code, p.full_name
-        ORDER BY o.product_model, p.full_name
-      `;
-
-      const salesData = await prisma.$queryRaw<Row[]>(productSalesSql);
-      if (!salesData || salesData.length === 0) return [];
-
-      const avgCostSql = Prisma.sql`
-          SELECT 
-            product_model,
-            SUM(quantity * unit_price) / SUM(quantity) as avg_cost_price
-          FROM inbound_records 
-          WHERE unit_price >= 0
-          GROUP BY product_model
-        `;
-
-      const costData = await prisma.$queryRaw<Row[]>(avgCostSql);
-      const costMap: Record<string, number> = {};
-      (costData || []).forEach((item) => {
-        const avgCost = item["avg_cost_price"];
-        costMap[item["product_model"]] =
-          typeof avgCost === "bigint" ? Number(avgCost) : Number(avgCost) || 0;
-      });
-
+      const records = await this.calculateFIFOData(startDate, endDate);
       const productMap: Record<string, any> = {};
-      (salesData || []).forEach((row) => {
-        const productModel = row["product_model"];
-        const customerCode = row["customer_code"];
-        const customerName = row["customer_name"];
-        const salesAmountVal = row["sales_amount"];
-        const salesAmount =
-          typeof salesAmountVal === "bigint"
-            ? Number(salesAmountVal)
-            : Number(salesAmountVal) || 0;
-        const quantityVal = row["total_quantity"];
-        const quantity =
-          typeof quantityVal === "bigint"
-            ? Number(quantityVal)
-            : Number(quantityVal) || 0;
-        const avgCostPrice = costMap[productModel] || 0;
-        const costAmount = avgCostPrice * quantity;
+
+      for (const row of records) {
+        const customerCode = row.resolved_customer_code;
+        const customerName = row.customer_full_name;
+        const productModel = row.product_model;
+
+        const salesAmount = row.sales_amount;
+        const costAmount = row.cost_amount;
         const profitAmount = salesAmount - costAmount;
-        const profitRate =
-          salesAmount > 0 ? (profitAmount / salesAmount) * 100 : 0;
 
         if (!productMap[productModel]) {
           productMap[productModel] = {
@@ -181,37 +233,55 @@ export default class AnalysisQueries {
             cost_amount: 0,
             profit_amount: 0,
             profit_rate: 0,
-            customer_details: [] as any[],
+            customer_details_map: {},
           };
         }
 
-        productMap[productModel].sales_amount += salesAmount;
-        productMap[productModel].cost_amount += costAmount;
-        productMap[productModel].profit_amount += profitAmount;
-        productMap[productModel].customer_details.push({
-          customer_code: customerCode,
-          customer_name: customerName,
-          sales_amount: salesAmount,
-          cost_amount: costAmount,
-          profit_amount: profitAmount,
-          profit_rate: profitRate,
-        });
-      });
+        const prod = productMap[productModel];
+        prod.sales_amount += salesAmount;
+        prod.cost_amount += costAmount;
+        prod.profit_amount += profitAmount;
 
-      Object.values(productMap).forEach((product: any) => {
-        product.profit_rate =
-          product.sales_amount > 0
-            ? (product.profit_amount / product.sales_amount) * 100
-            : 0;
-      });
+        if (!prod.customer_details_map[customerCode]) {
+          prod.customer_details_map[customerCode] = {
+            customer_code: customerCode,
+            customer_name: customerName,
+            sales_amount: 0,
+            cost_amount: 0,
+            profit_amount: 0,
+            profit_rate: 0,
+          };
+        }
+        const custDetails = prod.customer_details_map[customerCode];
+        custDetails.sales_amount += salesAmount;
+        custDetails.cost_amount += costAmount;
+        custDetails.profit_amount += profitAmount;
+      }
 
-      const result = Object.values(productMap)
+      return Object.values(productMap)
+        .map((prod: any) => {
+          prod.profit_rate =
+            prod.sales_amount !== 0
+              ? (prod.profit_amount / prod.sales_amount) * 100
+              : 0;
+          prod.customer_details = Object.values(prod.customer_details_map)
+            .map((cust: any) => {
+              cust.profit_rate =
+                cust.sales_amount !== 0
+                  ? (cust.profit_amount / cust.sales_amount) * 100
+                  : 0;
+              return cust;
+            })
+            .sort((a: any, b: any) => b.sales_amount - a.sales_amount);
+
+          delete prod.customer_details_map;
+          return prod;
+        })
         .filter(
           (product: any) =>
             product.product_model && product.product_model.trim() !== "",
         )
         .sort((a: any, b: any) => b.sales_amount - a.sales_amount);
-      return result;
     } catch (error) {
       throw error as Error;
     }
