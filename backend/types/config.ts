@@ -40,6 +40,7 @@ export interface AppConfig {
     user?: string;
     password?: string;
     dbName?: string;
+    maxConnections?: number;
   };
   auth?: AuthConfig;
   server?: ServerConfig;

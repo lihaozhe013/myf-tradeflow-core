@@ -35,29 +35,42 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
     ]);
 
     // Enhance with Last In/Out dates
-    // For small batch (limit 10), it's okay to query individually or group query
-    const results = await Promise.all(rows.map(async (row) => {
-        // Find last Inbound date
-        const lastIn = await prisma.inventoryLedger.findFirst({
-            where: { product_model: row.product_model, change_type: 'INBOUND' },
-            orderBy: { date: 'desc' },
-            select: { date: true }
-        });
-        // Find last Outbound date
-        const lastOut = await prisma.inventoryLedger.findFirst({
-            where: { product_model: row.product_model, change_type: 'OUTBOUND' },
-            orderBy: { date: 'desc' },
-            select: { date: true }
-        });
-        
+    // Batch query optimization to avoid N+1 problem and connection exhaustion
+    const productModels = rows.map(r => r.product_model);
+
+    // 1. Fetch Max Inbound Dates grouped by product
+    const lastInbounds = await prisma.inventoryLedger.groupBy({
+      by: ['product_model'],
+      where: {
+        product_model: { in: productModels },
+        change_type: 'INBOUND'
+      },
+      _max: { date: true }
+    });
+
+    // 2. Fetch Max Outbound Dates grouped by product
+    const lastOutbounds = await prisma.inventoryLedger.groupBy({
+      by: ['product_model'],
+      where: {
+        product_model: { in: productModels },
+        change_type: 'OUTBOUND'
+      },
+      _max: { date: true }
+    });
+
+    // Create lookup maps
+    const lastInMap = new Map(lastInbounds.map(item => [item.product_model, item._max.date]));
+    const lastOutMap = new Map(lastOutbounds.map(item => [item.product_model, item._max.date]));
+    
+    const results = rows.map((row) => {
         return {
             product_model: row.product_model,
             current_inventory: row.quantity,
-            last_inbound: lastIn ? lastIn.date : null,
-            last_outbound: lastOut ? lastOut.date : null,
+            last_inbound: lastInMap.get(row.product_model) || null,
+            last_outbound: lastOutMap.get(row.product_model) || null,
             last_update: new Date().toISOString() // Dynamic
         };
-    }));
+    });
 
     res.json({
         data: results,

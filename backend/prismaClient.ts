@@ -14,12 +14,22 @@ function createPrismaClient() {
   const dbConfig = getDatabaseConfig();
   
   // Default to nothing if not postgres, or throw
-  const { user, password, host, port, dbName } = dbConfig;
+  const { user, password, host, port, dbName, maxConnections } = dbConfig;
   const connectionString = `postgresql://${user}:${password}@${host}:${port}/${dbName}`;
   
   logger.info(`Configured for PostgreSQL: ${host}:${port}/${dbName}`);
 
-  const pool = new pg.Pool({ connectionString });
+  // Configure connection pool explicitly
+  // Default max connections to 5 as requested (safe for 20 max total connections)
+  // If provided in config, use that value.
+  const poolMax = maxConnections ? Number(maxConnections) : 5;
+
+  const pool = new pg.Pool({ 
+    connectionString,
+    max: poolMax,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 5000,
+  });
   const adapter = new PrismaPg(pool);
 
   const log: any[] = process.env['NODE_ENV'] === 'development' 
